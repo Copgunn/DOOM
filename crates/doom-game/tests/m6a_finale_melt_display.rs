@@ -3,8 +3,8 @@
 //! the genuine linuxdoom-1.10 engine (`tests/reference/m6a_frames`, `m6a_melt`, `m6a_session`,
 //! written by `tools/reference/m6a_goldens.py`; no Rust output feeds an expectation).
 //!
-//! **How the display is driven.** The display under test is not yet reached by the session (that
-//! is the next step), so each item's frozen session (wire 26, the intermission logic, its own
+//! **How the display is driven.** This test drives the display beside the frozen session, not
+//! through the finale-and-melt session (`m6a2_session` does that): each item's frozen session (wire 26, the intermission logic, its own
 //! frozen session display) runs from the committed demo, and a second display, in the new
 //! configuration, is driven in lockstep from what the session exposes after each tic: the
 //! simulation (`Session::level`), the tic's sound and intermission draws (`TicReport`), the

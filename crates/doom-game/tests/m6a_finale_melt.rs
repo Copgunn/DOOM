@@ -2,8 +2,8 @@
 //! `F_Ticker`; `doom_render::f_finale::draw`, `F_Drawer`) and the melt step
 //! (`doom_render::f_wipe::Melt`, `wipe_initMelt` and `wipe_doMelt` with `ticks = 1`) against the
 //! committed goldens of the genuine linuxdoom-1.10 engine (`tools/reference/m6a_goldens.py`; no
-//! Rust output feeds an expectation). These functions are reached by no configuration: the
-//! session still refuses the victory tic and the display the melt pictures.
+//! Rust output feeds an expectation). This test calls the functions directly; the finale-and-melt
+//! session and display reach them too (`m6a2_session`), and the frozen ones still refuse.
 //!
 //! Each item runs from its committed demo and WADs: the session layer (wire 26, the
 //! intermission, the session display) produces every level and intermission frame up to the

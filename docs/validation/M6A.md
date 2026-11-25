@@ -2,8 +2,9 @@
 
 **Status (2026-11-23, America/Los_Angeles): M6a part 1 is merged** ([PR #65](https://github.com/Copgunn/DOOM/pull/65), 2026-11-23), and
 so is the held-keys fix of [§5.8](#58-held-keys-at-a-level-load-2026-11-23-after-part-1-merged)
-([PR #79](https://github.com/Copgunn/DOOM/pull/79), the same day). Part 2 is in progress on the branch `feat/m6a-part2`; nothing
-of it is in this record yet. The paragraph below is the status as written on 2026-11-22, before the merge, and is left as it was.
+([PR #79](https://github.com/Copgunn/DOOM/pull/79), the same day). Part 2 (the finale and the melt pictures, pull request #80, not merged) is
+recorded in sections 6 to 12; it passed the owner's hand test on 2026-11-24 ([§9](#9-the-owners-hand-test-of-9e3734ae-and-his-five-sessions-against-the-genuine-engine-2026-11-24)).
+The paragraph below is the status as written on 2026-11-22, before the merge, and is left as it was.
 
 **Status (2026-11-22, America/Los_Angeles): this is the record up to the hand-test gate, not the finished milestone.** The
 playable level chain (exits, intermission, carried start, reborn, secret route) is built and compared; the PR stops next for the
@@ -399,6 +400,122 @@ sizes (commands in [TESTING](../TESTING.md#part-2-the-finale-and-the-melt-in-pro
   [wire 27 record's](WIRE27.md#4-real-maps-local-only-passfail-and-tic-counts), on `doom-sim`); the app and `doom-play`
   themselves on these demos (the session was driven directly); any play with input after the old refusal, which only the
   owner's next hand test gives. Nothing was measured for time.
+
+## 8. The part 2 test map
+
+Each new test file of part 2, read from the files at head `9e3734ae` (2026-11-24); this table is a reading, not a
+run. "Genuine" is the genuine linuxdoom-1.10 engine's output.
+Paths are under `tests/reference/`. Tests/ignored counts are `#[test]` and `#[ignore]` attributes in the file.
+
+| Test file (tests, ignored) | Compares (layer) | Against | Planted faults |
+| --- | --- | --- | --- |
+| `m6a_finale_melt.rs` (4, 0) | Finale state/frames and every melt step; pure functions (`session::finale`, `f_finale::draw`, `f_wipe::Melt`) | Genuine: `m6a_session`, `m6a_frames` (sb10, sb11), `m6a_melt` (sb10) | Finale stage 1 a tic early; one crawl character too many; other mode's art lump; melt column offset; dropped step 5; `M_Random` index shifted |
+| `m6a_finale_melt_display.rs` (6, 0) | Display `FinaleAndMelt` beside the frozen session: frames, index, melts; DDSP v4 restore at melt steps (vs the uninterrupted run, Rust-only); frozen display unchanged; refusals | Genuine: `m6a_frames`, `m6a_melt` (sb10 melts; sb11 frames and index only), `m6a_session` | Melt column off by one; dropped step; wrong melt palette; finale art one tic early; a faulted display cannot be saved |
+| `m6a_frozen_bytes.rs` (2, 0) | SHA-256 of full DSES v1, DDSP v3, DSND v2, DSIM42 bytes of the frozen session at declared points | `m6a_frozen_bytes.txt`: a regression pin generated on master 25cdb3ba, not an engine or encoder golden | Self-test: one changed digest character, a missing or extra row |
+| `m6a2_full_crawl.rs` (3, 0) | Both full-crawl items (FULLREG, FULLRET), sb10 and sb11: frames, index, finale rows, melts; crawl timing read from goldens alone; display layer via `m6a2/` | Genuine: `m6a2_session`, `m6a2_frames`, `m6a2_melt`, `m6a2_manifest.json`, `m6a2_results.json`, `m6a2_wads/m6a2_font.wad`; part 1 FINRET goldens for one control | Newline as space; line step off by one (both in a test-side copy of `F_TextWrite`, shown equal when clean); last character short; melt column off by one at sb11 |
+| `m6a2_melt_sb11.rs` (2, 0) | Every part 1 item at sb11, melts included; display layer via `m6a2/` | Genuine: `m6a2_melt/*.sb11.melt` with part 1 `m6a_frames` and `m6a_session` unchanged | Melt column off by one; dropped step; wrong palette, each in CHAIN's first melt |
+| `m6a2_session.rs` (8, 2) | `Session::new_finale_and_melt` end to end, sb10 and sb11: session rows, frames, melts, sound rows, mixer buffers, level state; frozen vs new session; demo replay; the 2 ignored are local-only real-map runs | Genuine: `m6a_*` and `m6a2_*` session/frames/sound/melt, `m6a_mixer/goldens`; independent encoder: `m6a_state.txt` (DSIM42, sb10, projected to wire 26 names) | Finale a tic late; tic in a melt; command in a melt; stage-1 wipe missing (FINRET and FULLRET); buffer mixed in a melt; the ignored fault test repeats three on real maps |
+| `m6a2_session_rules.rs` (6, 1) | DSES v2 restore-and-continue (Rust-only); genuine stops (NOHELP2, NOVICTOR) and the session's own refusals; v2 reader; the ignored one writes fuzz seeds | Genuine: stop tics from `m6a_results.json`; otherwise Rust-only, no golden | None against goldens; forged states are refused; a planted-fault session cannot be saved |
+| `m6a2_wire27.rs` (4, 0) | Eight wire 27 items through the new and the frozen session: DSIM43 digest after every tic; DSES v2 embeds DSIM43 | Genuine strict build plus independent DSIM43 encoder: `wire27_state.txt`; `wire27_wads`, `wire27_scripts` | Self-test: an altered golden digest is reported at its capture |
+| `m6a2_play.rs` (10, 0) | App (`load_finale_and_melt_session`) played by keys: demo, tics, melt steps, presented pictures, pacing, held inputs; session layer via `m6a2_run/` | Genuine: `m6a_session`, `m6a_frames`, `m6a_melt` / `m6a2_melt`, `m6a2_session`, `m6a2_frames`; `m6a_scripts` | Key dropped in a melt; motion accumulated; command in a melt step; melt step skipped; burst after a melt |
+| `m6a_chain_finale_melt.rs` (8, 0) | Sound chain `FinaleAndMelt`: rows, buffers, melt step counts, DSND v3 restore (462 points); frozen chain; plain `save()` pins | Genuine: `m6a_sound`, `m6a_mixer`, `m6a_melt`, `m6a_manifest.json` (26 of 29 items; later levels not driven here) | Buffer mixed in a melt; sound update in a melt; `D_VICTOR` refusal a tic late |
+| `dsnd3_reader.rs` (3, 0) | DSND v3 reader on hand-built states | Hand-built bytes, no golden (Rust-only) | None: refusals only |
+| `finale_melt_reader_tests.rs` (6, 0) | DDSP v4 reader and rules on hand-built states; `compose` follows the melt | Hand-built bytes, no golden (Rust-only) | None: refusals only |
+| `doom-play/src/melt_tests.rs` (5, 0) | doom-play: sound queue, exit lines, input log, `--tic-stats` in a melt (headless, fake clock) | Rust-only; no genuine counterpart; reads committed synthetic WADs | None |
+
+Helpers, not test targets: `m6a2/mod.rs` is used by `m6a2_full_crawl` and `m6a2_melt_sb11`; `m6a2_run/mod.rs` by
+`m6a2_session` and `m6a2_play`; `m6a2_session_rules` and `m6a2_wire27` use neither (the first uses `m6a`, the second its own loader).
+
+### Compared twice on purpose
+
+- Melt steps at sb10 through the pure function, display, session and app (the sound chain counts steps only): "layer by layer, as
+  part 1 was" (note §7.8); the pure-function test was written before any configuration reached the functions. The same fault kinds are
+  planted at each layer; the AGENTS rule that "self-tests must prove the harness can fail" is the only stated reason.
+- sb10 against sb11: `m6a2_melt_sb11` says the frames and rows are the part 1 goldens and only the melt rows are new
+  (owner's addition to ruling V9); the display test compares sb11 frames and index too, since no sb11 melt golden existed then.
+- Full crawl: `m6a2_full_crawl` (display) against `m6a2_session` (session) and `m6a2_play` (FULLREG): the same layering. Part 1
+  FINRET/FINREG stay in the part 1 tests because they cover the crawl's right-edge break, which the narrow font avoids.
+- DSIM43 captures: `m6a2_session` renames them to wire 26's names to meet the DSIM42 goldens; `m6a2_wire27` renames the frozen
+  session's DSIM42 to 43 for the wire 27 goldens. Both are declared fixture projections; why two are needed is each file's
+  golden being of one wire (`m6a_state.txt` is DSIM42, `wire27_state.txt` is DSIM43).
+- FULLREG/FULLRET buffers against FINREG/FINRET mixer goldens (`m6a2_run`): the mixer golden depends only on the sound starts
+  and lumps, the font WAD holds no sound, and the genuine sound streams are asserted byte-identical.
+- Frozen unchanged (display, sound chain, `m6a2_session`, `m6a_frozen_bytes`): the first three compare with the new
+  configuration; `m6a_frozen_bytes` pins bytes against master because no committed digest pinned the v3, v2 and v1 bytes (7.8, 7.9).
+- Restore-and-continue (DDSP v4 in the display test, DSND v3 in the sound test, DSES v2 in `m6a2_session_rules`) and the three
+  hand-built readers: one per format layer; any further reason is not stated in the code or docs.
+- `NOHELP2`'s stop: pure, display, `m6a2_session_rules` and `m6a2_play`: each at its own layer's refusal; reason not stated.
+
+## 9. The owner's hand test of `9e3734ae`, and his five sessions against the genuine engine (2026-11-24)
+
+**The hand test passed** (the owner, 2026-11-24, the Windows artifact of `9e3734ae`, his retail IWAD, skill 2,
+`--bindings modern --fullscreen`). His observations, not tests: E1M8 past the dark room with no refusal, three runs; the
+melt, the text screen and the picture shown; pause holds on the picture; R on the picture starts a new game on E1M8; Q
+saves. With registered mode forced: refused at session tic 4842 (the `HELP2` picture not found), the demo saved, R and Q
+offered.
+
+**His five recordings through the whole session path**, local only, as [§7](#7-part-2-on-wire-27-the-owners-e1m8-sessions-through-the-whole-session-2026-11-24-evening)
+(`tools/local/m6a2_play_check.py`, then `real_maps_finale_and_melt_local`; the recordings are only read and not
+committed). Session tics are 0-based. No mismatch on any tic.
+
+| Recording (its tics) | Tics compared | Reaches | Melts, steps | Result |
+| --- | ---: | --- | ---: | --- |
+| retail `045123` (8,227) | 8,227 | two reborn loads, the victory at tic 6690, 1,537 finale tics (ends in the crawl) | 4, 159 | pass, both sizes |
+| retail `045714` (5,470) | 5,470 | the victory at tic 3245, 2,225 finale tics: the whole crawl, the art screen from tic 4815 | 3, 128 | pass, both sizes |
+| retail `050126` (173) | 173 | the recording's end, in the level | 1, 42 | pass, both sizes |
+| registered `050239` (4,843) | 4,842 | the victory at tic 3272, 1,570 finale tics, then the stop below | 2, 85 | pass, both sizes |
+| retail `050651` (2,985) | 2,985 | the victory at tic 2913, 72 finale tics | 2, 80 | pass, both sizes |
+
+- **The registered stop is the genuine engine's.** The genuine engine ran 4,842 tics of that demo and stopped with
+  `W_GetNumForName: HELP2 not found!`; the Rust session refused session tic 4842 (the 4,843rd, the recording's last
+  command) with the typed `HELP2` lump error, at both sizes. The 4,842 tics before it are equal.
+- **Compared on every tic at both sizes**, as §7: session rows, frames, sound rows, mixer buffers and melt steps; at
+  screenblocks 10 also the level's whole state after every level tic (6,690, 3,245, 173, 3,272 and 2,913 captures).
+- **The masked-digest rule** (the owner's ruling 10 of 2026-11-24: part 1's rule, decision R4, is accepted for part 2's
+  real-map frames). A level frame in which the genuine tracker flags columns of undefined reads is compared by its masked
+  digest. Flagged frames and columns per recording, screenblocks 10 then 11: `045123` 45 frames with 58 columns, 47 with
+  60; `045714` 14 with 23, 18 with 48; `050126` 1 with 1, 1 with 1; `050239` 23 with 31, 25 with 33; `050651` 27 with 30,
+  30 with 42. No frame was excluded whole. Listener columns not checked on 413, 243, 6, 272 and 242 `S` rows.
+- **The gate can fail** on these goldens: a buffer mixed in a melt was reported on all five, a finale one tic late on the
+  four that reach it, a missing art-screen wipe on `045714`, the only one that reaches the art screen.
+- **Two faults of the local tooling were found and fixed here, neither in the engine.** (1) The tool's own check that the
+  genuine run with the unit melt clock equals the plain one compared whole-picture digests, which differ between two
+  runs of the same genuine build on a flagged frame (seen: one tic of `050651`, the `F`, `D` and `Q` rows, masked digest
+  equal); it reported 3 false failures here and 8 on the run of §7, which that section did not mention. It now compares
+  flagged frames by their masked digest. (2) The planted-fault test planted the missing art-screen wipe on every run with
+  a finale and failed on `045123`, which ends before the art screen; it now plants it only where the art screen is reached.
+- **Not shown:** the app and `doom-play` themselves on these demos (the session was driven directly); nothing was timed.
+
+**Open finding, recorded and not investigated here (the owner's ruling 11): visible hitches.** As measured by
+`--tic-stats` on the owner's machine, which was not confirmed idle:
+
+| Run | Tics | Tic intervals more than 1 ms off | Longest interval | Demo writes | Hitches the owner counted |
+| --- | ---: | --- | ---: | --- | --- |
+| demo folder on a hard drive | 5,643 | 6 (3 of them more than 5 ms) | 46.060 ms | up to 366 ms | not reported |
+| demo folder on an SSD | 2,985 | 0 | 29.349 ms | none over 20 ms (longest 8.7 ms) | 7 in the 2,913 level tics |
+| hard drive, without `--tic-stats` | not measured | not measured | not measured | not measured | 7 in 3,272 level tics |
+
+Tic pacing and disk writes do not explain the visible hitches. Picture presentation is unmeasured. **No cause is
+claimed**; a later pull request is to measure presentation intervals.
+
+## 10. Fuzzing the three part 2 readers again, from new seeds (2026-11-24)
+
+The `m6a2_dses2` run of [note §7.10](../M6A_REFERENCE_INVESTIGATION.md#710-the-session-the-app-and-the-fuzz-runs-at-the-hand-test-gate-2026-11-24) read
+`DSES` version 2 states that embedded `DSIM` 42 and is stale. All three targets were run again at `9e3734ae` from seeds
+written by `write_fuzz_seeds_part2_local` at that head (none of the 37 new `m6a2_dses2` seeds equals an old one by
+SHA-256). Decoders only; restore is not driven. Commands in [TESTING](../TESTING.md#part-2-the-finale-and-the-melt-in-progress).
+
+| Target | Seed replay (`-runs=0`) | Coverage-guided campaign (240 s, `-max_len=300000`, `-seed=1`) |
+| --- | --- | --- |
+| `m6a2_dses2` (`DSES` v2 embedding `DSIM` 43) | 37 seeds, 74,102 to 212,957 bytes, exit 0 | 201,591 executions, no finding |
+| `m6a_ddsp4` | 37 seeds, 64,119 to 192,661 bytes, exit 0 | 161,276 executions, no finding |
+| `m6a_dsnd3` | 37 seeds, 94 to 148 bytes, exit 0 | 25,766,681 executions, no finding |
+
+- **Sanitizer:** every replay and campaign above ran under AddressSanitizer (`--sanitizer address`); there was no
+  separate sanitizer campaign beyond these. No crash, timeout, out-of-memory or leak report; no artifact file written.
+- **Leak detection** was not disabled (`ASAN_OPTIONS` and `LSAN_OPTIONS` unset, so LeakSanitizer ran at its default);
+  that it would report a leak was not confirmed with a planted one.
+- **Not alone on the machine:** the real-map comparison of §9 ran at the same time, so the execution counts are not rates.
 
 ## Not run, and limits
 

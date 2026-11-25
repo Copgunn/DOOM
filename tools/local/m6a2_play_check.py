@@ -36,6 +36,16 @@ G, ST = SR.G, SR.ST
 UNIT = ['--melt-clock', 'unit']
 
 
+def stable(text):
+    """The frame rows two genuine runs of one demo must share: no melt rows, and on a tic whose F row flags columns of
+    undefined reads only that row's masked digest (observed 2026-11-24: the whole-picture digests of F, D and Q differ
+    there between two runs of the same build on the same demo, and nowhere else)."""
+    rows = [r.split(',') for r in G.without(text, ('V', 'Y')).splitlines()]
+    flagged = {r[1] for r in rows if r[0] == 'F' and int(r[6]) > 0}
+    return [r[:2] + r[3:] if r[0] == 'F' and r[1] in flagged else r
+            for r in rows if not (r[0] in ('D', 'Q') and r[1] in flagged)]
+
+
 def genuine(binary, mbin, item, work):
     """Every golden of one uncut run: dict(files {rel: text}, end, tics, victory, state rows, fails)."""
     name, fails = item['name'], []
@@ -48,7 +58,7 @@ def genuine(binary, mbin, item, work):
         if r['end'] != end: fails.append(f'the {label} run ended {r["end"]}, the screenblocks 10 run {end}')
         if G.golden_sound(r['sound']) != G.golden_sound(r10['sound']): fails.append(f'the {label} sound stream differs')
     for sb, plain, unit in ((10, r10, u10), (11, r11, u11)):
-        if G.without(unit['frames'], ('V', 'Y')) != G.without(plain['frames'], ('V', 'Y')):
+        if stable(unit['frames']) != stable(plain['frames']):
             fails.append(f'the unit melt clock changed frame rows other than the melt rows at screenblocks {sb}')
     gs = G.table(r10['session'], 'G')
     victory = next((int(g['tic']) for g in gs if g['gamestate'] == '2'), None)

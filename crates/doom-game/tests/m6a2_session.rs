@@ -10,7 +10,7 @@
 //! buffers and, at screenblocks 10, 125 melts of 4,946 steps; the screenblocks-11 melt goldens of
 //! the part 2 set hold 131 melts of 5,182 steps over 31 items (the 29 and FULLREG and FULLRET).
 //! **Not compared**, each named by the test: SKILL0 and SKILL1, whose demos the session refuses
-//! (the easy skills come with the next pull request, wire 27); NOE1M2AT runs no tic (refused at
+//! (the easy skills come with a later pull request, wire 28); NOE1M2AT runs no tic (refused at
 //! its load, as the genuine engine stops there), so it has nothing but its mixer golden's header
 //! to compare.
 mod m6a;
@@ -546,8 +546,10 @@ fn real_maps_finale_and_melt_local() {
 }
 
 /// The local gate can fail: on every item of `M6A_REFERENCE_DIR`, a buffer mixed during a melt
-/// is reported, and on every item that reaches the finale so are a finale that starts a tic late
-/// and a missing wipe before the art screen. Prints each first difference.
+/// is reported, on every item that reaches the finale so is a finale that starts a tic late, and
+/// on every item that reaches the art screen so is a missing wipe before it (an item has a wipe
+/// at its start, at each load and at the victory; one more is the art screen's). Prints each
+/// first difference.
 #[test]
 #[ignore = "local only: needs M6A_REFERENCE_DIR from tools/local/m6a2_play_check.py"]
 fn real_maps_finale_and_melt_local_catches_planted_faults() {
@@ -560,10 +562,13 @@ fn real_maps_finale_and_melt_local_catches_planted_faults() {
             item,
             source: Source::Part1,
         };
-        let finale = run(&spec, Options::at(10)).counts.finale_tics > 0;
+        let clean = run(&spec, Options::at(10)).counts;
         let mut faults = vec![PlantedFault::MixInMelt];
-        if finale {
-            faults.extend([PlantedFault::FinaleLate, PlantedFault::NoArtWipe]);
+        if clean.finale_tics > 0 {
+            faults.push(PlantedFault::FinaleLate);
+        }
+        if clean.finale_tics > 0 && clean.wipes > clean.loads + 2 {
+            faults.push(PlantedFault::NoArtWipe);
         }
         for fault in faults {
             let options = Options {

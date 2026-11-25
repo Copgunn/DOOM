@@ -3301,9 +3301,10 @@ cargo test -p doom-game --test m6a2_full_crawl --test m6a2_melt_sb11 -- --nocapt
 
 The tests print their counts with `-- --nocapture`. What they compared is in the
 [investigation note](M6A_REFERENCE_INVESTIGATION.md#7-part-2-plan-size-and-decisions-for-the-owner-2026-11-23)
-until the part 2 evidence record is written. The sound test drives each item as far as part 1's `m6a_chain` does (the
+and, for the test map, the owner's hand-test sessions, the fuzz runs, mutation testing and the independent read, in
+the [record](validation/M6A.md#8-the-part-2-test-map). The sound test drives each item as far as part 1's `m6a_chain` does (the
 first level, the intermission or finale after it and the next load tic; later levels need the session, in `doom-game`).
-No fuzz campaign has been run for `m6a_ddsp4` or `m6a_dsnd3`.
+The fuzz runs of the three part 2 readers are in the [record](validation/M6A.md#10-fuzzing-the-three-part-2-readers-again-from-new-seeds-2026-11-24).
 
 ### Wire 27: the wrapping `P_InterceptVector`
 

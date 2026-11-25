@@ -3765,7 +3765,7 @@ compared in retail as well as registered ([record](validation/M6A.md)).
 
 ### The finale and the melt (M6a part 2)
 
-Built in pull request #80 (draft, not merged; the owner's hand test pending) in the session's finale-and-melt configuration,
+Built in pull request #80 (not merged; the owner's hand test passed on 2026-11-24, [record](validation/M6A.md#9-the-owners-hand-test-of-9e3734ae-and-his-five-sessions-against-the-genuine-engine-2026-11-24)) in the session's finale-and-melt configuration,
 on [wire 27](#wire-27-the-wrapping-p_interceptvector) (the owner's ruling of 2026-11-24: the real E1M8 reaches its exit only with the wrapping
 `P_InterceptVector`, so the configuration moved from wire 26 before it was frozen; this pull request adds no wire and does not
 change `doom-sim`), and played by `doom-play`. Part 1's configuration stays on wire 26 and keeps the

@@ -1218,6 +1218,20 @@ For this the part 2 gate helper reads local goldens and compares real-map frames
 **Stale since the redefinition:** the `m6a2_dses2` fuzz run of section 7.10 read `DSES` version 2 states that embedded
 DSIM42. It is to be run again from new seeds with the other fuzz results, after the hand test.
 
+### 7.12 The hand test passed; rulings 10 and 11 (2026-11-24, night)
+
+The owner's hand test of `9e3734ae` passed (what he saw, and his five sessions against the genuine engine, are in the
+[record](validation/M6A.md#9-the-owners-hand-test-of-9e3734ae-and-his-five-sessions-against-the-genuine-engine-2026-11-24)).
+His rulings of the same day:
+
+- **Ruling 10.** The masked-digest rule for real-map frames in part 2 is accepted: it is part 1's rule (decision R4).
+  The pull request text states it with the flagged-column counts.
+- **Ruling 11.** The visible hitches he counted are recorded as an open finding and are neither fixed nor investigated
+  in this pull request. No cause is claimed; a later pull request measures presentation intervals.
+
+The fuzz runs from new seeds, the test map, mutation testing and the independent read are in sections 8 to 12 of the
+record. The stale line under 7.11 above is answered by the record's section 10.
+
 ### 7.7 What proceeded before the rulings (kept as written)
 
 Steps 1 and 2 only. Item 6 is ruled already. Step 2 adds pure functions in new modules that no configuration reaches,
