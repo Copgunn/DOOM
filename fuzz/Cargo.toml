@@ -500,3 +500,24 @@ path = "fuzz_targets/wire27_dsim43.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "wire28_dsim44"
+path = "fuzz_targets/wire28_dsim44.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "wire28_dses3"
+path = "fuzz_targets/wire28_dses3.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "wire28_demo3"
+path = "fuzz_targets/wire28_demo3.rs"
+test = false
+doc = false
+bench = false
