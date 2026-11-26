@@ -53,8 +53,10 @@ enum End {
     Exit(usize),
     Escape(usize),
 }
-/// The items and the `V` rows (variant, item, first differing capture, digest).
-fn golden() -> (Vec<Item>, Vec<(String, String, usize, String)>) {
+/// A `V` row: variant, item, first differing capture, the variant's digest there.
+type Variant = (String, String, usize, String);
+/// The items and the `V` rows.
+fn golden() -> (Vec<Item>, Vec<Variant>) {
     let text = std::fs::read_to_string(reference("wire28_state.txt")).expect("golden");
     let mut lines = text.lines().map(|l| l.trim_end_matches('\r'));
     assert_eq!(lines.next(), Some("#schema,DOOM-WIRE28-STATE-v1"));
