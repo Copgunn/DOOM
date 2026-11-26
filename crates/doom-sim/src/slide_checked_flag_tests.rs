@@ -1,25 +1,14 @@
 //! The slide trace's checked flag, `checked_arithmetic && limit.is_some()` in
-//! `Mover::slide` (certificate audit 1, item 5: the cargo-mutants survivor
-//! "replace && with ||" of `docs/validation/WIRE27.md` section 9).
-//!
-//! The genuine run of the overshoot item WRAP (`tests/overshoot_walk.rs`) reaches
-//! at tic 52 a slide trace whose walk meets, about 5,000 units east, notch edges
-//! whose `P_InterceptVector` narrows a `FixedMul` product (m_fixed.c:44-49,
-//! p_maputl.c:246-248): the genuine engine's fractions come out negative and are
-//! dropped ("behind source", p_maputl.c:591-592), so its intercepts (the `L` rows
-//! of `tests/reference/overshoot_state.txt`) are none. `movement::path` gives
-//! exactly that with the plain wrapping intercept (`checked` false) and refuses it
-//! with the checked one under wire 27.
-//!
-//! The flag gives the checked path only to an access with an intercept limit (the
-//! player of the real-map policies). No configuration builds a checked world with a
-//! slide access without a limit (`checked_arithmetic` is set with the Episode 1
-//! bounds alone, whose policies all have the real-map player; non-players never
-//! slide), so the test builds that state by hand: the plain access of `move_xy` on
-//! the wire 27 world at WRAP's tic 52. It must take the plain path, as the same
-//! move in the world with `checked_arithmetic` cleared does; `||` in place of `&&`
-//! would take the checked one and reach `intercept_arithmetic`, which the plain
-//! access does not have.
+//! `Mover::slide` (certificate audit 1, item 5: the mutation survivor "replace &&
+//! with ||" of `docs/validation/WIRE27.md` section 9). At WRAP's tic 52
+//! (`tests/overshoot_walk.rs`) the genuine engine's notch-edge intercepts narrow a
+//! `FixedMul` product (m_fixed.c:44-49, p_maputl.c:246-248), come out negative and
+//! are dropped (p_maputl.c:591-592): no `L` rows. The plain wrapping intercept gives
+//! that; the checked one refuses. No configuration builds a checked world with a slide
+//! access without an intercept limit (`checked_arithmetic` comes with the Episode 1
+//! bounds alone, whose players all have one; non-players never slide), so the second
+//! test builds it by hand: `||` would take the checked path and reach the plain
+//! access's `intercept_arithmetic`, which panics.
 use crate::intercept_vector::InterceptCaller;
 use crate::*;
 
