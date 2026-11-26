@@ -1296,8 +1296,8 @@ fireball, claw, hitscan, floor damage and splash (**observed**, HURT0 against HU
 never targets the player and crushers are not admitted, so no other source reaches it. Rust applies the halving in three places that each build a damage request: `DamagePlan::current_original_in`, the
 Demon's `strike_player` and `damage_actor`. **`damage_actor` is an API path without the cap** (since wire 23, not changed here): it
 halves on `sk_baby` but never applies the sector-11 cap, so on a special-11 sector at skill 2 a blow of 150 on a player of 100 health kills
-where the C leaves 1 (the reader's probe on wire 28, uncommitted). Nothing in `doom-play` calls it for the player; the open decision is in
-[the record's Limits](validation/WIRE28.md#limits).
+where the C leaves 1 (the reader's probe on wire 28, uncommitted). Nothing in `doom-play` calls it for the player. The owner ruled on 2026-11-26 that it stays as it is, a known divergence listed for the certificate audit with a census of
+every damage path ([record §12](validation/WIRE28.md#12-the-owners-rulings-of-2026-11-26)).
 
 Order is observable and was tested by altered genuine builds (**observed**): halving after the thrust is caught at HURT0 capture
 62 and BITE0 capture 97, halving after the sector-11 cap at BITE0 capture 193, no halving at HURT0 and SPLASH0 from the first

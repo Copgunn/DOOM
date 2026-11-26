@@ -680,6 +680,9 @@ The entries marked merged below are done; they keep their place here because thi
     open mutation survivor at `movement.rs:869` (`&&` replaced with `||` in the slide's `checked` flag), not proven
     equivalent, to be closed by a test or by a proof with a C citation ([record](validation/WIRE27.md)). Another named
     item: committing the independent reader's Rust-against-C harness ([record](validation/WIRE27.md#11-the-independent-read-2026-11-24)).
+    Added from wire 28 by the owner's rulings of 2026-11-26, none changed now ([the list and the damage census](validation/WIRE28.md#12-the-owners-rulings-of-2026-11-26)):
+    the public `damage_actor` on the player without the sector-11 cap; the Demon and Spectre bite without that cap on wires 23 to 27; the demo
+    version-3 parsers accepting a button byte the writers refuse; `Snapshot::diagnostic_bytes` refusing version 44; the unexplained M7FIGHT timing.
   - **The independent read** of the bound derivation and of its premise (every actor's centre stays inside the map's vertex
     rectangle) was done on 2026-11-24; what it did not cover is in the record.
   - **A `doom-play` wall-clock test** (`a_stalled_disk_keeps_the_queue_bounded_and_loses_no_tic`) failed once on macOS
@@ -690,7 +693,7 @@ The entries marked merged below are done; they keep their place here because thi
   synthetic items, SKILL0 and SKILL1, and locally on E1M7 at skill 3, the owner's five sessions of 2026-11-25, the 61 committed recordings replayed on skills 0 and 1 (2026-11-26, [§5.3](validation/WIRE28.md#53-real-maps-on-skills-0-and-1)) and the owner's hand test of 2026-11-26 (E1M7 on skill 3, E1M8 to the finale on skills 0 and 1; [§5.4](validation/WIRE28.md#54-e1m8-on-the-easy-skills))
   ([rule](COMPATIBILITY.md#wire-28-the-easy-skills-and-e1m7-on-skill-3), [evidence](validation/WIRE28.md),
   [source note](M6A_REFERENCE_INVESTIGATION.md#8-wire-28-the-easy-skills-and-e1m7-on-skill-3-source-investigation-2026-11-25)). Not done, by design:
-  the witness is a refuse-the-tic stop, not the original's behaviour, and no recorded run has reached it; three engine questions (`spawning.rs:201`, the `DSES` 3 skill byte, `damage_actor` without the sector-11 cap) are open decisions for the owner ([Limits](validation/WIRE28.md#limits)); nightmare is M6b; the wires 23 to 27
+  the witness is a refuse-the-tic stop, not the original's behaviour, and no recorded run has reached it; three engine questions were ruled on by the owner on 2026-11-26 (a direct monster spawn follows S''; `DSES` 3 refuses a skill byte its level does not have; `damage_actor` without the sector-11 cap stays, a known divergence: [record §12](validation/WIRE28.md#12-the-owners-rulings-of-2026-11-26)); nightmare is M6b; the wires 23 to 27
   keep the bite divergence ([COMPATIBILITY](COMPATIBILITY.md#silent-divergence-in-wires-23-to-27-the-bite-on-a-sector-of-special-11)).
 - **Simulation follow-up (decided: the THING-loading truncation is closed under wire 25 only).** `P_LoadThings` ends the
   whole THINGS loop at the first Doom II type (doomednums 64-69, 71, 84, 88, 89) when `gamemode != commercial`

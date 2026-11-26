@@ -3430,7 +3430,8 @@ python3 -u tools/local/wire28_real.py --iwad IWAD --work DIR --set sessions --wi
     --file crates/doom-sim/src/demon.rs --re '^crates/doom-sim/src/demon\.rs:154:35: replace && with \|\| in strike_player$' --output OUT
   ```
   Exit code 2 means a mutant was missed; it is not a harness failure.
-- **Fuzzing the three wire 28 readers.** Seeds were made by a scratch helper that is **not committed**, so a campaign starts from any corpus you
+- **Fuzzing the three wire 28 readers.** Seeds were made by a scratch helper that is **not committed** (one is: `fuzz/corpus/wire28_dses3/skill_and_level`,
+  a refused `DSES` 3 state, [provenance](../fuzz/corpus/README.md#wire-28-dses-version-3-seed)), so a campaign starts from any corpus you
   supply (DSIM44 captures, `DSES` 3 states, demos). The recorded runs used `-max_total_time=240 -seed=1 -timeout=20 -rss_limit_mb=2048` with
   `-max_len` 131072 (`wire28_dsim44`), 300000 (`wire28_dses3`) and 4096 (`wire28_demo3`): `cargo +nightly fuzz run TARGET CORPUS --sanitizer none --
   OPTIONS` for the coverage-guided campaign, `--sanitizer address` for the sanitizer campaign (leak detection **on**, default options) and
