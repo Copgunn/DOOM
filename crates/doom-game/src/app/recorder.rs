@@ -9,7 +9,9 @@
 //! ([`write_demo_episode1_v2`]) from the same stored commands.
 
 use crate::input::{RecordedTic, read_ticcmd_bytes};
-use doom_sim::demo::{DemoError, parse_demo_episode1_v2, write_demo_episode1_v2};
+use doom_sim::demo::{
+    DemoError, parse_demo_episode1_v2, write_demo_episode1_v2, write_demo_episode1_v3,
+};
 use doom_sim::{BT_ATTACK, BT_CHANGE, BT_USE, BT_WEAPONMASK, TicCommand};
 use std::fmt;
 
@@ -57,6 +59,8 @@ pub struct Recorder {
     skill: u8,
     cap: usize,
     commands: Vec<TicCommand>,
+    /// [`Recorder::new_v3`]: the file is written by the wire 28 writer (skills 0 to 3).
+    v3: bool,
 }
 
 impl Recorder {
@@ -67,6 +71,26 @@ impl Recorder {
             skill,
             cap,
             commands: Vec::new(),
+            v3: false,
+        }
+    }
+
+    /// [`Recorder::new`] for the session's wire 28 configuration: the file is written by doom-sim's
+    /// `write_demo_episode1_v3`, which also admits skills 0 and 1 and for skills 2 and 3 writes
+    /// [`Recorder::new`]'s bytes.
+    pub fn new_v3(map: u8, skill: u8, cap: usize) -> Self {
+        Self {
+            v3: true,
+            ..Self::new(map, skill, cap)
+        }
+    }
+
+    /// The demo writer of this recording.
+    fn write(&self, commands: &[TicCommand]) -> Result<Vec<u8>, DemoError> {
+        if self.v3 {
+            write_demo_episode1_v3(self.map, self.skill, commands)
+        } else {
+            write_demo_episode1_v2(self.map, self.skill, commands)
         }
     }
 
@@ -119,7 +143,7 @@ impl Recorder {
 
     /// The demo file's bytes: header, every recorded tic and the end marker.
     pub fn bytes(&self) -> Result<Vec<u8>, DemoError> {
-        write_demo_episode1_v2(self.map, self.skill, &self.commands)
+        self.write(&self.commands)
     }
 
     /// The bytes that turn the file of every tic but the last ([`Recorder::bytes`] before the
@@ -131,7 +155,7 @@ impl Recorder {
         let Some(last) = self.commands.last() else {
             return Ok(None);
         };
-        let one = write_demo_episode1_v2(self.map, self.skill, std::slice::from_ref(last))?;
+        let one = self.write(std::slice::from_ref(last))?;
         let mut tail = [0; 5];
         tail.copy_from_slice(&one[DEMO_HEADER_BYTES..]);
         let before = (self.commands.len() - 1) as u64;

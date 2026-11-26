@@ -7,7 +7,9 @@
 //! what this documentation describes is the frozen one of part 1 ([`Session::new`],
 //! [`Session::tic`], `DSES` version 1), which keeps every refusal below. The second,
 //! [`Session::new_finale_and_melt`], runs the same tics and adds the victory, the Episode 1
-//! finale and every wipe's melt ([`finale_melt`], `DSES` version 2 in [`state_v2`]).
+//! finale and every wipe's melt ([`finale_melt`], `DSES` version 2 in [`state_v2`]). The third,
+//! [`Session::new_finale_and_melt_wire28`], is the second on wire 28, with skills 0 and 1
+//! (`DSES` version 3 in [`state_v3`]).
 //!
 //! **One session tic** ([`Session::tic`]), in the C's order:
 //!
@@ -80,6 +82,7 @@ pub mod intermission;
 pub mod sound;
 pub mod state;
 pub mod state_v2;
+pub mod state_v3;
 
 use doom_map::Map;
 use doom_render::{
@@ -317,7 +320,7 @@ impl SessionData {
 pub struct SessionSettings {
     /// The start map, 1..=9 (any, as vanilla's warp; ruling U14).
     pub map: u8,
-    /// The skill byte: 2 or 3 (the easy skills are M6a step 10, after the hand test).
+    /// The skill byte: 2 or 3; also 0 or 1 in the wire 28 configuration.
     pub skill: u8,
     /// Screenblocks, 10 or 11 (decision S14).
     pub screenblocks: u8,
@@ -628,7 +631,7 @@ impl Session {
         if !(1..=9).contains(&settings.map) || !(10..=11).contains(&settings.screenblocks) {
             return Err(StartError::Domain);
         }
-        let skill = skill_of(settings.skill)?;
+        let skill = config.skill(settings.skill)?;
         let sound = ChainSound::new_with(
             data.sound_set.clone(),
             data.music,

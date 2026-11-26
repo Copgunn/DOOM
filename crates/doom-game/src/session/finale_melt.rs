@@ -78,6 +78,15 @@ pub enum Configuration {
     /// wipe's melt one step per tic (module documentation), over wire 27 (DSIM43). The easy
     /// skills stay refused (a later pull request, wire 28).
     FinaleAndMelt,
+    /// Wire 28 (decision D3 of 2026-11-25, recorded for the owner;
+    /// [`Session::new_finale_and_melt_wire28`], [`Session::tic_finale_and_melt`],
+    /// [`Session::melt_step`], `DSES` version 3 in [`super::state_v3`]): [`Self::FinaleAndMelt`]'s
+    /// finale, melt, display and sound in every respect, over wire 28 (doom-sim's
+    /// `PlayerMonstersEpisode1V6`, captures DSIM44): skills 0 and 1 admitted besides 2 and 3
+    /// (ruling U12 (iii); p_mobj.c:743-751, p_inter.c:95-101, 799-800) and spawn rule S'' with
+    /// the monster escape witness, a refuse-the-tic stop (M6a note §1.17, option 1).
+    /// Nightmare (4) stays refused ([`super::StartError::Domain`]).
+    FinaleAndMeltWire28,
 }
 
 impl Configuration {
@@ -85,13 +94,32 @@ impl Configuration {
     pub(crate) fn chain_mode(self) -> ChainMode {
         match self {
             Self::RefusesFinaleAndMelt => ChainMode::RefusesMelt,
-            Self::FinaleAndMelt => ChainMode::FinaleAndMelt,
+            Self::FinaleAndMelt | Self::FinaleAndMeltWire28 => ChainMode::FinaleAndMelt,
+        }
+    }
+
+    /// Whether the session shows the finale and melts (both configurations but the frozen one):
+    /// its tics run through [`Session::tic_finale_and_melt`] and [`Session::melt_step`].
+    pub fn melts(self) -> bool {
+        self != Self::RefusesFinaleAndMelt
+    }
+
+    /// The skill of the settings' skill byte in this configuration: 2 and 3 in every one, 0
+    /// (`sk_baby`) and 1 (`sk_easy`) under wire 28 only; the two older configurations refuse them
+    /// as before (`NotYet::EasySkill`), and every configuration refuses 4 and above
+    /// (`StartError::Domain`).
+    pub(crate) fn skill(self, byte: u8) -> Result<Skill, StartError> {
+        match (self, byte) {
+            (Self::FinaleAndMeltWire28, 0) => Ok(Skill::Baby),
+            (Self::FinaleAndMeltWire28, 1) => Ok(Skill::Easy),
+            _ => super::skill_of(byte),
         }
     }
 
     /// The level of this configuration loaded in the `G_Ticker` whose `gametic` is `gametic`:
     /// wire 26 (`PlayerMonstersEpisode1V4`, DSIM42) for the frozen configuration, wire 27
-    /// (`PlayerMonstersEpisode1V5`, DSIM43) for the finale and the melt.
+    /// (`PlayerMonstersEpisode1V5`, DSIM43) for the finale and the melt, wire 28
+    /// (`PlayerMonstersEpisode1V6`, DSIM44) for [`Self::FinaleAndMeltWire28`].
     pub(crate) fn level_at(
         self,
         map: Map,
@@ -103,6 +131,7 @@ impl Configuration {
         let build = match self {
             Self::RefusesFinaleAndMelt => Simulation::original_player_episode1_v4_level_at,
             Self::FinaleAndMelt => Simulation::original_player_episode1_v5_level_at,
+            Self::FinaleAndMeltWire28 => Simulation::original_player_episode1_v6_level_at,
         };
         build(
             map,
@@ -118,7 +147,9 @@ impl Configuration {
     pub(crate) fn display_config(self, mode: GameMode) -> doom_render::SessionConfig {
         match self {
             Self::RefusesFinaleAndMelt => doom_render::SessionConfig::RefusesFinaleAndMelt,
-            Self::FinaleAndMelt => doom_render::SessionConfig::FinaleAndMelt { mode },
+            Self::FinaleAndMelt | Self::FinaleAndMeltWire28 => {
+                doom_render::SessionConfig::FinaleAndMelt { mode }
+            }
         }
     }
 }
@@ -244,6 +275,15 @@ impl Session {
         Self::new_in(data, settings, Configuration::FinaleAndMelt)
     }
 
+    /// A new game in the wire 28 configuration ([`Configuration::FinaleAndMeltWire28`]): as
+    /// [`Session::new_finale_and_melt`], with the levels on wire 28 and skills 0 to 3 admitted.
+    pub fn new_finale_and_melt_wire28(
+        data: Arc<SessionData>,
+        settings: SessionSettings,
+    ) -> Result<Self, StartError> {
+        Self::new_in(data, settings, Configuration::FinaleAndMeltWire28)
+    }
+
     /// The configuration.
     pub fn configuration(&self) -> Configuration {
         self.config
@@ -267,7 +307,7 @@ impl Session {
     pub fn tic_finale_and_melt(&mut self, cmd: TicCommand) -> Result<FinaleMeltTicReport, Refusal> {
         let tic = self.gametic;
         let refuse = |witness| Refusal { tic, witness };
-        if self.config != Configuration::FinaleAndMelt {
+        if !self.config.melts() {
             return Err(refuse(SessionWitness::Configuration(self.config)));
         }
         if self.ended.is_some() {
@@ -334,7 +374,7 @@ impl Session {
     pub fn melt_step(&mut self, out: &mut Frame) -> Result<MeltStepReport, Refusal> {
         let tic = self.gametic;
         let refuse = |witness| Refusal { tic, witness };
-        if self.config != Configuration::FinaleAndMelt {
+        if !self.config.melts() {
             return Err(refuse(SessionWitness::Configuration(self.config)));
         }
         if self.ended.is_some() {
@@ -379,7 +419,7 @@ impl Session {
         sound: &mut ChainSound,
         ts: &mut ChainTic,
     ) -> Result<(), SessionWitness> {
-        if self.config == Configuration::FinaleAndMelt && !display.melt_in_progress() {
+        if self.config.melts() && !display.melt_in_progress() {
             ts.sound.buffer = sound
                 .mix_after_display()
                 .map_err(|e| SessionWitness::Sound(e.into()))?;

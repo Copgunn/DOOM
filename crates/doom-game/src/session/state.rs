@@ -114,7 +114,9 @@ pub enum DsesError {
     NotSaveable,
     /// Save: the session's configuration saves only the other version (owner's ruling 3 of
     /// 2026-11-23: a [`super::finale_melt::Configuration::FinaleAndMelt`] session saves as `DSES`
-    /// version 2 only, a frozen one as version 1 only). Nothing is written.
+    /// version 2 only, a frozen one as version 1 only, a
+    /// [`super::finale_melt::Configuration::FinaleAndMeltWire28`] one as version 3 only).
+    /// Nothing is written.
     Configuration(super::finale_melt::Configuration),
     /// `DSES` version 2: the embedded display's melt in progress and the embedded sound's pending
     /// display disagree (a session mixes the owed buffer exactly when its melt ends, so a saved
