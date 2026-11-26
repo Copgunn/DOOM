@@ -1,0 +1,33 @@
+#schema,DOOM-WIRE28-SKILL-STATE-v1
+#generator,tools/reference/wire28_fin.py (m6a_state.py's state variant and the independent DSIM44 encoder level_snapshot_wire28.py; never from Rust output)
+#rows,FIN0 and FIN1
+#points,L: every capture j >= 1 of a level in sequence_sha256 (SHA-256 of the 32-byte state digests in order); D: capture 1 (load), every leveltime multiple of 35 (stride) and the level's last capture (last)
+#columns,L,item,load,tic,map,kind,captures,map_sha256,sequence_sha256
+#columns,D,item,load,tic,leveltime,why,state_sha256
+L,FIN0,0,-1,8,new,449,f19ef3cf849414ab3ac1287596779b842e267714dbae1e2a66e3f9486fdf69af,33d7e27826624db3387f4bedecdd3b044ccb0037aa012f0a06eaaceb69681824
+D,FIN0,0,0,1,load,cbde9cf1284c711557472cddc696a3678e6958a3af4e5fd151bebbba43bc572d
+D,FIN0,0,34,35,stride,95b7ac60ff55ff36a20daa4ae202859becdf8d5f7b362667b622e74e1179afba
+D,FIN0,0,69,70,stride,1b2b8ef916f2b2085fe0fa33cd06ad3e610a879669cdd003f9d4f1b5cbe5fa1a
+D,FIN0,0,104,105,stride,ba3aa73a005defee17a99a57f00a125d4b5becc8b5a8749c1ba8b9e524a659cb
+D,FIN0,0,139,140,stride,f91ff3b08644aca169b6fb7cf5529fc528dbcba83c291568a8529681d19f84b3
+D,FIN0,0,174,175,stride,baef45ed30e343b35ae5b61e8f1d71fd0eff862f1b45d574e1af52be1f7530a1
+D,FIN0,0,209,210,stride,35da1ffef5ca5110d0aafba5ebd031e71f57ba247b0a2d9a28eabdaa5dd07438
+D,FIN0,0,244,245,stride,b8ec92d24a81630a5ec3259e53341200ac27c3658a3e6ca92c2f2f1f210c2a87
+D,FIN0,0,279,280,stride,95c6cc52b1e8c49b58cf33c8523380ece0ca9782bd4f91d39363ffc9d24e0f75
+D,FIN0,0,314,315,stride,05c52cc7194dc464c7b7ca320e9a9f6a6c7df9376b69ab97072fbd01a1f4f7a8
+D,FIN0,0,349,350,stride,980e2f8063dee267a48e2fbab2d6987e569eb6f8700e22c59a4c77ea5fbfb204
+D,FIN0,0,384,385,stride,23841ef89ea4b8a41899e36e4131c5722a64e1085f4c98f0754444895cee752a
+D,FIN0,0,419,420,stride,71b801dd2880010f973150605d45460e83828a1fd7f15234390930c39715a857
+D,FIN0,0,448,449,last,b117376cc04bd739b89a43416ed7c7807f2db5bfad423cf554dea0cfd81bcf31
+L,FIN1,0,-1,8,new,321,f19ef3cf849414ab3ac1287596779b842e267714dbae1e2a66e3f9486fdf69af,e1af39faacf41a1fc0e597cfbd4d93c94b591791b6c10b7b66705ebecf1ba08b
+D,FIN1,0,0,1,load,aaadf45043c3e0bf3c086a551262d2c5523e3287c84786bd8550399b4f4d2f65
+D,FIN1,0,34,35,stride,42bbcd118596724cb2c01af2e541ec209bbb900658d1a339633c3025dec64420
+D,FIN1,0,69,70,stride,5fcf8a595648a0fe2c8dca4fac093178c8586bac7cb1ab0fc9984c2aa21cd74f
+D,FIN1,0,104,105,stride,ebd01f7db86d3fa8c64c961ed2feac969b758dea57a65e91e63854b96e747f62
+D,FIN1,0,139,140,stride,31790f58c5ebb261b9b97834261f9b6ec4e5bae89e502d5adec7faa38e6a6955
+D,FIN1,0,174,175,stride,88279ad2ea8ae595bf9033399313f61d875e347f16632e1ed10c3c848c1ac4ec
+D,FIN1,0,209,210,stride,9e1370987c2616b40a46c46e8e2b5d674084261c92144951d48fdea7233d1ed4
+D,FIN1,0,244,245,stride,a234bd392e01e49f0036d17cc852e2d836da908e063a86c0c03037ece4f9478a
+D,FIN1,0,279,280,stride,b9b1da8eb52cc15cbeffe01c93162edc43367f46cb1d3e2598233ea09eef3c72
+D,FIN1,0,314,315,stride,4e247ebbfe8a4b8d2443cb3d29bbeb29cb1aebdfc6dd19a4d5096e98a7333c92
+D,FIN1,0,320,321,last,e67da911a18f86c57c12ae75801dbe09b1a71058b6b1e7cafef20a8ce0d151b0
