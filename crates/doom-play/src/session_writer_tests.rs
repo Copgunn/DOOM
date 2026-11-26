@@ -317,8 +317,61 @@ fn dropping_the_host_drains_the_queue() {
 /// the app's appends are declined and it hands the whole demo over, replacing the pending
 /// snapshot. When the disk answers, the file catches up and after the drain is the recorder's
 /// demo byte for byte (no tic dropped); the catch-up snapshot is written unsynced.
+///
+/// 2026-11-26 (certificate audit 1, the owner's exception of that date: how the time is measured
+/// may change, not what is asserted). The longest update is a wall-clock time, so it also counts
+/// time the test thread spent waiting for a processor: the macOS job once read 747 ms with all
+/// the binary's tests running beside it, and with the thread starved on one processor this test
+/// read 1.0 and 1.2 s, the disk never touched (docs/validation/AUDIT1.md, item 7). The measurement
+/// is now the least of up to three runs of the whole scenario, every other assertion made in each
+/// run: an update that waits on the stalled disk is slow in every run, a thread that lost its
+/// processor is not. The bound and every assertion are unchanged.
 #[test]
 fn a_stalled_disk_keeps_the_queue_bounded_and_loses_no_tic() {
+    let bound = Duration::from_millis(500);
+    let longest = least_of_three(bound, stalled_disk_run);
+    assert!(
+        longest < bound,
+        "an update took {longest:?} with the disk stalled"
+    );
+}
+
+/// The least of up to three measurements, stopping at the first one under `bound`.
+fn least_of_three(bound: Duration, mut measure: impl FnMut() -> Duration) -> Duration {
+    let mut least = measure();
+    for _ in 0..2 {
+        if least < bound {
+            break;
+        }
+        least = least.min(measure());
+    }
+    least
+}
+
+/// The measurement can still fail: a delay in every run stays over the bound after three runs,
+/// and a delay in the first run alone does not.
+#[test]
+fn the_stalled_disk_measurement_keeps_a_delay_that_repeats() {
+    let (bound, slow, fast) = (
+        Duration::from_millis(500),
+        Duration::from_millis(747),
+        Duration::from_millis(3),
+    );
+    let mut runs = 0;
+    let mut every = || {
+        runs += 1;
+        slow
+    };
+    assert_eq!(least_of_three(bound, &mut every), slow);
+    assert_eq!(runs, 3);
+    let mut once = [slow, fast, slow].into_iter();
+    assert_eq!(least_of_three(bound, || once.next().unwrap()), fast);
+    assert_eq!(once.next(), Some(slow), "stopped at the first run under");
+}
+
+/// One run of the stalled-disk scenario with all its assertions but the time bound; returns the
+/// longest update.
+fn stalled_disk_run() -> Duration {
     let dir = scratch("stall");
     let gate = Gate::closed();
     gate.set(true);
@@ -355,10 +408,6 @@ fn a_stalled_disk_keeps_the_queue_bounded_and_loses_no_tic() {
         queued >= QUEUE_TICS - 1 && snapshots == 1,
         "{queued} {snapshots}"
     );
-    assert!(
-        longest < Duration::from_millis(500),
-        "an update took {longest:?} with the disk stalled"
-    );
     assert_eq!(app.save_status(), &SaveStatus::Saved(ticks as usize));
     gate.set(true); // the disk answers
     host.finish();
@@ -381,6 +430,7 @@ fn a_stalled_disk_keeps_the_queue_bounded_and_loses_no_tic() {
         &ops[ops.len().saturating_sub(4)..]
     );
     std::fs::remove_dir_all(&dir).unwrap();
+    longest
 }
 
 /// A demo of `n` tics as the app's recorder lays it out (13 header bytes, 4 per tic, the
