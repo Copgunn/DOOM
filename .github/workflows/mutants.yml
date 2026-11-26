@@ -228,9 +228,10 @@ jobs:
 
   selftest:
     # Shows that the cross-crate judgment does what the header says, on one named mutant that
-    # does not depend on the diff: in doom-sim's Diagnostic::v40_skill the guard of skill 0 is
-    # replaced by `false`. doom-sim's own tests are reported; with doom-game's tests added the
-    # mutant must be caught, or this job fails. If the own-tests run stops missing it, the case
+    # does not depend on the diff: doom-sim's Simulation::reborn_requested replaced by `false`.
+    # doom-sim has no test that calls it; doom-game's session tests do (a dead player's reborn).
+    # doom-sim's own tests are reported; with doom-game's tests added the mutant must be caught,
+    # or this job fails. If the own-tests run stops missing it, the case
     # no longer shows the difference and wants replacing (a warning, not a failure).
     name: Mutants cross-crate self-test
     if: ${{ github.event_name == 'workflow_dispatch' || github.event.label.name == 'run-mutants' }}
@@ -250,8 +251,8 @@ jobs:
       - name: One doom-sim mutant, judged both ways
         shell: bash
         env:
-          MUTANT_FILE: crates/doom-sim/src/diagnostic.rs
-          MUTANT_RE: "^crates/doom-sim/src/diagnostic\\.rs:\\d+:\\d+: replace match guard self\\.easy && b == crate::Skill::Baby as u8 with false in Diagnostic<'a>::v40_skill$"
+          MUTANT_FILE: crates/doom-sim/src/carried_start.rs
+          MUTANT_RE: "^crates/doom-sim/src/carried_start\\.rs:\\d+:\\d+: replace Simulation::reborn_requested -> bool with false$"
         run: |
           set -uo pipefail
           outcome() {   # outcome NAME ARGS...: runs the one mutant, prints which list it landed in
