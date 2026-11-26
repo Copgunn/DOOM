@@ -370,6 +370,8 @@ Seven rulings on the three open decisions and on this record, applied the same d
 
 7. **The CI statement** is corrected above and in the pull request's text.
 
+**Rerun on `5d238a17` (2026-11-26, America/Los_Angeles), before merge, at the owner's request:** from a clean clone of that head with new work directories (the genuine side regenerated), `wire28_real.py --set e1m7 --selftest` (the six E1M7 skill 3 constructions: 6 of 6 pass, 16,459 session tics, both self-tests reported at their tics, exit 0) and `--set sessions` on the owner's three hand-test recordings (082510: 18,263; 083445: 3,929; 083716: 3,643; 3 of 3 pass, 25,835 session tics, exit 0), every stream at screenblocks 10 and 11, 0 refusals, 0 differences.
+
 **The audit list** (for the later pull request that audits the old certificate argument, [ROADMAP](../ROADMAP.md); nothing here is changed now):
 
 - the public `damage_actor` on the player never applies the sector-11 cap (since wire 23; section 11, S2);
