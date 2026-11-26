@@ -1703,4 +1703,6 @@ mod wire27_tests;
 #[cfg(test)]
 mod wire28_genuine_tests;
 #[cfg(test)]
+mod wire28_mutant_tests;
+#[cfg(test)]
 mod wire28_tests;
