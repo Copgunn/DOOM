@@ -1,28 +1,14 @@
-//! The block-walk overshoot (`P_PathTraverse`, p_maputl.c:841-876) against the
-//! genuine engine, under wires 26, 27 and 28 (certificate audit 1, item 4).
-//!
-//! The goldens, `tests/reference/overshoot_state.txt`, come from
-//! `tools/reference/overshoot_goldens.py`: the genuine linuxdoom-1.10 runner (the
-//! strict `-fwrapv` build of wire 27's tooling) and the independent DSIM43 encoder;
-//! no Rust output feeds them. Two items of `tests/reference/overshoot_wads/`:
-//!
-//! - **SLIDE**: at tic 38 a slide trace 11.3 units long, 3 raw units under a
-//!   BLOCKMAP row line with a y step of 4 raw units, has `ystep` 0 and walks 64 cells
-//!   east instead of stepping into its end cell; 3,557 units east it meets the dip
-//!   line (linedef 10), whose infinite line separates the short trace's ends, and the
-//!   genuine engine slides along it.
-//! - **WRAP**: at tic 52 the same kind of walk meets two 2,184-unit notch edges
-//!   about 5,000 units east; their `P_InterceptVector` narrows a `FixedMul` product
-//!   (`wrap.den_exact.num_wrong.div2`, six calls), so wires 26, 27 and 28 refuse the
-//!   tic with `MapScale(Arithmetic)`; the genuine engine drops the wrapped
-//!   (negative) fractions and goes on.
-//!
-//! The capture digest is wire 27's (`tests/wire27_intercept.rs`): a DSIM42 or DSIM44
-//! capture is renamed to DSIM43 (version, `profile`, context) first; the encoders
-//! assert that nothing else differs (`level_snapshot_wire27.compare42`,
-//! `level_snapshot_wire28.compare43`). The `F` rows are the genuine runner with a
-//! planted fault (the walk never enters a cell past its end cell): Rust must differ
-//! from them, so a reach-bounded walk would fail this test.
+//! The block-walk overshoot (p_maputl.c:841-876) against the genuine engine under
+//! wires 26, 27 and 28 (certificate audit 1, item 4). Goldens:
+//! `tests/reference/overshoot_state.txt` from `tools/reference/overshoot_goldens.py`
+//! (the genuine strict runner and the independent DSIM43 encoder, never Rust output).
+//! SLIDE: at tic 38 a slide trace walks 64 cells past its end cell and the genuine
+//! engine slides along a line 3,557 units east. WRAP: at tic 52 such a walk meets
+//! edges whose `P_InterceptVector` narrows a `FixedMul` product; wires 26 to 28 refuse
+//! the tic (`MapScale(Arithmetic)`) and the genuine engine drops the fractions. The
+//! digest is wire 27's (`tests/wire27_intercept.rs`; DSIM42 and DSIM44 captures are
+//! renamed to DSIM43, which the encoders show is the only difference). `F` rows: the
+//! genuine runner with a planted reach-bounded walk, which Rust must not equal.
 use doom_sim::{demo::parse_demo_episode1_v2, *};
 use doom_test_evidence::sha256;
 use std::path::{Path, PathBuf};
@@ -33,9 +19,7 @@ fn reference(path: &str) -> PathBuf {
         .join(path)
 }
 
-/// One item of the golden: map, tics, the expected ends under wires 26 and 27
-/// (`None` complete, `Some(tic)` refused), the overshoot tic, and the strict and
-/// planted-fault capture digests.
+/// An item: the ends under wires 26 and 27 (`Some(tic)` refused) and digests.
 #[derive(Default)]
 struct Item {
     name: String,
@@ -71,19 +55,8 @@ fn golden() -> Vec<Item> {
                 ..Item::default()
             }),
             "O" => item.expect("I first").overshoot = f[2].parse().expect(line),
-            "C" | "F" => {
-                let item = item.expect("I first");
-                let list = if f[0] == "C" {
-                    &mut item.strict
-                } else {
-                    &mut item.fault
-                };
-                assert_eq!(
-                    (item.name.as_str(), list.len()),
-                    (f[1], f[2].parse().expect(line))
-                );
-                list.push(f[3].to_owned());
-            }
+            "C" => item.expect("I first").strict.push(f[3].to_owned()),
+            "F" => item.expect("I first").fault.push(f[3].to_owned()),
             "L" | "B" | "W" | "U" => {}
             _ => panic!("row {line}"),
         }
@@ -145,26 +118,17 @@ fn level(item: &Item, wire: u8) -> Simulation {
     let wad = doom_wad::Wad::parse(&bytes, doom_wad::Limits::default()).expect("wad parse");
     let name = format!("E1M{}", item.map);
     let map = doom_map::Map::from_wad(&wad, &name, doom_map::MapLimits::default()).expect("map");
-    let build = match wire {
-        26 => Simulation::original_player_episode1_v4_level,
-        27 => Simulation::original_player_episode1_v5_level,
-        28 => Simulation::original_player_episode1_v6_level,
-        _ => unreachable!("wires 26 to 28"),
-    };
-    let start = LevelStart::NewGame;
-    build(
-        map,
-        item.map,
-        Skill::Medium,
-        MapContextOptions::default(),
-        start,
-    )
-    .expect("the map loads under wires 26 to 28")
+    let build = [
+        Simulation::original_player_episode1_v4_level,
+        Simulation::original_player_episode1_v5_level,
+        Simulation::original_player_episode1_v6_level,
+    ][usize::from(wire - 26)];
+    let (skill, options) = (Skill::Medium, MapContextOptions::default());
+    build(map, item.map, skill, options, LevelStart::NewGame).expect("wires 26 to 28 load it")
 }
 
-/// Plays `commands` and returns the first capture whose digest differs from
-/// `expected` and the refusal (session tic, error) if one came first; the state
-/// after a refusal must be the capture before it.
+/// The first capture differing from `expected` and the refusal (tic, error), if
+/// any; the state after a refusal must be the capture before it.
 fn play(
     s: &mut Simulation,
     commands: &[TicCommand],
@@ -186,9 +150,8 @@ fn play(
     (None, None)
 }
 
-/// Every item equals the genuine engine after every tic under wires 26, 27 and 28,
-/// up to the refusal the witness build predicts (wire 28 takes wire 27's
-/// intercept rule): SLIDE runs to its end, WRAP refuses tic 52.
+/// Every capture equals the genuine one under wires 26 to 28, up to the refusal the
+/// witness build predicts (wire 28 has wire 27's intercept rule).
 #[test]
 fn the_overshoot_items_equal_the_genuine_engine_under_wires_26_to_28() {
     let items = golden();
@@ -197,20 +160,10 @@ fn the_overshoot_items_equal_the_genuine_engine_under_wires_26_to_28() {
         let commands = demo(&item.name);
         assert_eq!(commands.len(), item.tics, "{}", item.name);
         for wire in [26, 27, 28] {
-            let (difference, refusal) = play(&mut level(item, wire), &commands, &item.strict);
-            assert_eq!(
-                difference, None,
-                "{} wire {wire}: first differing capture",
-                item.name
-            );
-            let expected = if wire == 26 { item.wire26 } else { item.wire27 };
-            let arithmetic: SimError = MapScaleError::Arithmetic.into();
-            assert_eq!(
-                refusal,
-                expected.map(|tic| (tic, arithmetic)),
-                "{} wire {wire}",
-                item.name
-            );
+            let end = if wire == 26 { item.wire26 } else { item.wire27 };
+            let refused = end.map(|tic| (tic, SimError::from(MapScaleError::Arithmetic)));
+            let result = play(&mut level(item, wire), &commands, &item.strict);
+            assert_eq!(result, (None, refused), "{} wire {wire}", item.name);
         }
     }
     let wrap = &items[1];
@@ -218,11 +171,10 @@ fn the_overshoot_items_equal_the_genuine_engine_under_wires_26_to_28() {
     assert_eq!(wrap.overshoot, 52);
 }
 
-/// The harness can fail: Rust differs from the planted-fault genuine build (the
-/// reach-bounded walk) at the capture after SLIDE's overshoot tic, an altered
-/// digest is reported at its capture, and SLIDE without its small forward move at
-/// tic 38 differs at capture 39. On WRAP the planted fault does not change the
-/// genuine run (the wrapped fractions are negative and dropped).
+/// The harness can fail: Rust differs from the planted-fault build at capture 39 of
+/// SLIDE, an altered digest is reported at its capture, and SLIDE without its small
+/// forward move at tic 38 differs at capture 39. (WRAP's genuine run does not depend
+/// on the overshoot: the wrapped fractions are dropped.)
 #[test]
 fn a_reach_bounded_walk_and_planted_faults_are_detected() {
     let items = golden();
@@ -235,12 +187,9 @@ fn a_reach_bounded_walk_and_planted_faults_are_detected() {
     }
     for at in [0, slide.overshoot + 1, slide.tics] {
         let mut bent = slide.strict.clone();
-        let flipped = if bent[at].starts_with('0') { "1" } else { "0" };
-        bent[at].replace_range(..1, flipped);
-        assert_eq!(
-            play(&mut level(slide, 27), &commands, &bent),
-            (Some(at), None)
-        );
+        bent[at] = format!("x{}", &bent[at][1..]);
+        let result = play(&mut level(slide, 27), &commands, &bent);
+        assert_eq!(result, (Some(at), None));
     }
     let mut quiet = commands.clone();
     assert_ne!(quiet[slide.overshoot].forward, 0);

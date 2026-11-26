@@ -1,14 +1,8 @@
-//! The slide and use walk (`movement::path`, p_maputl.c:772-876) on the overshoot
-//! item SLIDE's trace (certificate audit 1, item 4; `tests/overshoot_walk.rs`).
-//!
-//! The genuine observer build recorded, at SLIDE's tic 38, the trace (`O` row of
-//! `tests/reference/overshoot_state.txt`) and its line intercepts (`L` rows): one,
-//! the dip line 10 at fraction 28,619, met 63 cells into a walk whose end cell is
-//! the second. `movement::path` is the one walk of the slide and the use traces
-//! (`P_SlideMove` and `P_UseLines`, which share `PT_ADDLINES`); the caller only
-//! selects wire 27's wrap rule. It must collect exactly the genuine intercepts for
-//! both callers and both arithmetic modes: it walks the cells the original walks,
-//! past the end cell, not a set of lines bounded by the trace's reach.
+//! `movement::path`, the one walk of the slide and use traces (p_maputl.c:772-876),
+//! on the trace the genuine observer recorded at SLIDE's tic 38 (`O` row of
+//! `tests/reference/overshoot_state.txt`): it must collect the genuine intercepts
+//! (`L` rows: the dip line 10, 63 cells past the end cell) for both callers and both
+//! arithmetic modes, so it walks the original's cells, not a reach-bounded set.
 use crate::intercept_vector::InterceptCaller;
 use crate::*;
 
