@@ -50,13 +50,18 @@ matches, which is what speedrun and tool-assisted (TAS) research need.
   own engine tic by tic, on synthetic maps and locally on real ones, and the owner has played it through E1M8 to the
   finale on Windows ([evidence](docs/validation/M6A.md)).
 
-Not yet, and next (a later pull request): the two easy skills and E1M7 on `uv`. Not yet, later: the automap, music, menus,
-general demo playback, other episodes, nightmare skill, or any claim of a match beyond the runs recorded so far
+- **Easy skills, and E1M7 on `uv`.** Skills 0 and 1 (double ammunition and half damage on 0) and E1M7 on `uv` play. They are compared with
+  the original's engine on synthetic maps, and E1M7 on `uv` and the owner's sessions also locally on real ones
+  ([evidence](docs/validation/WIRE28.md)). If a monster or a corpse would be thrown through a wall, which the original lets happen, the
+  session stops at that tic instead of guessing ([what it supports](docs/COMPATIBILITY.md#wire-28-the-easy-skills-and-e1m7-on-skill-3)).
+
+Not yet, later: the automap, music, menus, general demo playback, other episodes, nightmare skill, or any claim of a match beyond the runs
+recorded so far
 ([what is missing](docs/ROADMAP.md#vanilla-completeness-checklist)).
 
 ## Play it
 
-`doom-play` plays Episode 1 from the map you pick (E1M1 to E1M9, skill `hmp` or `uv`) with your own `DOOM.WAD`: each exit
+`doom-play` plays Episode 1 from the map you pick (E1M1 to E1M9, skill 0 to 3: `hmp` and `uv` are 2 and 3) with your own `DOOM.WAD`: each exit
 leads to the tally screen and the next map, and E1M8's exit leads to the episode's ending text and picture. To really play
 Doom, use an established source port such as [Chocolate Doom](https://www.chocolate-doom.org/).
 
@@ -69,7 +74,7 @@ cargo run --release -p doom-play -- --iwad /path/to/DOOM.WAD --map 1 --skill hmp
 
 - **Controls.** The original's defaults: arrows move and turn, right Ctrl fires, Space uses, right Shift runs, `1`-`8`
   pick weapons, mouse left fires (`--bindings modern` gives WASD). Esc pauses (R restarts, Q quits), End mutes.
-- **Limits.** Needs an OpenGL 2.1 driver; no menus, saving or cheat codes; E1M7 on `uv` is refused
+- **Limits.** Needs an OpenGL 2.1 driver; no menus, saving or cheat codes; nightmare is refused
   ([every limit, and what has been tried](docs/COMPATIBILITY.md#playable-build-m5b)).
 
 ## How it's verified
