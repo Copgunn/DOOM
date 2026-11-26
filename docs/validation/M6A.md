@@ -771,7 +771,7 @@ After pull requests #80 and #84 merged (master `e292d45f`): documents and record
 ### 14.2 The README's evidence figures, summed from the records
 
 An index written on 2026-11-25. It holds no new observation: every figure is from the section linked, and nothing was
-run again for it. **Note, 2026-11-26:** the wire 28 rows (the five sessions of 2026-11-25, E1M7 on skill 3 and the easy-skill replays) come from
+run again for it. **Note, 2026-11-26:** the wire 28 rows (the five sessions of 2026-11-25, the three hand-test recordings of 2026-11-26, E1M7 on skill 3 and the easy-skill replays) come from
 [the wire 28 record](WIRE28.md); the sums below were re-derived from its per-run logs on that day, and no run was repeated for them.
 **There are two figures and no blended headline.** **What is counted:** tics of real Episode 1 maps that a record reports as compared with the genuine
 linuxdoom-1.10 engine and equal, local only, each distinct tic once. A recording counts once however often it was
@@ -796,13 +796,14 @@ retail or registered replay does not count, because it is the same demo and the 
 | The two E1M8 sessions of 2026-11-24 that wire 26 refused | [§7](#7-part-2-on-wire-27-the-owners-e1m8-sessions-through-the-whole-session-2026-11-24-evening): 3,894 + 3,064 | 2 | 6,958 | the same two recordings under wires 26 and 27 in the [wire 27 record](WIRE27.md#4-real-maps-local-only-passfail-and-tic-counts) |
 | The five sessions of the part 2 hand test | [§9](#9-the-owners-hand-test-of-9e3734ae-and-his-five-sessions-against-the-genuine-engine-2026-11-24): 8,227 + 5,470 + 173 + 4,842 + 2,985 | 5 | 21,697 | the 4,843rd tic of the registered session, where both engines stop |
 | The five sessions of 2026-11-25 (wire 28) | [WIRE28 §5.2](WIRE28.md#52-the-owners-five-sessions-of-2026-11-25): 767 + 623 + 6,503 + 5,467 + 3,940 | 5 | 17,300 | the same five under wire 27 (10 runs, 34,600 tics, 17,300 per screen size) and at the second size; two of them (3,722 and 3,171 level tics) were listed below as not counted at all, before their comparison was recorded |
-| **Played by hand, subtotal** | | **77** | **256,155** | |
+| The owner's wire 28 hand test of 2026-11-26 (three recordings; UTC stamps 082510, 083445, 083716) | [WIRE28 §5.4](WIRE28.md#54-e1m8-on-the-easy-skills): 18,263 + 3,929 + 3,643 | 3 | 25,835 | nothing: the E1M7 skill 3 recording is a new recording, not one of the constructions of figure 2 |
+| **Played by hand, subtotal** | | **80** | **281,990** | |
 | Four files of the owner's sessions folder not recorded as played by hand | [M5D](M5D.md#hand-played-checks) | 4 | 7,875 | |
 | Our 2,400 idle tics added to each of the two E1M8 recordings | [§7](#7-part-2-on-wire-27-the-owners-e1m8-sessions-through-the-whole-session-2026-11-24-evening): 6,294 - 3,894 and 5,464 - 3,064 | 0 (two constructions) | 4,800 | the recorded part, counted above; the wire 27 record's 700 idle tics, which are the start of these |
-| **Total, figure 1: distinct recordings** | | **152** | **518,303** | |
+| **Total, figure 1: distinct recordings** | | **155** | **544,138** | |
 
-Sums re-derived on 2026-11-26: 249,473 + 256,155 + 7,875 + 4,800 = 518,303, that is 501,003 + 17,300; 72 + 5 = 77 sessions and 238,855 + 17,300 = 256,155 tics.
-**Without the 4,800 appended idle tics it is 513,503: figure 1 clears 500,000 without them** (by 13,503; with them by 18,303).
+Sums re-derived on 2026-11-26: 249,473 + 281,990 + 7,875 + 4,800 = 544,138, that is 501,003 + 17,300 + 25,835; 72 + 5 + 3 = 80 sessions and 238,855 + 17,300 + 25,835 = 281,990 tics; 71 + 80 + 4 = 155 recordings.
+**Without the 4,800 appended idle tics it is 539,338: figure 1 clears 500,000 without them** (by 39,338; with them by 44,138).
 
 **Figure 2: the same recordings on other skills** (local only, each compared with the genuine engine at both screen sizes, equal, no refusal):
 
@@ -813,13 +814,13 @@ Sums re-derived on 2026-11-26: 249,473 + 256,155 + 7,875 + 4,800 = 518,303, that
 | The same 63, on skill 1 | the same section, the same counts | 63 | 212,951 | the same 5,813 and 5,505 | 201,633 | 4,800 |
 | **Figure 2 total** | | | | | **419,690** | **9,600** |
 
-16,424 + 201,633 + 201,633 = 419,690. **Compared in all, as a sum of the two figures and not a headline:** 518,303 + 419,690 = 937,993 tics.
+16,424 + 201,633 + 201,633 = 419,690. **Compared in all, as a sum of the two figures and not a headline:** 544,138 + 419,690 = 963,828 tics.
 
-- **The README's figures:** "more than 75 hand-played sessions" is the 77; "over 256,000 tics" is the 256,155;
-  "more than 500,000 distinct real-map tics" is figure 1's 518,303; "more than 400,000" tics of the same recordings on other skills is figure 2's
-  419,690; "more than 900,000 in all" is their sum, 937,993.
-- **How thin figure 1 is.** It clears 500,000 by 18,303 tics. Without the four files that are not recorded as
-  played by hand it is 510,428, and without those and the 4,800 idle tics 505,628. In the other direction: the chains' left-out part is an upper bound (it includes the
+- **The README's figures:** "80 hand-played sessions" is the 80; "over 280,000 tics" is the 281,990;
+  "more than 540,000 distinct real-map tics" is figure 1's 544,138; "more than 400,000" tics of the same recordings on other skills is figure 2's
+  419,690; "more than 960,000 in all" is their sum, 963,828.
+- **How thin figure 1 is.** It clears 500,000 by 44,138 tics. Without the four files that are not recorded as
+  played by hand it is 536,263, and without those and the 4,800 idle tics 531,463. In the other direction: the chains' left-out part is an upper bound (it includes the
   first intermission, which no scripted run has), and a count that took the two game modes as different comparisons
   would add the registered sets.
 - **Not counted at all:** the three idle sessions of [M5b's first play check](M5B.md#step-8-the-first-play-check)

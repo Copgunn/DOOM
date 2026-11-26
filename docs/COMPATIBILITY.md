@@ -3159,8 +3159,9 @@ genuine engine": the comparison runs are listed in the
 
 Skill 2 under wire 28 is not in this table. **Evidence limits:** the runs are the 61 committed recordings (made on skill 2) plus two constructions
 replayed on skills 0 and 1, and our own constructions on E1M7 at skill 3, so this shows that every map loads and plays equal to the genuine engine on
-those inputs, not that every thing, blow or route on those skills is covered; no run reached the victory on E1M8 at these skills
-([§5.3 and §5.4](validation/WIRE28.md#53-real-maps-on-skills-0-and-1)); the escape witness was reached 0 times on E1M7 at skill 3.
+those inputs, not that every thing, blow or route on those skills is covered; no replay of those recordings reached the victory on E1M8 at these skills, and the owner's hand test of
+2026-11-26 (Windows build of `cbe88eba`, three recordings, compared with the genuine engine afterwards) covers E1M8 to the finale on skills 0 and 1
+([§5.3 to §5.5](validation/WIRE28.md#53-real-maps-on-skills-0-and-1)); the escape witness was reached 0 times on E1M7 at skill 3, in the constructions and in the hand-test recording.
 
 ### Presentation (outside the proven frame)
 
@@ -3995,7 +3996,7 @@ constructors `original_player_episode1_v6_level` and `_at`) is wire 27 in every 
 - **Formats:** [DSIM44](STATE_FORMAT.md#dsim-v44--wire-28-the-easy-skills-and-e1m7-on-skill-3), [`DSES` 3 and demo version 3](STATE_FORMAT.md#session-state-dses-version-3-wire-28).
   The session configuration is `Configuration::FinaleAndMeltWire28`; `doom-play` uses it for every skill and no longer offers wire 27's.
 - **Evidence limits:** the escape and the stuck imps are one synthetic room layout (twelve items; the escape's genuine item refuses at the witness);
-  skill 0's rules are shown on the items and on SKILL0 and SKILL1; nightmare, other episodes and every
+  skill 0's rules are shown on the items, on SKILL0 and SKILL1 and, on real maps, by the replays and the hand test ([record §5](validation/WIRE28.md#5-real-maps-e1m7-on-skill-3-and-the-owners-five-sessions)); nightmare, other episodes and every
   other monster, wall angle and blow are not covered. The `DSES` 3 restore test compares the session with itself.
 
 ### Silent divergence in wires 23 to 27: the bite on a sector of special 11

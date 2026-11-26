@@ -1,7 +1,7 @@
 # Wire 28 evidence record (the easy skills and E1M7 on skill 3)
 
 Observed results of wire 28 (`PlayerMonstersEpisode1V6`, captures `DSIM` 44, session state `DSES` 3), recorded 2026-11-25
-(America/Los_Angeles; sections 5.3, 5.4, 9 and 11 added 2026-11-26) on branch `feat/wire28-easy-skills`, [PR #86](https://github.com/Copgunn/DOOM/pull/86). The rule and what
+(America/Los_Angeles; sections 5.3 to 5.5, 9, 10 and 11 added 2026-11-26; recording file-name stamps are UTC) on branch `feat/wire28-easy-skills`, [PR #86](https://github.com/Copgunn/DOOM/pull/86). The rule and what
 is admitted are in [COMPATIBILITY](../COMPATIBILITY.md#wire-28-the-easy-skills-and-e1m7-on-skill-3), the format in
 [STATE_FORMAT](../STATE_FORMAT.md#dsim-v44--wire-28-the-easy-skills-and-e1m7-on-skill-3), the C facts in the
 [M6a note §8](../M6A_REFERENCE_INVESTIGATION.md#8-wire-28-the-easy-skills-and-e1m7-on-skill-3-source-investigation-2026-11-25), the
@@ -95,7 +95,7 @@ and an extra genuine `P_Random` draw before tic 200 were each reported at their 
 
 ### 5.1 E1M7 on skill 3
 
-No recorded E1M7 run on skill 3 exists, so these are **our constructions**: the five E1M7 runs of the 61 (recorded on skill 2) with
+When these were built no recorded E1M7 run on skill 3 existed, so they are **our constructions** (the owner's hand test of 2026-11-26 later supplied one, section 5.4): the five E1M7 runs of the 61 (recorded on skill 2) with
 the header's skill byte set to 3, plus 35 idle tics from the load. All six pass at both sizes: **16,459 session tics**, 0 refusals,
 the whole DSIM44 state equal at every one (21 levels).
 
@@ -164,8 +164,8 @@ change later reverted. Confirming reruns of both skills on the restored helper (
 ### 5.4 E1M8 on the easy skills
 
 The owner's ruling V5 (2026-11-25): valid inputs even where they stop reaching their exits; a recording made on another skill that does not reach the victory on
-skill 0 or 1 is expected, and an equal run that never reaches it still counts as compared tics. **No route was constructed and nothing here is derived from the
-owner's own recordings.** What each of the twelve E1M8 demos of section 5.3 does on each easy skill:
+skill 0 or 1 is expected, and an equal run that never reaches it still counts as compared tics. **No route was constructed, and the table below is derived from no
+recording of the owner's.** What each of the twelve E1M8 demos of section 5.3 does on each easy skill:
 
 | Demo | Tics compared | Equal | Ends (genuine and Rust alike) |
 | --- | ---: | --- | --- |
@@ -178,9 +178,35 @@ owner's own recordings.** What each of the twelve E1M8 demos of section 5.3 does
 
 All twelve are equal on skill 0 and on skill 1 (52,095 tics each), **none reaches the victory**, and the tic counts are the same on both skills. The victory
 is reached by the synthetic items FIN0 and FIN1 instead ([section 4](#4-skill0-and-skill1-against-every-genuine-stream); not repeated here), compared with the
-genuine engine in CI: their cost was 149 lines plus 21 (the orchestrator's count when they were built, not recounted here).
-**E1M8 to the finale on skills 0 and 1, real map: not yet covered** (as of 2026-11-26). It is to be supplied by the owner's hand-test sessions on the Windows
-build and verified against the genuine engine afterward; their verification is running and is not recorded here.
+genuine engine in CI: their cost was 168 added lines (149 as first built; `git diff --numstat d3d142bc cbe88eba -- . ':!tests/reference'`, recounted from the tree).
+
+**E1M8 to the finale on skills 0 and 1, real map: covered** by the owner's hand test of 2026-11-26 (America/Los_Angeles) on the Windows build of `cbe88eba`, verified
+afterwards against the genuine engine through the full session path. The owner's report: passed; E1M7 loaded on skill 3 with no refusal; on skill 0 ammunition
+pickups were doubled and damage halved, on skill 1 both were normal; both easy runs reached the finale. The three recordings (read-only on the owner's machine, never
+copied into the repository; file-name stamps are UTC) were compared on 2026-11-26 about 01:00 with `tools/local/wire28_real.py --set sessions` (wire 28 session,
+genuine strict build, every stream at screenblocks 10 and 11, mixer buffers, the whole DSIM44 state at screenblocks 10 after every level tic), exit 0:
+
+| Recording (UTC stamp) | Tics compared | Where it ends | Loads after the first | Melts (steps) | Masked frames sb10 / sb11 | Result |
+| --- | ---: | --- | ---: | --- | --- | --- |
+| 082510, E1M7 skill 3 | 18,263 of 18,263 | the recording's end: level 17,778, intermission 485, no victory; played on into E1M8 | 2 | 4 (161) | 39 / 48 | pass |
+| 083445, E1M8 skill 0 | 3,929 of 3,929 | victory at session tic 3521, then 408 finale tics | 0 | 2 (77) | 25 / 29 | pass |
+| 083716, E1M8 skill 1 | 3,643 of 3,643 | victory at session tic 3516, then 127 finale tics | 0 | 2 (77) | 26 / 29 | pass |
+
+**Total 25,835 session tics, 3 of 3 pass, 0 refusals, 0 differences**; state captures 17,778 (3 levels), 3,521 and 3,516. The genuine victory tics equal the owner's reported
+3521 and 3516. The escape witness was not reached in the E1M7 run. No existing construction reaches the victory on either easy skill, and none was forced (the owner's
+ruling V5); the hand test is what supplies it. These tics are counted in figure 1 of [M6A §14.2](M6A.md#142-the-readmes-evidence-figures-summed-from-the-records).
+
+**What the hand test stands for.** It ran on `cbe88eba`. Since then the only change under a crate's `src` outside test files is the line `#[cfg(test)] mod wire28_mutant_tests;`
+in `crates/doom-sim/src/lib.rs` plus the new test-only file it names (`fff2a40d`). Checked on 2026-11-26 with `git diff --stat cbe88eba HEAD -- 'crates/*/src/*'`, which at `58049822` prints exactly two files, `crates/doom-sim/src/lib.rs` (2 added lines) and
+`crates/doom-sim/src/wire28_mutant_tests.rs` (60 added lines), 62 insertions (the pathspec `'crates/*/src'` without the final `/*` matches nothing). Under `crates/` outside `src` the same range also adds the test file
+`doom-game/tests/wire28_mutants.rs` and the example `doom-sim/examples/wire28_witness_timing.rs`. A later change under a crate's `src` would void this statement.
+
+### 5.5 The 61 unchanged runs under wire 28, and wire 27's gate
+
+Local only, 2026-11-26: the 61 committed recordings (made on skill 2, the E1M1 to E1M9 scripts and `DEMO1`), unchanged, through the wire 28 session (`wire28_real.py --set own
+--wire27`). **61 of 61 pass at screenblocks 10 and 11, 196,833 session tics, 0 refusals.** Per map (runs, tics): E1M1 5, 10,029; E1M2 5, 12,544; E1M3 5, 15,388; E1M4 5, 12,717;
+E1M5 11, 47,146; E1M6 5, 16,724; E1M7 5, 16,424; E1M8 10, 35,977; E1M9 10, 29,884. The unchanged wire 27 test `real_maps_finale_and_melt_local` on the same demos: exit 0, 122
+runs, 393,666 session tics over both sizes. These add nothing to the evidence sums (the 61 are already counted in figure 1 of M6A §14.2).
 
 ## 6. `DSES` version 3: restore and continue
 
@@ -274,6 +300,28 @@ Exit code 2 is cargo-mutants' "a mutant was missed"; the runs that exited 2 are 
 rerun with `doom-game`'s tests. Each hand-applied kill is an observation of one mutation, not of the whole selection. Reading a mutant as equivalent is an argument,
 not a run.
 
+## 10. Witness timing
+
+Reported, not gated. Taken 2026-11-26, 02:30 to 02:33 (America/Los_Angeles), **run alone**: nothing else was running (no cargo, no real-map job, no agent; `ps` showed only the
+session and an idle `rust-analyzer` at 0.2 % CPU; `free -g` 11 total, 9 available). The load average read 0.8 to 1.0 throughout with no visible process using CPU; that is not explained.
+Binary built from `~/scratch/wire28/target-tests` (ext4, release, `--locked`), rustc 1.100.0, i7-8750H, 12 logical CPUs, WSL2. Harness: `crates/doom-sim/examples/wire28_witness_timing.rs` at
+`58049822`; it alternates wire 27 and wire 28 runs of one skill 2 demo, takes the wall-clock median in ns per run, and checks equality (tics, RNG, state fields except `profile` and
+`context.schema`) outside the timed region. Two passes each:
+
+| Demo | Map | Tics | Runs per wire | Wire 27 ns/tic | Wire 28 ns/tic | Difference |
+| --- | --- | ---: | ---: | --- | --- | --- |
+| MTELE1 (synthetic `montele.wad`) | E1M1 | 160 | 200 | 2902.5 / 2835.6 | 2930.0 / 2875.0 | +0.95 % / +1.39 % |
+| CHAOS (real E1M1) | E1M1 | 5,000 | 40 | 33385.8 / 32790.0 | 33319.5 / 32605.7 | -0.20 % / -0.56 % |
+| M7FIGHT (real E1M7) | E1M7 | 1,221 | 60 | 118764.3 / 119131.0 | 124530.1 / 124606.1 | +4.85 % / +4.60 % |
+| M7IDLE (real E1M7) | E1M7 | 2,100 | 60 | 107662.5 / 108693.7 | 107437.8 / 108582.7 | -0.21 % / -0.10 % |
+
+Every equality line: tics equal, RNG equal, differing fields `profile` and `context.schema`; every run exited 0.
+
+**What it measures.** The cost of all wire 28 code on a skill 2 run, not of the witness alone: the library has no counter, so the harness cannot count witness checks, and the checks are not
+counted here. **M7FIGHT's +4.6 to +4.9 % is as measured:** it repeats in both passes and lies outside the spread of the other three demos (within about 1.4 % of zero). Its cause was not
+investigated. It is a wall-clock median on a laptop CPU, not an instruction count. CI's "Simulation instruction counts" job is green on `58049822`.
+**Harness limit.** M7CHAOS (4 loads) was run twice and exited 1 both times with `Error: PlayerReborn`: the harness runs one level and does not handle a reborn. That is not a timing result.
+
 ## 11. The independent read
 
 A fresh reviewer that did not write the code, read-only, at `fff2a40d`, 2026-11-26 about 00:45 (America/Los_Angeles). **It found no place where wire 28 differs from
@@ -312,13 +360,12 @@ release build, the unwritten record sections, every `A_Chase` path after a `P_Mo
   not every monster, wall angle or blow.
 - Wires 23 to 27 keep the bite divergence (D4); only wire 27 was observed to differ against the genuine engine (BITE2), wires 23 to 26 by the independent reader's
   Rust-only probe (section 11).
-- **S1, open decision for the owner:** `DSES` 3 accepts a state whose skill byte disagrees with its embedded level's `actors.options[0]`; no session writes one.
-  **S2, open decision for the owner:** the public `damage_actor` on the player halves at skill 0 but never applies the sector-11 cap (since wire 23); API only, not
-  reachable from `doom-play`. Neither is changed in this pull request.
-- **Open mutation survivor, open decision for the owner:** `spawning.rs:201:38` is not proven equivalent and has no test (section 9): `preflight_monster_spawn` follows
-  S'' too, or line 201's change is reverted.
-- **Real-map E1M8 to the finale on skills 0 and 1: not yet covered** as of 2026-11-26 (section 5.4); the 63 demos per skill never reach the victory, only the synthetic
-  FIN0 and FIN1 do. The skill 0 and 1 runs are the same recordings as on other skills, not new play.
+- **Open decisions for the owner (three), none changed in this pull request.** (1) `spawning.rs:201` (survivor `201:38`, section 9): `preflight_monster_spawn` follows S'' too, or line 201's
+  change, which is dead for a direct spawn, is reverted. (2) S1: `DSES` 3 accepts a state whose skill byte disagrees with its embedded level's `actors.options[0]` (no session writes
+  one). (3) S2: the public `damage_actor` on the player halves at skill 0 but never applies the sector-11 cap (since wire 23; API only, not reachable from `doom-play`).
+- The real E1M8 finale on skills 0 and 1 is covered by the hand test of section 5.4 (three recordings); no existing construction reaches the victory there, and none was forced. The skill 0 and 1
+  replays of section 5.3 are the same recordings as on other skills, not new play. The hand test stands only while nothing under a crate's `src` outside test files changes after `cbe88eba`.
+- Witness timing (section 10) is the cost of all wire 28 code, one unexplained +4.6 to +4.9 % on M7FIGHT, no per-witness count.
 - The DSES version 3 restore test compares a session with itself, and its melt save points are not labelled by melt kind.
 - Fuzz seeds are not committed (section 7). `cargo clippy --manifest-path fuzz/Cargo.toml --bins -- -D warnings` fails on an existing
   file, `game_input_events.rs` (`manual_range_patterns`), not on a wire 28 file.

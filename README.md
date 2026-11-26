@@ -39,10 +39,10 @@ matches, which is what speedrun and tool-assisted (TAS) research need.
 - **Game logic.** One player, six weapons, seven kinds of monster and Episode 1's map features
   ([what is admitted](docs/COMPATIBILITY.md#policies)).
 - **Real maps.** All nine Episode 1 maps and the original's own `DEMO1`: every scripted run stays in sync with the
-  original C code, tic for tic, and so do the more than 75 hand-played sessions checked so far (over 256,000 tics).
-  Two honest figures. From distinct recordings, more than 500,000 real-map tics have been compared with the original,
+  original C code, tic for tic, and so do the 80 hand-played sessions checked so far (over 280,000 tics).
+  Two honest figures. From distinct recordings, more than 540,000 real-map tics have been compared with the original,
   every one equal. Counting also the same recordings replayed on other skills (where different things spawn and the game
-  plays out differently, but which no one played), more than 900,000 tics in all, every one equal
+  plays out differently, but which no one played), more than 960,000 tics in all, every one equal
   ([how each is summed, and what it leaves out](docs/validation/M6A.md#142-the-readmes-evidence-figures-summed-from-the-records);
   [scripted runs](docs/validation/M4B.md#real-maps-and-demo1); by hand: [M5c](docs/validation/M5C.md#hand-played-checks),
   [M5d](docs/validation/M5D.md#hand-played-checks), [M6a](docs/validation/M6A.md#5-after-the-hand-test-gate-2026-11-22-evening)).
@@ -57,7 +57,7 @@ matches, which is what speedrun and tool-assisted (TAS) research need.
   finale on Windows ([evidence](docs/validation/M6A.md)).
 
 - **Easy skills, and E1M7 on `uv`.** Skills 0 and 1 (double ammunition and half damage on 0) and E1M7 on `uv` play. They are compared with
-  the original's engine on synthetic maps, and E1M7 on `uv`, the owner's sessions and the existing recordings replayed on both easy skills also locally on real maps
+  the original's engine on synthetic maps, and E1M7 on `uv`, the owner's sessions, the owner's hand test of 2026-11-26 (E1M8 to the finale on skills 0 and 1) and the existing recordings replayed on both easy skills also locally on real maps
   ([evidence](docs/validation/WIRE28.md)). If a monster or a corpse would be thrown through a wall, which the original lets happen, the
   session stops at that tic instead of guessing ([what it supports](docs/COMPATIBILITY.md#wire-28-the-easy-skills-and-e1m7-on-skill-3)).
 
