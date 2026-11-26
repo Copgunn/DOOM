@@ -60,11 +60,11 @@ usage: doom-play --iwad PATH [options]
                        otherwise. linuxdoom-1.10 makes no such probe (it decides by the
                        file name); this is a declared rule. The mode is printed at launch,
                        given on the exit line and written into the demo's file name
-  --skill N            2 or hmp: Hurt Me Plenty (default); 3 or uv: Ultra-Violence.
+  --skill N            0: I'm Too Young To Die; 1: Hey, Not Too Rough;
+                       2 or hmp: Hurt Me Plenty (default); 3 or uv: Ultra-Violence.
                        N is the skill value stored in the demo header and the file
-                       name. Vanilla's own -skill option counts from 1, so these are
-                       its -skill 3 and -skill 4. The easy skills (0 and 1) are not built
-                       yet.
+                       name. Vanilla's own -skill option counts from 1, so 2 and 3 are
+                       its -skill 3 and -skill 4. Nightmare (4) is not built yet
   --sessions DIR       where session demos are written (default doom-sessions/)
   --bindings NAME      vanilla (default) or modern (WASD, E use, always run)
   --gamma N            gamma table 0-4 (default 0, as the original)
@@ -191,9 +191,11 @@ its art screen began.
 
 Limits: an OpenGL 2.1 (or OpenGL ES 2) driver is required. There is no music, menu,
 automap or saving. Built: every change of screen melts; after E1M8 come the finale text and
-then the art screen, which stays until you quit. Not built yet: the easy skills (0 and 1),
-which are refused at launch, and E1M7 on skill 3, where the session stops with a TIC REFUSED
-screen; the demo is kept. Cheat codes
+then the art screen, which stays until you quit; skills 0 to 3, and E1M7 on skill 3 plays.
+Not built yet: nightmare (skill 4), which is refused at launch. A possible stop: when a
+monster or a corpse is shoved through a one-sided wall (by a strong enough blow while it
+stands close to the wall), the original lets it through; the session refuses that tic and
+stops with a TIC REFUSED screen naming the rule; the demo is kept. Cheat codes
 have no effect: their keys reach the game as ordinary keys. The status bar face's idle glance follows the sound's random draws as the genuine
 engine replaying the session's demo does, under the declared schedule and build; a vanilla
 player's menu keys (Esc, -, =, F1-F10), which start menu sounds, are not part of a demo and
@@ -282,10 +284,10 @@ fn parse(args: impl IntoIterator<Item = String>) -> Result<Option<Options>, Stri
                 o.skill = match value()?.as_str() {
                     "hmp" => 2,
                     "uv" => 3,
-                    "0" | "1" => {
-                        return Err("--skill: the easy skills (0, 1) are not built yet".into());
+                    "4" | "nightmare" => {
+                        return Err("--skill: nightmare (4) is not built yet".into());
                     }
-                    v => number(&flag, v, |s| (2..=3).contains(s))?,
+                    v => number(&flag, v, |s| (0..=3).contains(s))?,
                 }
             }
             "--game-mode" => {
@@ -497,9 +499,10 @@ fn run(o: Options) -> Result<(), String> {
         files.push(std::fs::read(path).map_err(|e| format!("{}: {e}", path.display()))?);
     }
     let refs: Vec<&[u8]> = files.iter().map(Vec::as_slice).collect();
-    // the M6a session (wire 27 with sound across levels; rulings U2, U4, U6) in its finale-and-
-    // melt configuration (M6a part 2, ruling V1: the frozen configuration is no longer offered)
-    let data = GameData::load_finale_and_melt_session(&refs, o.game_mode, o.map, o.skill)
+    // the M6a session (sound across levels; rulings U2, U4, U6) in its wire 28 configuration for
+    // every skill (decision D3 of 2026-11-25: the finale and the melt on wire 28, skills 0 to 3;
+    // the wire 27 configuration, like the frozen one before it, is no longer offered)
+    let data = GameData::load_wire28_session(&refs, o.game_mode, o.map, o.skill)
         .map_err(|e| e.to_string())?;
     drop(files);
     if let Some(line) = data.session_mode().map(|m| mode_line(m, &o.iwad)) {
@@ -663,7 +666,8 @@ mod tests {
             "--map 2",
             "--iwad a --map 0",
             "--iwad a --map E1M10",
-            "--iwad a --skill 1",
+            // 2026-11-25: wire 28 admits skill 1, so "--iwad a --skill 1" left this list of
+            // refused arguments (accepted now: wire28_tests.rs).
             "--iwad a --skill 4",
             "--iwad a --skill nightmare",
             "--iwad a --gamma 5",
@@ -996,9 +1000,13 @@ mod tests {
                 "{bad}"
             );
         }
-        for easy in ["0", "1"] {
-            let e = parse(args(&format!("--iwad a.wad --skill {easy}"))).unwrap_err();
-            assert!(e.contains("easy skills (0, 1) are not built yet"), "{e}");
+        // 2026-11-25: wire 28 admits the easy skills; the refusal ("easy skills (0, 1) are not
+        // built yet") became their acceptance.
+        for (easy, value) in [("0", 0), ("1", 1)] {
+            let o = parse(args(&format!("--iwad a.wad --skill {easy}")))
+                .unwrap()
+                .unwrap();
+            assert_eq!(o.skill, value, "{easy}");
         }
         let line = |mode, source, file| mode_line(DeclaredMode { mode, source }, Path::new(file));
         assert_eq!(
