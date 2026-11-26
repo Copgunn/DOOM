@@ -1,0 +1,1728 @@
+{
+ "schema": "DOOM-WIRE28-RESULTS-v1",
+ "revision": "a77dfb96cb91780ca334d0d4cfd86957558007e0",
+ "claim": "every state digest is the genuine engine's strict build projected by the independent DSIM44 encoder; the overflow and address builds gave identical dumps, sound and session streams",
+ "builds": {
+  "strict": [
+   "-std=gnu89",
+   "-O0",
+   "-fwrapv",
+   "-fno-strict-aliasing",
+   "-ffp-contract=off",
+   "-fexcess-precision=standard",
+   "-fsigned-char",
+   "-DNORMALUNIX",
+   "-DLINUX"
+  ],
+  "overflow": [
+   "-std=gnu89",
+   "-O0",
+   "-fno-strict-aliasing",
+   "-ffp-contract=off",
+   "-fexcess-precision=standard",
+   "-fsigned-char",
+   "-DNORMALUNIX",
+   "-DLINUX",
+   "-fno-wrapv",
+   "-fsanitize=signed-integer-overflow,integer-divide-by-zero,float-cast-overflow",
+   "-fno-sanitize-recover=all"
+  ],
+  "address": [
+   "-std=gnu89",
+   "-O0",
+   "-fno-strict-aliasing",
+   "-ffp-contract=off",
+   "-fexcess-precision=standard",
+   "-fsigned-char",
+   "-DNORMALUNIX",
+   "-DLINUX",
+   "-fno-wrapv",
+   "-fsanitize=address,undefined",
+   "-fno-sanitize-recover=all",
+   "-fno-sanitize=alignment"
+  ]
+ },
+ "asan_options": "detect_leaks=0 (leak detection disabled in the address build; not LeakSanitizer coverage)",
+ "variants": {
+  "nodouble": {
+   "replacements": [
+    {
+     "original": "    if (gameskill == sk_baby\n\t|| gameskill == sk_nightmare)",
+     "replacement": "    if (gameskill == sk_nightmare\n\t|| gameskill == sk_nightmare)"
+    }
+   ],
+   "items": [
+    "AMMO0",
+    "DROP0"
+   ]
+  },
+  "nohalf": {
+   "replacements": [
+    {
+     "original": "    if (player && gameskill == sk_baby)\n\tdamage >>= 1; \t// take half damage in trainer mode\n",
+     "replacement": "\n\n"
+    }
+   ],
+   "items": [
+    "HURT0",
+    "SPLASH0",
+    "BITE0"
+   ]
+  },
+  "half_after_thrust": {
+   "replacements": [
+    {
+     "original": "    if (player && gameskill == sk_baby)\n\tdamage >>= 1; \t// take half damage in trainer mode\n",
+     "replacement": "\n\n"
+    },
+    {
+     "original": "    }\n    \n    // player specific\n",
+     "replacement": "    }\n    if (player && gameskill == sk_baby)\n\tdamage >>= 1;\n    // player specific\n"
+    }
+   ],
+   "items": [
+    "HURT0",
+    "BITE0"
+   ]
+  },
+  "half_after_cap": {
+   "replacements": [
+    {
+     "original": "    if (player && gameskill == sk_baby)\n\tdamage >>= 1; \t// take half damage in trainer mode\n",
+     "replacement": "    w28_full = damage;\n    if (player && gameskill == sk_baby)\n\tdamage >>= 1; \t// take half damage in trainer mode"
+    },
+    {
+     "original": "\t// end of game hell hack\n",
+     "replacement": "\tif (gameskill == sk_baby) damage = w28_full;\n"
+    },
+    {
+     "original": "\t    damage = target->health - 1;\n\t}\n",
+     "replacement": "\t    damage = target->health - 1;\n\t}\n\tif (gameskill == sk_baby)\n\t    damage >>= 1;\n"
+    },
+    {
+     "original": "    int\t\ttemp;\n",
+     "replacement": "    int\t\ttemp;\n    int\t\tw28_full;\n"
+    }
+   ],
+   "items": [
+    "BITE0"
+   ]
+  }
+ },
+ "variant_first_differences": [
+  {
+   "variant": "nodouble",
+   "item": "AMMO0",
+   "capture": 10
+  },
+  {
+   "variant": "nodouble",
+   "item": "DROP0",
+   "capture": 321
+  },
+  {
+   "variant": "nohalf",
+   "item": "HURT0",
+   "capture": 1
+  },
+  {
+   "variant": "nohalf",
+   "item": "SPLASH0",
+   "capture": 58
+  },
+  {
+   "variant": "nohalf",
+   "item": "BITE0",
+   "capture": 1
+  },
+  {
+   "variant": "half_after_thrust",
+   "item": "HURT0",
+   "capture": 62
+  },
+  {
+   "variant": "half_after_thrust",
+   "item": "BITE0",
+   "capture": 97
+  },
+  {
+   "variant": "half_after_cap",
+   "item": "BITE0",
+   "capture": 193
+  }
+ ],
+ "in_process_overrides": [
+  {
+   "what": "m6a_state.S (the DSIM42 projection module) replaced by a namespace whose Projector is level_snapshot_wire28.Projector and VERSION 44, around the m6a_state.levels calls of SKILL0 and SKILL1",
+   "why": "m6a_state projects with DSIM42; wire 28's schema is DSIM44 (DSIM43 field for field, three values naming the wire), and its projector admits skills 0 and 1",
+   "scope": "in-process only: no file is edited, and the original is restored"
+  },
+  {
+   "what": "wire27_goldens.BUILDS given one entry per variant and wire27_goldens.sources wrapped to apply the variant's replacements to p_inter.c, around each variant build",
+   "why": "a variant is the strict build of the genuine text with one rule of p_inter.c removed or moved (VARIANTS)",
+   "scope": "in-process only: no file is edited, and the original is restored"
+  }
+ ],
+ "tools_sha256": {
+  "wire28_goldens.py": "d24e82f84652932402eb518e7df947e71bd6b8d4b5b3c40352cc4235bd7db8fc",
+  "wire28_wad.py": "b38bf1f1dea2f597f4a68987e228377b272800ac64ec01fd8120c876b9bd5f2f",
+  "level_snapshot_wire28.py": "d694b14df81c60a530a7258ba940befe67deba2fc1d7cc133592a30fa4d9f543"
+ },
+ "inputs_sha256": {
+  "tests/reference/wire28_wads/wire28.wad": "49dac466114bb8251627b9c96d51d3d3bb7bd4d09790769f01e4d7388d14bb10",
+  "tests/reference/m5b_gfx.wad": "50d0f0f881e2347a3527405b97a8f5abd949cff923a7078d03ec8c20a40ca032",
+  "tests/reference/m5c_sfx.wad": "c228e186aceb05529187755be20f24321b7a46d2ba59a2a18e39b587e31d9699",
+  "tests/reference/m6a_wads/m6a_gfx.wad": "ec4826c3881919eb09108018aa3efb357c9891c4ae4256dbc9502749cade1d37",
+  "tests/reference/m6a_wads/m6a_music.wad": "7e5bcf6fa1837e6af4d996ae16d914669921ccc9ed5b6e924ea5a8dc826a47ea",
+  "tests/reference/wire28_scripts/AMMO0.lmp": "22ba6f70c3b3ab5e6b5867f2bdf8eb9a7277fea6a35ecb2ba244c19ee42f6d08",
+  "tests/reference/wire28_scripts/AMMO2.lmp": "6dfa60b1eff6e7cc74fb9988022a9418f21cf0e54c46a4fd7ffb939c91d95c56",
+  "tests/reference/wire28_scripts/DROP0.lmp": "2c2b123f38e19d4690d87d1c025cb9b12e86b0da68509f2d4dcdf0890a3f71d3",
+  "tests/reference/wire28_scripts/DROP2.lmp": "ce15cc40acced382f5713ca5ab0591f09ca1e74278d156829a5230cb0cd38698",
+  "tests/reference/wire28_scripts/HURT0.lmp": "af4940a73d4a358d5704c67d7dbd5d0c097cb3b490701c9715365f6f9f2f7de9",
+  "tests/reference/wire28_scripts/HURT2.lmp": "deedc728726c7b6df5b0317d804f0a6a491e2ccc1533ab58cf4ce9c684b1caa7",
+  "tests/reference/wire28_scripts/SPLASH0.lmp": "a21c3d26d8e41766091c06c7fc0034fe15604ad9ad3e77587dec7faa4de66c16",
+  "tests/reference/wire28_scripts/SPLASH2.lmp": "1a05ce6eb2215ed65e198392e2c262af03460cda781766e4283dbdfdec84be6f",
+  "tests/reference/wire28_scripts/BITE2.lmp": "a53debaff00dcc4abf61f0ac5585b7d08c84492e7e7a33669a28a8206b9c1c89",
+  "tests/reference/wire28_scripts/BITE0.lmp": "b16776120032eba230dd46d50069052698cf7cde5a97241e34b79dfab2deefd8",
+  "tests/reference/wire28_scripts/ESCAPE.lmp": "96f49e720841010113c0682a824e5920de2e1882a5346e0f87eccad11b63409b",
+  "tests/reference/wire28_scripts/SMALL.lmp": "3cfd8a8505845dd7d59a31173dabb2959fd7c104df97a07dde51962045a71948"
+ },
+ "generated_with": {
+  "compiler": "cc (Ubuntu 15.2.0-16ubuntu1) 15.2.0"
+ },
+ "items": {
+  "AMMO0": {
+   "map": 1,
+   "skill": 0,
+   "tics": 310,
+   "captures": 311,
+   "end": "complete",
+   "what": "skill 0: every P_GiveAmmo path of Episode 1 doubled before the cap",
+   "observed": {
+    "hits": [],
+    "pickups": [
+     [
+      9,
+      70,
+      0,
+      0,
+      0,
+      200,
+      1,
+      10
+     ],
+     [
+      19,
+      170,
+      0,
+      0,
+      0,
+      200,
+      1,
+      10
+     ],
+     [
+      27,
+      200,
+      0,
+      0,
+      0,
+      200,
+      1,
+      10
+     ],
+     [
+      35,
+      200,
+      8,
+      0,
+      0,
+      200,
+      1,
+      10
+     ],
+     [
+      43,
+      200,
+      48,
+      0,
+      0,
+      200,
+      1,
+      10
+     ],
+     [
+      51,
+      200,
+      50,
+      0,
+      0,
+      200,
+      1,
+      2
+     ],
+     [
+      59,
+      200,
+      50,
+      0,
+      4,
+      200,
+      1,
+      4
+     ],
+     [
+      65,
+      200,
+      50,
+      0,
+      4,
+      200,
+      4,
+      10
+     ],
+     [
+      88,
+      200,
+      50,
+      0,
+      3,
+      200,
+      4,
+      10
+     ],
+     [
+      108,
+      200,
+      50,
+      0,
+      2,
+      200,
+      4,
+      10
+     ],
+     [
+      128,
+      200,
+      50,
+      0,
+      1,
+      200,
+      4,
+      10
+     ],
+     [
+      148,
+      200,
+      50,
+      0,
+      0,
+      200,
+      4,
+      10
+     ],
+     [
+      160,
+      200,
+      50,
+      0,
+      0,
+      200,
+      4,
+      2
+     ],
+     [
+      175,
+      200,
+      50,
+      0,
+      0,
+      200,
+      2,
+      10
+     ],
+     [
+      179,
+      200,
+      50,
+      0,
+      0,
+      200,
+      2,
+      0
+     ],
+     [
+      205,
+      200,
+      50,
+      0,
+      0,
+      200,
+      0,
+      10
+     ],
+     [
+      265,
+      200,
+      50,
+      0,
+      2,
+      200,
+      0,
+      4
+     ],
+     [
+      273,
+      200,
+      50,
+      0,
+      12,
+      200,
+      0,
+      4
+     ],
+     [
+      280,
+      200,
+      50,
+      0,
+      12,
+      200,
+      4,
+      10
+     ],
+     [
+      281,
+      220,
+      58,
+      40,
+      14,
+      400,
+      4,
+      10
+     ],
+     [
+      288,
+      320,
+      58,
+      40,
+      14,
+      400,
+      4,
+      10
+     ]
+    ]
+   }
+  },
+  "AMMO2": {
+   "map": 1,
+   "skill": 2,
+   "tics": 310,
+   "captures": 311,
+   "end": "complete",
+   "what": "skill 2: the same commands, nothing doubled",
+   "observed": {
+    "hits": [],
+    "pickups": [
+     [
+      9,
+      60,
+      0,
+      0,
+      0,
+      200,
+      1,
+      10
+     ],
+     [
+      19,
+      110,
+      0,
+      0,
+      0,
+      200,
+      1,
+      10
+     ],
+     [
+      27,
+      160,
+      0,
+      0,
+      0,
+      200,
+      1,
+      10
+     ],
+     [
+      35,
+      160,
+      4,
+      0,
+      0,
+      200,
+      1,
+      10
+     ],
+     [
+      43,
+      160,
+      24,
+      0,
+      0,
+      200,
+      1,
+      10
+     ],
+     [
+      51,
+      160,
+      32,
+      0,
+      0,
+      200,
+      1,
+      2
+     ],
+     [
+      59,
+      160,
+      32,
+      0,
+      2,
+      200,
+      1,
+      4
+     ],
+     [
+      65,
+      160,
+      32,
+      0,
+      2,
+      200,
+      4,
+      10
+     ],
+     [
+      88,
+      160,
+      32,
+      0,
+      1,
+      200,
+      4,
+      10
+     ],
+     [
+      108,
+      160,
+      32,
+      0,
+      0,
+      200,
+      4,
+      10
+     ],
+     [
+      120,
+      160,
+      32,
+      0,
+      0,
+      200,
+      4,
+      2
+     ],
+     [
+      135,
+      160,
+      32,
+      0,
+      0,
+      200,
+      2,
+      10
+     ],
+     [
+      153,
+      160,
+      31,
+      0,
+      0,
+      200,
+      2,
+      10
+     ],
+     [
+      179,
+      160,
+      31,
+      0,
+      0,
+      200,
+      2,
+      0
+     ],
+     [
+      209,
+      160,
+      31,
+      0,
+      0,
+      200,
+      0,
+      10
+     ],
+     [
+      265,
+      160,
+      31,
+      0,
+      1,
+      200,
+      0,
+      4
+     ],
+     [
+      273,
+      160,
+      31,
+      0,
+      6,
+      200,
+      0,
+      4
+     ],
+     [
+      280,
+      160,
+      31,
+      0,
+      6,
+      200,
+      4,
+      10
+     ],
+     [
+      281,
+      170,
+      35,
+      20,
+      7,
+      400,
+      4,
+      10
+     ],
+     [
+      288,
+      220,
+      35,
+      20,
+      7,
+      400,
+      4,
+      10
+     ]
+    ]
+   }
+  },
+  "DROP0": {
+   "map": 2,
+   "skill": 0,
+   "tics": 410,
+   "captures": 411,
+   "end": "complete",
+   "what": "skill 0: a dropped clip (half a clip, doubled) and a dropped shotgun (one load, doubled)",
+   "observed": {
+    "hits": [],
+    "pickups": [
+     [
+      18,
+      49,
+      0,
+      0,
+      0,
+      200,
+      1,
+      10
+     ],
+     [
+      32,
+      48,
+      0,
+      0,
+      0,
+      200,
+      1,
+      10
+     ],
+     [
+      46,
+      47,
+      0,
+      0,
+      0,
+      200,
+      1,
+      10
+     ],
+     [
+      60,
+      46,
+      0,
+      0,
+      0,
+      200,
+      1,
+      10
+     ],
+     [
+      74,
+      45,
+      0,
+      0,
+      0,
+      200,
+      1,
+      10
+     ],
+     [
+      88,
+      44,
+      0,
+      0,
+      0,
+      200,
+      1,
+      10
+     ],
+     [
+      102,
+      43,
+      0,
+      0,
+      0,
+      200,
+      1,
+      10
+     ],
+     [
+      116,
+      42,
+      0,
+      0,
+      0,
+      200,
+      1,
+      10
+     ],
+     [
+      130,
+      41,
+      0,
+      0,
+      0,
+      200,
+      1,
+      10
+     ],
+     [
+      144,
+      40,
+      0,
+      0,
+      0,
+      200,
+      1,
+      10
+     ],
+     [
+      158,
+      39,
+      0,
+      0,
+      0,
+      200,
+      1,
+      10
+     ],
+     [
+      172,
+      38,
+      0,
+      0,
+      0,
+      200,
+      1,
+      10
+     ],
+     [
+      186,
+      37,
+      0,
+      0,
+      0,
+      200,
+      1,
+      10
+     ],
+     [
+      200,
+      36,
+      0,
+      0,
+      0,
+      200,
+      1,
+      10
+     ],
+     [
+      214,
+      35,
+      0,
+      0,
+      0,
+      200,
+      1,
+      10
+     ],
+     [
+      228,
+      34,
+      0,
+      0,
+      0,
+      200,
+      1,
+      10
+     ],
+     [
+      242,
+      33,
+      0,
+      0,
+      0,
+      200,
+      1,
+      10
+     ],
+     [
+      256,
+      32,
+      0,
+      0,
+      0,
+      200,
+      1,
+      10
+     ],
+     [
+      320,
+      42,
+      0,
+      0,
+      0,
+      200,
+      1,
+      10
+     ],
+     [
+      385,
+      42,
+      8,
+      0,
+      0,
+      200,
+      1,
+      2
+     ],
+     [
+      401,
+      42,
+      8,
+      0,
+      0,
+      200,
+      2,
+      10
+     ]
+    ]
+   }
+  },
+  "DROP2": {
+   "map": 2,
+   "skill": 2,
+   "tics": 410,
+   "captures": 411,
+   "end": "complete",
+   "what": "skill 2: the same commands",
+   "observed": {
+    "hits": [],
+    "pickups": [
+     [
+      18,
+      49,
+      0,
+      0,
+      0,
+      200,
+      1,
+      10
+     ],
+     [
+      32,
+      48,
+      0,
+      0,
+      0,
+      200,
+      1,
+      10
+     ],
+     [
+      46,
+      47,
+      0,
+      0,
+      0,
+      200,
+      1,
+      10
+     ],
+     [
+      60,
+      46,
+      0,
+      0,
+      0,
+      200,
+      1,
+      10
+     ],
+     [
+      74,
+      45,
+      0,
+      0,
+      0,
+      200,
+      1,
+      10
+     ],
+     [
+      88,
+      44,
+      0,
+      0,
+      0,
+      200,
+      1,
+      10
+     ],
+     [
+      102,
+      43,
+      0,
+      0,
+      0,
+      200,
+      1,
+      10
+     ],
+     [
+      116,
+      42,
+      0,
+      0,
+      0,
+      200,
+      1,
+      10
+     ],
+     [
+      130,
+      41,
+      0,
+      0,
+      0,
+      200,
+      1,
+      10
+     ],
+     [
+      144,
+      40,
+      0,
+      0,
+      0,
+      200,
+      1,
+      10
+     ],
+     [
+      158,
+      39,
+      0,
+      0,
+      0,
+      200,
+      1,
+      10
+     ],
+     [
+      172,
+      38,
+      0,
+      0,
+      0,
+      200,
+      1,
+      10
+     ],
+     [
+      186,
+      37,
+      0,
+      0,
+      0,
+      200,
+      1,
+      10
+     ],
+     [
+      200,
+      36,
+      0,
+      0,
+      0,
+      200,
+      1,
+      10
+     ],
+     [
+      214,
+      35,
+      0,
+      0,
+      0,
+      200,
+      1,
+      10
+     ],
+     [
+      228,
+      34,
+      0,
+      0,
+      0,
+      200,
+      1,
+      10
+     ],
+     [
+      242,
+      33,
+      0,
+      0,
+      0,
+      200,
+      1,
+      10
+     ],
+     [
+      256,
+      32,
+      0,
+      0,
+      0,
+      200,
+      1,
+      10
+     ],
+     [
+      320,
+      37,
+      0,
+      0,
+      0,
+      200,
+      1,
+      10
+     ],
+     [
+      385,
+      37,
+      4,
+      0,
+      0,
+      200,
+      1,
+      2
+     ],
+     [
+      401,
+      37,
+      4,
+      0,
+      0,
+      200,
+      2,
+      10
+     ]
+    ]
+   }
+  },
+  "HURT0": {
+   "map": 3,
+   "skill": 0,
+   "tics": 300,
+   "captures": 301,
+   "end": "complete",
+   "what": "skill 0: fireball, claw, hitscan, bite and floor damage halved before the thrust and armour",
+   "observed": {
+    "hits": [
+     [
+      0,
+      100,
+      98,
+      0,
+      100,
+      "none",
+      true
+     ],
+     [
+      32,
+      98,
+      96,
+      100,
+      100,
+      "none",
+      true
+     ],
+     [
+      61,
+      96,
+      94,
+      100,
+      99,
+      "TROOP:fireball",
+      true
+     ],
+     [
+      64,
+      94,
+      92,
+      99,
+      99,
+      "none",
+      false
+     ],
+     [
+      68,
+      92,
+      82,
+      99,
+      95,
+      "SERGEANT",
+      true
+     ],
+     [
+      69,
+      82,
+      77,
+      95,
+      93,
+      "TROOP:claw",
+      false
+     ],
+     [
+      91,
+      77,
+      72,
+      93,
+      91,
+      "TROOP:claw",
+      true
+     ],
+     [
+      96,
+      72,
+      67,
+      91,
+      90,
+      "SERGEANT",
+      true
+     ],
+     [
+      98,
+      67,
+      64,
+      90,
+      89,
+      "TROOP:fireball",
+      false
+     ],
+     [
+      115,
+      64,
+      60,
+      89,
+      87,
+      "TROOP:claw",
+      true
+     ],
+     [
+      120,
+      60,
+      58,
+      87,
+      87,
+      "SERGEANT",
+      true
+     ],
+     [
+      128,
+      58,
+      56,
+      87,
+      87,
+      "none",
+      true
+     ],
+     [
+      138,
+      56,
+      55,
+      87,
+      87,
+      "TROOP:claw",
+      true
+     ],
+     [
+      144,
+      55,
+      48,
+      87,
+      84,
+      "SERGEANT",
+      true
+     ],
+     [
+      145,
+      48,
+      40,
+      84,
+      80,
+      "TROOP:claw",
+      false
+     ],
+     [
+      160,
+      40,
+      38,
+      80,
+      80,
+      "none",
+      true
+     ],
+     [
+      162,
+      38,
+      36,
+      80,
+      79,
+      "TROOP:claw",
+      false
+     ],
+     [
+      167,
+      36,
+      32,
+      79,
+      77,
+      "TROOP:claw",
+      true
+     ],
+     [
+      168,
+      32,
+      26,
+      77,
+      75,
+      "SERGEANT",
+      false
+     ],
+     [
+      170,
+      26,
+      21,
+      75,
+      73,
+      "POSSESSED",
+      false
+     ],
+     [
+      185,
+      21,
+      18,
+      73,
+      72,
+      "TROOP:claw",
+      true
+     ],
+     [
+      191,
+      18,
+      11,
+      72,
+      69,
+      "TROOP:claw",
+      true
+     ],
+     [
+      192,
+      11,
+      6,
+      69,
+      68,
+      "SERGEANT",
+      false
+     ],
+     [
+      207,
+      6,
+      3,
+      68,
+      67,
+      "TROOP:claw",
+      true
+     ],
+     [
+      214,
+      3,
+      0,
+      67,
+      65,
+      "TROOP:claw",
+      false
+     ]
+    ]
+   }
+  },
+  "HURT2": {
+   "map": 3,
+   "skill": 2,
+   "tics": 300,
+   "captures": 301,
+   "end": "complete",
+   "what": "skill 2: the same commands",
+   "observed": {
+    "hits": [
+     [
+      0,
+      100,
+      95,
+      0,
+      100,
+      "none",
+      true
+     ],
+     [
+      32,
+      95,
+      91,
+      100,
+      99,
+      "none",
+      true
+     ],
+     [
+      61,
+      91,
+      87,
+      99,
+      97,
+      "TROOP:fireball",
+      true
+     ],
+     [
+      64,
+      87,
+      83,
+      97,
+      96,
+      "none",
+      false
+     ],
+     [
+      68,
+      83,
+      64,
+      96,
+      87,
+      "SERGEANT",
+      true
+     ],
+     [
+      69,
+      64,
+      54,
+      87,
+      82,
+      "TROOP:claw",
+      false
+     ],
+     [
+      91,
+      54,
+      44,
+      82,
+      77,
+      "TROOP:claw",
+      true
+     ],
+     [
+      96,
+      44,
+      40,
+      77,
+      76,
+      "none",
+      true
+     ],
+     [
+      98,
+      40,
+      30,
+      76,
+      71,
+      "TROOP:fireball",
+      false
+     ],
+     [
+      122,
+      30,
+      20,
+      71,
+      66,
+      "TROOP:claw",
+      true
+     ],
+     [
+      128,
+      20,
+      16,
+      66,
+      65,
+      "none",
+      true
+     ],
+     [
+      146,
+      16,
+      6,
+      65,
+      60,
+      "TROOP:claw",
+      true
+     ],
+     [
+      160,
+      6,
+      0,
+      60,
+      57,
+      "POSSESSED",
+      false
+     ]
+    ]
+   }
+  },
+  "SPLASH0": {
+   "map": 4,
+   "skill": 0,
+   "tics": 144,
+   "captures": 145,
+   "end": "complete",
+   "what": "skill 0: a barrel blast of 1 halved to 0 (its pain roll kept) and a blast of 54 halved",
+   "observed": {
+    "hits": [
+     [
+      57,
+      100,
+      100,
+      0,
+      0,
+      "PLAYER",
+      true
+     ],
+     [
+      71,
+      100,
+      88,
+      0,
+      0,
+      "none",
+      true
+     ]
+    ]
+   }
+  },
+  "SPLASH2": {
+   "map": 4,
+   "skill": 2,
+   "tics": 144,
+   "captures": 145,
+   "end": "complete",
+   "what": "skill 2: the same commands",
+   "observed": {
+    "hits": [
+     [
+      57,
+      100,
+      99,
+      0,
+      0,
+      "PLAYER",
+      true
+     ],
+     [
+      71,
+      99,
+      75,
+      0,
+      0,
+      "none",
+      true
+     ]
+    ]
+   }
+  },
+  "BITE2": {
+   "map": 5,
+   "skill": 2,
+   "tics": 300,
+   "captures": 99,
+   "end": "exit:97",
+   "what": "skill 2: a demon bite of damage >= health on sector special 11 capped at health - 1",
+   "observed": {
+    "hits": [
+     [
+      0,
+      100,
+      80,
+      0,
+      0,
+      "none",
+      true
+     ],
+     [
+      32,
+      80,
+      60,
+      0,
+      0,
+      "none",
+      true
+     ],
+     [
+      64,
+      60,
+      40,
+      0,
+      0,
+      "none",
+      true
+     ],
+     [
+      96,
+      40,
+      1,
+      0,
+      0,
+      "SERGEANT",
+      true
+     ]
+    ]
+   }
+  },
+  "BITE0": {
+   "map": 5,
+   "skill": 0,
+   "tics": 300,
+   "captures": 194,
+   "end": "exit:192",
+   "what": "skill 0: the same room, every blow halved before the cap",
+   "observed": {
+    "hits": [
+     [
+      0,
+      100,
+      90,
+      0,
+      0,
+      "none",
+      true
+     ],
+     [
+      32,
+      90,
+      80,
+      0,
+      0,
+      "none",
+      true
+     ],
+     [
+      64,
+      80,
+      70,
+      0,
+      0,
+      "none",
+      true
+     ],
+     [
+      96,
+      70,
+      50,
+      0,
+      0,
+      "SERGEANT",
+      true
+     ],
+     [
+      128,
+      50,
+      40,
+      0,
+      0,
+      "none",
+      true
+     ],
+     [
+      154,
+      40,
+      34,
+      0,
+      0,
+      "SERGEANT",
+      true
+     ],
+     [
+      160,
+      34,
+      24,
+      0,
+      0,
+      "none",
+      true
+     ],
+     [
+      178,
+      24,
+      20,
+      0,
+      0,
+      "SERGEANT",
+      true
+     ],
+     [
+      192,
+      20,
+      10,
+      0,
+      0,
+      "none",
+      true
+     ]
+    ]
+   }
+  },
+  "ESCAPE": {
+   "map": 6,
+   "skill": 2,
+   "tics": 170,
+   "captures": 171,
+   "end": "escape:77",
+   "what": "skill 2: idle embedded imps stuck in place; a two-barrel blast takes a corpse out of the room",
+   "observed": {
+    "hits": [
+     [
+      65,
+      100,
+      80,
+      0,
+      0,
+      "PLAYER",
+      true
+     ]
+    ],
+    "escape": {
+     "tic": 77,
+     "spawn": "1,256",
+     "before": [
+      1.0,
+      256.0,
+      50
+     ],
+     "after": [
+      -21.124664306640625,
+      256.00843811035156,
+      -127
+     ],
+     "momentum_after": [
+      -20.050491333007812,
+      0.0076446533203125
+     ],
+     "blasts": [
+      3,
+      4
+     ]
+    },
+    "stood": {
+     "1,256": 78
+    },
+    "moved_inside": []
+   }
+  },
+  "SMALL": {
+   "map": 7,
+   "skill": 2,
+   "tics": 277,
+   "captures": 278,
+   "end": "complete",
+   "what": "skill 2: embedded imps chasing, stuck in place; pistol and shotgun thrust, no escape",
+   "observed": {
+    "hits": [
+     [
+      84,
+      100,
+      94,
+      0,
+      0,
+      "TROOP:fireball",
+      true
+     ],
+     [
+      134,
+      94,
+      91,
+      0,
+      0,
+      "TROOP:fireball",
+      true
+     ]
+    ],
+    "escape": null,
+    "stood": {
+     "1,256": 278,
+     "512,10": 278,
+     "960,434": 278
+    },
+    "moved_inside": []
+   }
+  }
+ }
+}

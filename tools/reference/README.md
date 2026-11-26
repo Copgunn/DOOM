@@ -844,3 +844,23 @@ DOOM2.WAD).
   encoder [level_snapshot_wire27.py](level_snapshot_wire27.py), the witness counts per caller and class, and wire 27's
   decision for every caller and class) and [wire27_results.json](../../tests/reference/wire27_results.json). The Rust
   side is `cargo test -p doom-sim --test wire27_intercept`.
+
+## Wire 28: the easy skills and the monster escape witness against the genuine engine
+
+- [wire28_wad.py](wire28_wad.py) draws [wire28.wad](../../tests/reference/wire28_wads) (nine map slots built with the
+  M6a room builder, imported read-only: a pickup corridor, a corridor of two drops, a room of attackers on a hurting
+  floor, two barrels, a sector-11 room with a demon, and one convex room with a west notch and a 45-degree corner in
+  four versions: imps embedded below spawn rule S''s dropped margin, a barrel and the player embedded) and the twelve
+  demo scripts under [wire28_scripts](../../tests/reference/wire28_scripts); `--check` compares them. The skill byte of
+  each demo header is patched after the frozen script format, as `m6a_wad.SKILL_OVERRIDE` does.
+- [wire28_goldens.py](wire28_goldens.py) builds the M6a runner through `wire27_goldens.build` (read-only) in three
+  builds (strict, the claim; overflow and address, whose streams must equal strict's; address runs use
+  `detect_leaks=0`, so not LeakSanitizer coverage) and four variants (the strict build with one rule of p_inter.c
+  removed or moved, made in memory: no doubling, no halving, the halving after the thrust, the halving after the
+  sector-11 cap). It writes or `--check`s [wire28_state.txt](../../tests/reference/wire28_state.txt) (DSIM44 state
+  digests per tic through the independent encoder [level_snapshot_wire28.py](level_snapshot_wire28.py), each item's
+  end, and each variant's first differing capture), [wire28_skill_state.txt](../../tests/reference/wire28_skill_state.txt)
+  (the M6a items SKILL0 and SKILL1 through `m6a_state.py`'s state variant, read-only, over DSIM44) and
+  [wire28_results.json](../../tests/reference/wire28_results.json) (the observed pickups, hits, the escape and the stuck
+  imps). Two in-process overrides are declared in its `OVERRIDES`. The Rust side is
+  `cargo test -p doom-sim --lib wire28_genuine` and `cargo test -p doom-game --test wire28_genuine`.
