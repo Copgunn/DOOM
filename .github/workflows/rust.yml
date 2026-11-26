@@ -675,6 +675,9 @@ jobs:
           python3 tools/reference/wire28_wad.py --check
           python3 tools/reference/wire28_goldens.py --work "$RUNNER_TEMP/wire28" --check --selftest
           python3 tools/reference/wire28_fin.py --work "$RUNNER_TEMP/wire28_fin" --check
+      - name: Certificate audit 1 (the independent reader's differential of the genuine P_InterceptVector text against intercept_vector.rs, counts check and two planted faults)
+        if: env.DOCS_ONLY != 'true'
+        run: python3 tools/reference/wire27_read.py --work "$RUNNER_TEMP/wire27_read" --check --selftest
       - name: Documentation-only fast path
         if: env.DOCS_ONLY == 'true'
         run: echo "documentation-only change, so the genuine M6a runs were skipped"
