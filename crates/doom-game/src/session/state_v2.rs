@@ -412,6 +412,16 @@ impl SessionStateV2 {
         let in_level = self.gamestate == GameState::Level;
         let sound = &self.sound.state;
         let level = layout.level(&self.level)?;
+        // Version 3 alone: every level is set up on the one `gameskill` (g_game.c:484, 1450).
+        let level_skill = level
+            .field("actors.options")
+            .and_then(|o| o.first().copied());
+        if layout == Layout::V3 && level_skill != Some(self.settings.skill) {
+            return Err(DsesError::SkillAndLevel {
+                skill: self.settings.skill,
+                level: level_skill,
+            });
+        }
         let level_u64 = |path: &str| {
             level
                 .field(path)

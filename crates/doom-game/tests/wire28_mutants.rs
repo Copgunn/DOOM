@@ -6,6 +6,7 @@ mod m6a;
 use doom_game::app::{App, GameData, Host, SessionConfig, Timestamp};
 use doom_game::app::{FinaleMeltSessionTicReport, MeltStepShown, Recorder};
 use doom_game::session::state::DsesError;
+use doom_game::session::state_v2::SessionStateV2;
 use doom_game::session::state_v3::SessionStateV3;
 use doom_game::session::{ModeSetting, Session, SessionSettings};
 
@@ -95,4 +96,42 @@ fn check_refuses_a_state_out_of_its_domain() {
     let mut bad = state;
     bad.0.settings.screenblocks = 9;
     assert!(matches!(bad.check(), Err(DsesError::Value("screenblocks"))));
+}
+
+/// Owner's ruling 2 of 2026-11-26: `DSES` version 3 refuses a state whose skill byte disagrees
+/// with its embedded level's skill, with `SkillAndLevel`, in `check` and in `decode`; version 2
+/// still accepts the same disagreement (its acceptance is frozen). Every level of a game is set up
+/// on the one `gameskill` (g_game.c:484, 1450), so no session writes such a state. With
+/// `WIRE28_DSES3_SEED` set to a path the refused version 3 bytes are also written there (the fuzz
+/// seed `fuzz/corpus/wire28_dses3/skill_and_level`).
+#[test]
+fn dses_version_3_refuses_a_skill_byte_its_level_does_not_have() {
+    let settings = |skill| SessionSettings {
+        map: 1,
+        skill,
+        screenblocks: 10,
+    };
+    let data = m6a::data(&m6a::item("SKILL0"), None);
+    let state = Session::new_finale_and_melt_wire28(data, settings(0))
+        .unwrap()
+        .save_v3()
+        .unwrap();
+    for skill in [1, 2, 3] {
+        let mut bad = state.clone();
+        bad.0.settings.skill = skill;
+        let refused = |r: Result<(), DsesError>| matches!(r, Err(DsesError::SkillAndLevel { skill: s, level: Some(0) }) if s == skill);
+        assert!(refused(bad.check()), "{skill}");
+        assert!(refused(SessionStateV3::decode(&bad.encode()).map(|_| ())));
+        if let (1, Ok(path)) = (skill, std::env::var("WIRE28_DSES3_SEED")) {
+            std::fs::write(path, bad.encode()).unwrap();
+        }
+    }
+    let data = m6a::data(&m6a::item("SKILL2"), None);
+    let mut v2 = Session::new_finale_and_melt(data, settings(2))
+        .unwrap()
+        .save_v2()
+        .unwrap();
+    v2.settings.skill = 3;
+    assert!(v2.check().is_ok());
+    assert!(SessionStateV2::decode(&v2.encode()).is_ok());
 }

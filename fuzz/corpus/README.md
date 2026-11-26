@@ -194,3 +194,11 @@ commercial assets are loaded. Corpus/artifacts remain ignored or temporary.
 See [commands](../../docs/TESTING.md#canonical-demon-execution-binding) and
 [actual results](../../docs/validation/M3F5.md). All target builds do not imply all
 historical targets were recampaigned. detect_leaks=0 means no leak coverage.
+
+## Wire 28 `DSES` version 3 seed
+
+`wire28_dses3/skill_and_level` (84,022 bytes, SHA-256
+`545b1f2d90d9b74d4011b632f6ad544cbf7b8f8cdec47c36d82b8b2472a9d06d`) is a synthetic state: the
+SKILL0 item's wire 28 session saved at its start, with the skill byte set to 1 against an embedded
+level of skill 0, which the reader refuses (`SkillAndLevel`). No game assets. Regenerate with
+`WIRE28_DSES3_SEED=PATH cargo test -p doom-game --test wire28_mutants dses_version_3`.

@@ -122,6 +122,15 @@ pub enum DsesError {
     /// display disagree (a session mixes the owed buffer exactly when its melt ends, so a saved
     /// state has a pending display exactly when it has a melt in progress).
     MeltAndPendingDisplay,
+    /// `DSES` version 3 only (owner's ruling 2 of 2026-11-26): the skill byte and the embedded
+    /// level's skill (`actors.options[0]` of its DSIM44 capture) disagree. Versions 1 and 2 make
+    /// no such check; their acceptance is frozen.
+    SkillAndLevel {
+        /// The state's skill byte.
+        skill: u8,
+        /// The embedded level's skill byte, if the capture names one.
+        level: Option<u8>,
+    },
 }
 
 impl fmt::Display for DsesError {
