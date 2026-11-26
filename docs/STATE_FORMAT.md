@@ -3042,8 +3042,11 @@ field for field** ([table](#session-state-dses-version-2-m6a-part-2)), with thre
 and the embedded level is a [`DSIM` version 44](#dsim-v44--wire-28-the-easy-skills-and-e1m7-on-skill-3) capture (a version 42 or 43 capture
 is refused, `DsesError::Level`). The embedded display and sound are `DDSP` version 4 and `DSND` version 3, **unchanged**: no new version of
 either. The decoder's checks and the restore are version 2's with those three differences. The older configurations refuse skills 0 and 1
-(`NotYet(EasySkill)`). Tests, and the restore-and-continue test at 60 save points (Rust-only):
-[record §6](validation/WIRE28.md#6-dses-version-3-restore-and-continue). The reader is fuzzed.
+(`NotYet(EasySkill)`). Tests, and the restore-and-continue test at 68 save points (Rust-only):
+[record §6](validation/WIRE28.md#6-dses-version-3-restore-and-continue). The reader is fuzzed. **Named limit (S1, open decision for the owner):** the
+decoder accepts a state whose skill byte disagrees with the embedded level's `actors.options[0]` (`check_as` in `state_v2.rs` checks only the
+settings' skill domain). Version 2 had the same gap for a 2/3 mismatch; version 3 widens it to the skills that change rules. No session writes such a
+state, so it arises only from a forged file; the engine is not changed in this pull request ([record](validation/WIRE28.md#limits)).
 
 **Demo version 3** is not a new file format: it is the version-110 Episode 1 demo of the session, with the header's skill byte (byte 1,
 `DEMO_SKILL_INDEX`) allowed to be 0 to 3 where version 2 allows 2 and 3 (`parse_demo_episode1_v3`, `write_demo_episode1_v3`,

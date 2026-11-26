@@ -1294,7 +1294,10 @@ A halved blow of 1 is 0: it is still a hit. The thrust is 0, the attacker is set
 the pain state is entered (quirk Q-p_inter-799). The halving applies to every source that reaches `P_DamageMobj` for the player:
 fireball, claw, hitscan, floor damage and splash (**observed**, HURT0 against HURT2, SPLASH0 against SPLASH2). A telefrag
 never targets the player and crushers are not admitted, so no other source reaches it. Rust applies the halving in three places that each build a damage request: `DamagePlan::current_original_in`, the
-Demon's `strike_player` and `damage_actor`.
+Demon's `strike_player` and `damage_actor`. **`damage_actor` is an API path without the cap** (since wire 23, not changed here): it
+halves on `sk_baby` but never applies the sector-11 cap, so on a special-11 sector at skill 2 a blow of 150 on a player of 100 health kills
+where the C leaves 1 (the reader's probe on wire 28, uncommitted). Nothing in `doom-play` calls it for the player; the open decision is in
+[the record's Limits](validation/WIRE28.md#limits).
 
 Order is observable and was tested by altered genuine builds (**observed**): halving after the thrust is caught at HURT0 capture
 62 and BITE0 capture 97, halving after the sector-11 cap at BITE0 capture 193, no halving at HURT0 and SPLASH0 from the first
@@ -1305,11 +1308,13 @@ hit, no doubling at AMMO0 capture 10 ([record §3](validation/WIRE28.md#3-the-tw
 - **(read)** `P_DamageMobj`'s cap (836-842) applies to every damage source on a player in a special-11 sector, and the sector's
   own per-32-tic 20 points go through the same function (p_spec.c:1054-1063); the level exits when health is 10 or less
   (p_spec.c:1061-1062). A lethal blow there leaves 1 health and the exit comes at the next tic (quirk Q-p_inter-838).
-- **(observed, silent divergence in wires 24 to 27)** The Demon and Spectre bite on the player skipped the cap in `strike_player`:
+- **(observed, silent divergence in wires 23 to 27)** The Demon and Spectre bite on the player skipped the cap in `strike_player`:
   BITE2, a demon bite of at least the player's health on a special-11 sector, is equal to the genuine engine under wire 28 and
   first differs under wire 27 at capture 97 (under wire 27 the bite in session tic 96 kills the player; the genuine engine caps to
   health 1 and the level exits at tic 97). The frozen wires keep the divergence (they are frozen, and changing them would change
-  expected bytes); wire 28 applies the cap to the bite, gated on `has_easy_skills`. Options not taken: leave wire 28 diverging;
+  expected bytes); wire 28 applies the cap to the bite, gated on `has_easy_skills`. Wires 23 to 26 share the code
+  (**observed**, Rust-only, by the independent reader's scratch probe, not committed: player health 4, every sector special 11, a Demon in
+  `S_SARG_ATK2`; wires 23 to 27 each end with the player dead, health -28, wire 28 leaves health 1 as the C does). Options not taken: leave wire 28 diverging;
   refuse the tic.
 
 ### 8.4 Spawn rule S'' and the escape witness
@@ -1317,12 +1322,15 @@ hit, no doubling at AMMO0 capture 10 ([record §3](validation/WIRE28.md#3-the-tw
 - **(read)** `P_SpawnMapThing` (p_mobj.c:708-797) filters by skill bit and mode (743-751) and spawns at the THING's position with
   `P_SpawnMobj` (776-781): no position check. A monster whose box overlaps a one-sided wall therefore starts inside it. A move is
   refused by `PIT_CheckLine` only when the destination box *straddles* a one-sided line (p_map.c:197-198, 211-212), so a walker
-  already embedded stays still (**observed**: three embedded imps, SMALL, 278 captures, standing while chasing), and a thing
+  whose destination box still straddles a wall is stopped, but one that overlaps a wall by less than its step can walk away (rule S'
+  already admitted overlaps up to 2r - 31). What holds is **(inferred** from the arithmetic, not run**)**: every monster that only S''
+  admits overlaps by more than 2r - 31 (at least 9 for r = 20, 29 for the Demon), more than every admitted speed (8 to 10), so those
+  are stuck (**observed**: three embedded imps, SMALL, 278 captures, standing while chasing), and a thing
   that is thrown can be carried wholly to the other side in one move, after which it moves freely (quirk Q-p_map-189;
   **observed**, ESCAPE).
 - **(read)** `P_XYMovement` clamps momentum to `MAXMOVE` (30 units) per axis (p_mobj.c:137-145), splits a step only for
   **positive** components above 15 (152-157, quirk Q-p_mobj-152), calls `P_TryMove` and on a blocked non-player non-missile move
-  zeroes momentum (166-186, 189). So the thrust of one tic is all a body gets; it cannot be stored across tics.
+  zeroes momentum (166-186, 189). So for a body whose move is blocked or which is embedded, the thrust of one tic is all it gets and cannot be stored across tics (a free body keeps its momentum, with friction).
 - **Rule S'' (owner's option 1 of §1.17).** Rule S' (the spawn rule of wires 23-27) refuses a mover whose box is inside a margin
   of the boundary; S'' drops that margin clause for monsters (barrels and the player keep it) and puts a **witness** in its place:
   after every accepted XY move of a non-player, non-missile mover on a map with a boundary, the same parity test the barrels use
@@ -1344,13 +1352,14 @@ What follows is the arithmetic that bounds an escape, independent of that distan
 
 - Thrust is `damage * 8192 * 100 / mass` fixed-point units, that is damage/8 map units at mass 100 (Zombieman 20 health,
   Shotgun guy 30, Imp 60), damage/32 at mass 400 (Demon, Spectre) and damage/80 at the Baron (p_inter.c:817). A corpse gets no
-  thrust (p_inter.c:675, 787-791; **observed**). Momentum is zeroed by a blocked move, so all of it must arrive in one tic: at most
+  thrust (p_inter.c:675, 787-791; **(read)**: no item lands a blow on a corpse, so nothing observed it). Momentum is zeroed by a blocked move, so all of it must arrive in one tic: at most
   health - 1 of non-lethal damage plus one lethal blow.
 - To escape the body needs one step larger than d + r (distance from the wall plus radius), the step being at most 30
   (p_mobj.c:137-145); positive components above 15 are halved (152), so no body with r of 20 or more crosses an east or north
   wall in one move, while a west, south or diagonal-toward-minus move can (west **observed**, east and north inferred).
 - Largest single sources: barrel or rocket splash 128 (p_map.c:1179-1194), rocket direct 160 at most, a berserk punch 200 at most
   (p_pspr.c:476-479), a shotgun pellet 15, a pistol bullet 15, the chainsaw none (p_inter.c:810).
+- The chaingunner (health 70, radius 20, in the wire 28 roster): barrels alone (69 + 128)/8 = 24.6, so an escape is possible for d under 4.6 **(inferred)**.
 - For the imp: two barrels alone (59 + 128)/8 = 23.4, so d under 3.4 (**observed** 49 + 128 from d = 1); a lethal rocket after a
   non-lethal 27.4 gives d under 7.4; berserk of 30 or more gives d under 10; a single rocket on a full-health imp gives at most 20,
   no escape; a shotgun alone at most 9.3, no escape (**observed**, SMALL). Zombieman and Shotgun guy by barrels alone: 18.4 and

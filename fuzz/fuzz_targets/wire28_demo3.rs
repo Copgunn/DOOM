@@ -3,7 +3,8 @@
 //! byte 0, demo from the rest) and `SessionDemo::parse_v3` on arbitrary bytes. Never a panic; an
 //! accepted demo that `write_demo_episode1_v3` / `bytes_v3` write (they refuse the commands the
 //! readers pass on to the session: a record's two top button bits, a marker-valued byte) writes
-//! bytes that parse to the same commands, the two readers agree, and the version 2 reader agrees
+//! bytes that parse to the same commands (each reader is checked against its own writer; the two
+//! readers are not compared with each other on one input), and the version 2 reader agrees
 //! on skills 2 and 3 and refuses skills 0 and 1. Rust-only safety. Run with `-max_len=4096`.
 use doom_game::session::demo::SessionDemo;
 use doom_sim::demo::{parse_demo_episode1_v2, parse_demo_episode1_v3, write_demo_episode1_v3};
