@@ -641,7 +641,10 @@ impl Simulation {
             .as_deref()
             .and_then(|r| r.actor_type(ty))
             .map_or(Fixed::ZERO, ActorTypeDef::radius);
-        if !self.spawn_admitted(position, radius, 1008, true)
+        // Spawn rule S'' (wire 28): a monster has no margin clause here either, as in the
+        // THINGS batch; `P_SpawnMobj` has no position check (p_mobj.c:479-534). Owner's
+        // ruling 1 of 2026-11-26. `margined` is true for every other type and wire.
+        if !self.spawn_admitted(position, radius, 1008, self.margined(ty))
             || matches!(height,SpawnHeight::Absolute(z) if !crate::sight::within(z,1018))
         {
             return Err(MonsterError::Arithmetic.into());

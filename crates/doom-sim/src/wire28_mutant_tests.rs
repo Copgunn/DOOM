@@ -58,3 +58,48 @@ fn dsim44_counts_a_skill_2_capture_with_thing_bit_2() {
         assert_eq!(got, Ok((44, spawned as i32)), "{skill:?}");
     }
 }
+
+/// Kills `spawning.rs:201:38` (`&&` → `||` in `Simulation::spawn_type_checks`) and
+/// pins what a direct `spawn_type` of a monster returns (owner's ruling 1 of
+/// 2026-11-26: `preflight_monster_spawn` follows spawn rule S″ too).
+///
+/// The hall of `wire28_tests` (map 6): west wall `x = 0`, the void behind it. An
+/// Imp (radius 20) stands clear of S′'s margin at `x = 11` and inside it below.
+/// Wire 28 admits it embedded, as the THINGS batch does (`P_SpawnMobj` checks no
+/// position, p_mobj.c:479-534); wire 27 refuses it with `Perception(Arithmetic)`,
+/// as before this pull request. A centre in the void is refused on both wires
+/// with that variant (the vertex-rectangle and parity clauses, which S″ keeps).
+/// `preflight_monster_spawn`'s own `Monster(Arithmetic)` is returned for none of
+/// these: line 201 reads the same clauses first. Under the mutant wire 28 refuses
+/// `x = 10`, `5` and `1` with `Perception(Arithmetic)`. Rust-only.
+#[test]
+fn a_direct_monster_spawn_follows_s_double_prime() {
+    let mut l = room(6);
+    l.clear_things();
+    l.add_thing([-300, 0, 0, 1, 7]);
+    let spawn = |v6: bool, x: i16| {
+        let build = if v6 {
+            Simulation::original_player_episode1_v6_level
+        } else {
+            Simulation::original_player_episode1_v5_level
+        };
+        let mut s = build(
+            l.map(),
+            1,
+            Skill::Hard,
+            Default::default(),
+            LevelStart::NewGame,
+        )?;
+        let at = [Fixed::from_map_units(x), Fixed::from_map_units(100)];
+        let id = s.spawn_type(ActorTypeId(T::MT_TROOP.ordinal()), at, SpawnHeight::Floor);
+        Ok::<_, LevelStartError>(id.map(|id| s.actor(id).unwrap().position()[0]))
+    };
+    let margin = Err(SimError::from(PerceptionError::Arithmetic));
+    for x in [11, 10, 5, 1, -5] {
+        let (here, margin) = (Ok(Fixed::from_map_units(x)), || margin.clone());
+        let v6 = if x > 0 { here.clone() } else { margin() };
+        assert_eq!(spawn(true, x).unwrap(), v6, "{x}");
+        let v5 = if x >= 11 { here } else { margin() };
+        assert_eq!(spawn(false, x).unwrap(), v5, "{x}");
+    }
+}
