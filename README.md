@@ -30,6 +30,10 @@ matches, which is what speedrun and tool-assisted (TAS) research need.
 
 *The end-of-episode text crawl (sampled) and its melt: the difference stays black ([how](docs/TESTING.md#readme-animations)).*
 
+![The same recorded commands on a synthetic map at skill 0 and skill 1 side by side with their per-pixel difference; the runs part at tic 32.](docs/media/wire28-skills-side-by-side.gif)
+
+*One recording on skill 0 and skill 1 (Rust frames, each equal to the original engine's; [how](docs/TESTING.md#wire-28-the-easy-skills-and-e1m7-on-skill-3)).*
+
 ## Where it stands
 
 - **Game logic.** One player, six weapons, seven kinds of monster and Episode 1's map features

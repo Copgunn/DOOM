@@ -3393,6 +3393,8 @@ cargo test -p doom-sim --lib wire28_tests
 cargo test -p doom-sim --lib wire28_genuine
 cargo test -p doom-game --test wire28_genuine
 cargo test -p doom-game --test wire28_session
+# the skills 0 and 1 animation, docs/media/wire28-skills-side-by-side.gif (--work outside the repository; --check compares; runs cargo)
+python3 tools/media/wire28_readme_visual.py --work DIR
 cargo test -p doom-play wire28
 # fuzz (nightly, cargo-fuzz; targets wire28_dsim44, wire28_dses3, wire28_demo3)
 cargo +nightly fuzz build --sanitizer address
