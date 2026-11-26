@@ -2,8 +2,14 @@ name: Mutants
 
 # Informational mutation testing of the branch's source diff (M4b decision I12).
 # This is NOT a required check: no ruleset or branch protection names it, and its
-# workflow and job names ("Mutants", "Mutants plan", "Mutants shard k/N", "Mutants summary") do
-# not collide with the required check names reported by rust.yml.
+# workflow and job names ("Mutants", "Mutants plan", "Mutants shard k/N", "Mutants summary",
+# "Mutants cross-crate self-test") do not collide with the required check names reported by rust.yml.
+#
+# Who judges a mutant (certificate audit 1, 2026-11-26). A mutant of doom-sim, doom-render or
+# doom-sound is judged by its own crate's tests AND doom-game's: doom-game holds the comparisons
+# with the genuine engine that drive those three crates, so with a crate's own tests alone a
+# mutant that only those comparisons catch showed as missed. A mutant of doom-game is judged by
+# doom-game's tests, as before. The self-test job runs one named doom-sim mutant both ways.
 #
 # Triggers:
 #  * workflow_dispatch: only offered by GitHub once this file is on the default
@@ -111,51 +117,62 @@ jobs:
           # missed, 3 timeouts, 4 the unmutated baseline failed. This job is
           # informational: 2 and 3 are findings, reported by the summary job, so
           # they do not fail the shard; any other nonzero status does.
-          # -p is repeated so a diff that touches only the renderer (M5a), the
-          # app core (M5b doom-game) or the sound crate (M5c doom-sound) is mutated too; doom-play (window and device code) is left out; --in-diff still limits mutation to the changed lines.
+          # One cargo-mutants run per group, so each group can name the tests that judge it;
+          # doom-play (window and device code) is left out; --in-diff still limits mutation to the
+          # changed lines, and --shard deals out each group's own list.
           # Cap each test process (per process, not per job). The memory cap is what
           # protects the runner: a mutant that makes a loop endless and allocating must
           # abort instead of starving the runner of memory before any timeout fires. The
           # time limit is only a backstop for a test that outlives cargo-mutants: it sits
-          # above cargo-mutants' own --timeout (300 s) so that cargo-mutants reports an
+          # 30 s above cargo-mutants' own --timeout so that cargo-mutants reports an
           # endless loop as a timeout itself (a lower limit here reported it as caught),
           # and a stray looping test still dies 30 s later. The cap reaches test
           # executables only (cargo runner), not rustc. Bound: --jobs 2 x 2 test threads
           # x 1.5 GB = 6 GB on the 16 GB runner.
-          cat > "$RUNNER_TEMP/capped-runner.sh" <<'EOS'
-          #!/bin/bash
-          ulimit -v 1500000
-          exec timeout 330 "$@"
-          EOS
-          chmod +x "$RUNNER_TEMP/capped-runner.sh"
+          # --timeout is 300 s for doom-game's own tests (as before) and 1500 s where
+          # doom-game's tests are added to another crate's: a missed mutant there runs both
+          # suites to the end, which a 300 s limit would report as a timeout.
           export CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_RUNNER="$RUNNER_TEMP/capped-runner.sh"
-          set +e
-          cargo mutants -p doom-sim -p doom-render -p doom-sound -p doom-game --test-tool nextest --jobs 2 \
-            --cargo-test-arg=--test-threads=2 \
-            --timeout 300 --build-timeout 900 \
-            --in-diff "$RUNNER_TEMP/mutants.patch" \
-            --shard "$SHARD/$SHARDS" --sharding round-robin \
-            --output "$RUNNER_TEMP/mutants-out"
-          rc=$?
-          set -e
-          echo "cargo-mutants exit status: $rc"
-          case "$rc" in
-            0) ;;
-            2) echo "::warning::shard $SHARD/$SHARDS: missed mutants (see the summary job)" ;;
-            3) echo "::warning::shard $SHARD/$SHARDS: mutant timeouts (see the summary job)" ;;
-            *) exit "$rc" ;;
-          esac
+          results="$RUNNER_TEMP/mutants-results"
+          mkdir -p "$results"
+          judge() {
+            local group=$1 limit=$2 rc
+            shift 2
+            printf '#!/bin/bash\nulimit -v 1500000\nexec timeout %s "$@"\n' "$((limit + 30))" > "$RUNNER_TEMP/capped-runner.sh"
+            chmod +x "$RUNNER_TEMP/capped-runner.sh"
+            echo "::group::$group: cargo mutants $*"
+            cargo mutants "$@" --test-tool nextest --jobs 2 \
+              --cargo-test-arg=--test-threads=2 \
+              --timeout "$limit" --build-timeout 900 \
+              --in-diff "$RUNNER_TEMP/mutants.patch" \
+              --shard "$SHARD/$SHARDS" --sharding round-robin \
+              --output "$RUNNER_TEMP/mutants-out/$group"
+            rc=$?
+            echo "::endgroup::"
+            echo "$group: cargo-mutants exit status: $rc"
+            for kind in caught missed timeout unviable; do
+              cp "$RUNNER_TEMP/mutants-out/$group/mutants.out/$kind.txt" "$results/$group.$kind.txt" 2>/dev/null || true
+            done
+            cp "$RUNNER_TEMP/mutants-out/$group/mutants.out/outcomes.json" "$results/$group.outcomes.json" 2>/dev/null || true
+            echo "$group $rc" >> "$results/groups.txt"
+            case "$rc" in
+              0) ;;
+              2) echo "::warning::shard $SHARD/$SHARDS, $group: missed mutants (see the summary job)" ;;
+              3) echo "::warning::shard $SHARD/$SHARDS, $group: mutant timeouts (see the summary job)" ;;
+              *) exit "$rc" ;;
+            esac
+          }
+          judge doom-sim 1500 -p doom-sim --test-package doom-sim --test-package doom-game
+          judge doom-render 1500 -p doom-render --test-package doom-render --test-package doom-game
+          judge doom-sound 1500 -p doom-sound --test-package doom-sound --test-package doom-game
+          judge doom-game 300 -p doom-game
       - name: Upload this shard's results
         if: ${{ always() && steps.diff.outputs.empty != 'true' }}
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: mutants-shard-${{ matrix.shard }}
-          path: |
-            ${{ runner.temp }}/mutants-out/mutants.out/outcomes.json
-            ${{ runner.temp }}/mutants-out/mutants.out/missed.txt
-            ${{ runner.temp }}/mutants-out/mutants.out/caught.txt
-            ${{ runner.temp }}/mutants-out/mutants.out/timeout.txt
-            ${{ runner.temp }}/mutants-out/mutants.out/unviable.txt
+          # One flat directory, <group>.<kind>.txt, so the layout does not depend on which groups ran.
+          path: ${{ runner.temp }}/mutants-results/
           if-no-files-found: warn
           retention-days: 30
 
@@ -187,12 +204,12 @@ jobs:
           for d in shards:
             counts = []
             for k in kinds:
-              f = d / f"{k}.txt"
-              items = [l.rstrip() for l in f.read_text().splitlines() if l.strip()] if f.exists() else []
+              items = [l.rstrip() for f in sorted(d.glob(f"*.{k}.txt")) for l in f.read_text().splitlines() if l.strip()]
               lines[k] += items
               counts.append(len(items))
             rows.append((d.name.rsplit("-", 1)[1], counts))
           print("## Mutation testing (informational)\n")
+          print("Judged by: doom-sim, doom-render and doom-sound mutants by their own crate's tests and doom-game's; doom-game mutants by doom-game's tests.\n")
           print(f"Shard jobs result: `{os.environ['SHARDS_RESULT']}`; shards with results: {len(shards)} of {os.environ['SHARD_COUNT']}.\n")
           if len(shards) < int(os.environ["SHARD_COUNT"]):
             print("Some shards uploaded nothing (empty diff, failed or cancelled shard): the totals below are incomplete.\n")
@@ -208,3 +225,58 @@ jobs:
               print("None.\n")
           print("A missed or timed-out mutant is a finding to resolve, not a failure of this job; see docs/TESTING.md, Mutation testing.")
           PY
+
+  selftest:
+    # Shows that the cross-crate judgment does what the header says, on one named mutant that
+    # does not depend on the diff: in doom-sim's Diagnostic::v40_skill the guard of skill 0 is
+    # replaced by `false`. doom-sim's own tests are reported; with doom-game's tests added the
+    # mutant must be caught, or this job fails. If the own-tests run stops missing it, the case
+    # no longer shows the difference and wants replacing (a warning, not a failure).
+    name: Mutants cross-crate self-test
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.label.name == 'run-mutants' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Install stable Rust
+        run: rustup toolchain install stable --profile minimal
+      - name: Install cargo-mutants and cargo-nextest
+        uses: taiki-e/install-action@cfdb7ed4ccc7c7dce37759eae89dc5674b469b39 # v2.90.3
+        with:
+          tool: cargo-mutants@27.1.0,cargo-nextest@0.9.151
+      - name: One doom-sim mutant, judged both ways
+        shell: bash
+        env:
+          MUTANT_FILE: crates/doom-sim/src/diagnostic.rs
+          MUTANT_RE: "^crates/doom-sim/src/diagnostic\\.rs:\\d+:\\d+: replace match guard self\\.easy && b == crate::Skill::Baby as u8 with false in Diagnostic<'a>::v40_skill$"
+        run: |
+          set -uo pipefail
+          outcome() {   # outcome NAME ARGS...: runs the one mutant, prints which list it landed in
+            local name=$1 out="$RUNNER_TEMP/selftest-$1" kind found=""
+            shift
+            cargo mutants -p doom-sim "$@" --file "$MUTANT_FILE" --re "$MUTANT_RE" --test-tool nextest --jobs 1 \
+              --timeout 1500 --build-timeout 900 --output "$out" >&2
+            echo "$name: cargo-mutants exit status: $?" >&2
+            for kind in caught missed timeout unviable; do
+              if [ "$(grep -c . "$out/mutants.out/$kind.txt" 2>/dev/null || true)" = 1 ]; then found="$found$kind"; fi
+            done
+            echo "${found:-none}"
+          }
+          own=$(outcome own)
+          cross=$(outcome cross --test-package doom-sim --test-package doom-game)
+          {
+            echo "## Cross-crate self-test"
+            echo
+            echo "Mutant: \`$MUTANT_RE\`"
+            echo
+            echo "| Judged by | Outcome |"
+            echo "| --- | --- |"
+            echo "| doom-sim's own tests | $own |"
+            echo "| doom-sim's and doom-game's tests | $cross |"
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "own tests: $own; with doom-game's tests: $cross"
+          if [ "$own" != missed ]; then echo "::warning::doom-sim's own tests no longer miss the self-test mutant ($own): choose another case"; fi
+          if [ "$cross" != caught ]; then echo "::error::with doom-game's tests the self-test mutant is '$cross', not caught"; exit 1; fi
