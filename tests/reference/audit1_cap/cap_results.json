@@ -1,0 +1,561 @@
+{
+ "schema": "DOOM-AUDIT1-CAP-RESULTS-v1",
+ "revision": "a77dfb96cb91780ca334d0d4cfd86957558007e0",
+ "claim": "every digest is the genuine engine's strict build projected by the independent DSIM44 encoder; the overflow and address builds gave identical dumps, sound and session streams",
+ "builds": {
+  "strict": [
+   "-std=gnu89",
+   "-O0",
+   "-fwrapv",
+   "-fno-strict-aliasing",
+   "-ffp-contract=off",
+   "-fexcess-precision=standard",
+   "-fsigned-char",
+   "-DNORMALUNIX",
+   "-DLINUX"
+  ],
+  "overflow": [
+   "-std=gnu89",
+   "-O0",
+   "-fno-strict-aliasing",
+   "-ffp-contract=off",
+   "-fexcess-precision=standard",
+   "-fsigned-char",
+   "-DNORMALUNIX",
+   "-DLINUX",
+   "-fno-wrapv",
+   "-fsanitize=signed-integer-overflow,integer-divide-by-zero,float-cast-overflow",
+   "-fno-sanitize-recover=all"
+  ],
+  "address": [
+   "-std=gnu89",
+   "-O0",
+   "-fno-strict-aliasing",
+   "-ffp-contract=off",
+   "-fexcess-precision=standard",
+   "-fsigned-char",
+   "-DNORMALUNIX",
+   "-DLINUX",
+   "-fno-wrapv",
+   "-fsanitize=address,undefined",
+   "-fno-sanitize-recover=all",
+   "-fno-sanitize=alignment"
+  ]
+ },
+ "asan_options": "detect_leaks=0 (leak detection disabled in the address build; not LeakSanitizer coverage)",
+ "variant": {
+  "name": "nocap",
+  "file": "p_inter.c",
+  "original": "\tif (target->subsector->sector->special == 11\n\t    && damage >= target->health)\n",
+  "replacement": "\tif (target->subsector->sector->special == 11\n\t    && 0)\n",
+  "scope": "in-process addition to wire28_goldens.VARIANTS; no file is edited"
+ },
+ "tools_sha256": {
+  "audit1_cap.py": "0adff50e7927f7b0243e8d594ef71d53327d7a80e1903ecfe2666c0a28522d9b",
+  "wire28_goldens.py": "d24e82f84652932402eb518e7df947e71bd6b8d4b5b3c40352cc4235bd7db8fc",
+  "wire28_wad.py": "b38bf1f1dea2f597f4a68987e228377b272800ac64ec01fd8120c876b9bd5f2f",
+  "level_snapshot_wire28.py": "d694b14df81c60a530a7258ba940befe67deba2fc1d7cc133592a30fa4d9f543"
+ },
+ "inputs_sha256": {
+  "tests/reference/audit1_cap/BARONCL.lmp": "48b226e1a4209f879561607f063993ddc52b0e0764f87e884f72ff6bdf8b881f",
+  "tests/reference/audit1_cap/BARONFB.lmp": "53b6ec63774ec5fb5e61a903e50ba8bdd2cca851c37e1aceb642a5161f9e3cca",
+  "tests/reference/audit1_cap/BARREL.lmp": "13cb0939dede1e5a14421ac9b723333f6cabe41d95f51006e1b22dc1a44752af",
+  "tests/reference/audit1_cap/FLOOR.lmp": "eb51557d4699b030bef3520e5b54015527ca476ac8499b46d643a19d517813d5",
+  "tests/reference/audit1_cap/IMPBALL.lmp": "b4b635d16211d2f94eadde940aeb33422b2d2109e84d7261f369db042d6f85df",
+  "tests/reference/audit1_cap/IMPCLAW.lmp": "d661327972eb34c0b63bfc431f26d974b24d00c5835d9c1599bc9a34a7f688dd",
+  "tests/reference/audit1_cap/ROCKET.lmp": "c0c20edf366101273043be0601dab04933d6e5d75aea7d2afb97b581eb1af15e",
+  "tests/reference/audit1_cap/SHOTGUY.lmp": "42a628946e76f75b47a055aecdc973f560feb22d7e8cdbd924be9193380599fc",
+  "tests/reference/audit1_cap/SPECTRE.lmp": "8b5caa33468932ab2df8154d79ea3d3bbfc161e21d85c39ab3a9538658e69ef2",
+  "tests/reference/audit1_cap/ZOMBIE.lmp": "b446d2ebae9588d74deb3fe6d4fc99d160356a48dac44b24c56279eddef5df29",
+  "tests/reference/audit1_cap/cap1.wad": "559c0a5eb1ef869c0906d1c25c229d71dc774fc2411b8fc2542acce680be8b57",
+  "tests/reference/audit1_cap/cap2.wad": "8843faa71ff357fc84904d4f5dd674063ef86a3a5fad554a84ddabd9ccacba21",
+  "tests/reference/m5b_gfx.wad": "50d0f0f881e2347a3527405b97a8f5abd949cff923a7078d03ec8c20a40ca032",
+  "tests/reference/m5c_sfx.wad": "c228e186aceb05529187755be20f24321b7a46d2ba59a2a18e39b587e31d9699",
+  "tests/reference/m6a_wads/m6a_gfx.wad": "ec4826c3881919eb09108018aa3efb357c9891c4ae4256dbc9502749cade1d37",
+  "tests/reference/m6a_wads/m6a_music.wad": "7e5bcf6fa1837e6af4d996ae16d914669921ccc9ed5b6e924ea5a8dc826a47ea",
+  "tests/reference/wire28_scripts/BITE2.lmp": "a53debaff00dcc4abf61f0ac5585b7d08c84492e7e7a33669a28a8206b9c1c89",
+  "tests/reference/wire28_wads/wire28.wad": "49dac466114bb8251627b9c96d51d3d3bb7bd4d09790769f01e4d7388d14bb10"
+ },
+ "generated_with": {
+  "compiler": "cc (Ubuntu 15.2.0-16ubuntu1) 15.2.0"
+ },
+ "items": {
+  "FLOOR": {
+   "what": "the floor of special 11 alone",
+   "captures": 130,
+   "lethal": [
+    128,
+    20,
+    1,
+    "none"
+   ],
+   "nocap_differs_at": 129,
+   "captures_with_a_fireball": 0,
+   "attacker_distance_after": null,
+   "blows": [
+    [
+     0,
+     100,
+     80,
+     "none"
+    ],
+    [
+     32,
+     80,
+     60,
+     "none"
+    ],
+    [
+     64,
+     60,
+     40,
+     "none"
+    ],
+    [
+     96,
+     40,
+     20,
+     "none"
+    ],
+    [
+     128,
+     20,
+     1,
+     "none"
+    ]
+   ]
+  },
+  "ZOMBIE": {
+   "what": "former humans on ledges: hitscan",
+   "captures": 84,
+   "lethal": [
+    81,
+    13,
+    1,
+    "POSSESSED"
+   ],
+   "nocap_differs_at": 82,
+   "captures_with_a_fireball": 0,
+   "attacker_distance_after": 111,
+   "blows": [
+    [
+     0,
+     100,
+     80,
+     "none"
+    ],
+    [
+     32,
+     80,
+     60,
+     "none"
+    ],
+    [
+     44,
+     60,
+     48,
+     "POSSESSED"
+    ],
+    [
+     60,
+     48,
+     33,
+     "POSSESSED"
+    ],
+    [
+     64,
+     33,
+     13,
+     "none"
+    ],
+    [
+     81,
+     13,
+     1,
+     "POSSESSED"
+    ]
+   ]
+  },
+  "SHOTGUY": {
+   "what": "shotgun guys on ledges: pellets",
+   "captures": 100,
+   "lethal": [
+    97,
+    14,
+    1,
+    "SHOTGUY"
+   ],
+   "nocap_differs_at": 98,
+   "captures_with_a_fireball": 0,
+   "attacker_distance_after": 139,
+   "blows": [
+    [
+     0,
+     100,
+     80,
+     "none"
+    ],
+    [
+     32,
+     80,
+     60,
+     "none"
+    ],
+    [
+     64,
+     60,
+     40,
+     "none"
+    ],
+    [
+     68,
+     40,
+     34,
+     "SHOTGUY"
+    ],
+    [
+     96,
+     34,
+     14,
+     "none"
+    ],
+    [
+     97,
+     14,
+     1,
+     "SHOTGUY"
+    ]
+   ]
+  },
+  "IMPBALL": {
+   "what": "imps on ledges: fireball contact",
+   "captures": 106,
+   "lethal": [
+    103,
+    14,
+    1,
+    "TROOP"
+   ],
+   "nocap_differs_at": 104,
+   "captures_with_a_fireball": 38,
+   "attacker_distance_after": 128,
+   "blows": [
+    [
+     0,
+     100,
+     80,
+     "none"
+    ],
+    [
+     32,
+     80,
+     60,
+     "none"
+    ],
+    [
+     57,
+     60,
+     54,
+     "TROOP"
+    ],
+    [
+     64,
+     54,
+     34,
+     "none"
+    ],
+    [
+     96,
+     34,
+     14,
+     "none"
+    ],
+    [
+     103,
+     14,
+     1,
+     "TROOP"
+    ]
+   ]
+  },
+  "IMPCLAW": {
+   "what": "an imp in a closet with the player: claw",
+   "captures": 91,
+   "lethal": [
+    88,
+    13,
+    1,
+    "TROOP"
+   ],
+   "nocap_differs_at": 89,
+   "captures_with_a_fireball": 0,
+   "attacker_distance_after": 51,
+   "blows": [
+    [
+     0,
+     100,
+     80,
+     "none"
+    ],
+    [
+     26,
+     80,
+     62,
+     "TROOP"
+    ],
+    [
+     32,
+     62,
+     42,
+     "none"
+    ],
+    [
+     64,
+     42,
+     22,
+     "none"
+    ],
+    [
+     66,
+     22,
+     13,
+     "TROOP"
+    ],
+    [
+     88,
+     13,
+     1,
+     "TROOP"
+    ]
+   ]
+  },
+  "BARONFB": {
+   "what": "barons on ledges: fireball contact",
+   "captures": 64,
+   "lethal": [
+    61,
+    20,
+    1,
+    "BRUISER"
+   ],
+   "nocap_differs_at": 62,
+   "captures_with_a_fireball": 21,
+   "attacker_distance_after": 83,
+   "blows": [
+    [
+     0,
+     100,
+     80,
+     "none"
+    ],
+    [
+     32,
+     80,
+     60,
+     "none"
+    ],
+    [
+     46,
+     60,
+     20,
+     "BRUISER"
+    ],
+    [
+     61,
+     20,
+     1,
+     "BRUISER"
+    ]
+   ]
+  },
+  "BARONCL": {
+   "what": "a baron in a closet with the player: claw",
+   "captures": 62,
+   "lethal": [
+    59,
+    40,
+    1,
+    "BRUISER"
+   ],
+   "nocap_differs_at": 60,
+   "captures_with_a_fireball": 0,
+   "attacker_distance_after": 55,
+   "blows": [
+    [
+     0,
+     100,
+     80,
+     "none"
+    ],
+    [
+     26,
+     80,
+     60,
+     "BRUISER"
+    ],
+    [
+     32,
+     60,
+     40,
+     "none"
+    ],
+    [
+     59,
+     40,
+     1,
+     "BRUISER"
+    ]
+   ]
+  },
+  "BARREL": {
+   "what": "the player shoots a barrel beside it: splash",
+   "captures": 68,
+   "lethal": [
+    65,
+    40,
+    1,
+    "PLAYER"
+   ],
+   "nocap_differs_at": 66,
+   "captures_with_a_fireball": 0,
+   "attacker_distance_after": 0,
+   "blows": [
+    [
+     0,
+     100,
+     80,
+     "none"
+    ],
+    [
+     32,
+     80,
+     60,
+     "none"
+    ],
+    [
+     64,
+     60,
+     40,
+     "none"
+    ],
+    [
+     65,
+     40,
+     1,
+     "PLAYER"
+    ]
+   ]
+  },
+  "ROCKET": {
+   "what": "the player fires its own rocket at the wall in front of it: splash",
+   "captures": 64,
+   "lethal": [
+    61,
+    60,
+    1,
+    "PLAYER"
+   ],
+   "nocap_differs_at": 62,
+   "captures_with_a_fireball": 0,
+   "attacker_distance_after": 0,
+   "blows": [
+    [
+     0,
+     100,
+     80,
+     "none"
+    ],
+    [
+     32,
+     80,
+     60,
+     "none"
+    ],
+    [
+     61,
+     60,
+     1,
+     "PLAYER"
+    ]
+   ]
+  },
+  "SPECTRE": {
+   "what": "a spectre bite (wire28.wad BITE with a spectre)",
+   "captures": 99,
+   "lethal": [
+    96,
+    40,
+    1,
+    "SHADOWS"
+   ],
+   "nocap_differs_at": 97,
+   "captures_with_a_fireball": 0,
+   "attacker_distance_after": 51,
+   "blows": [
+    [
+     0,
+     100,
+     80,
+     "none"
+    ],
+    [
+     32,
+     80,
+     60,
+     "none"
+    ],
+    [
+     64,
+     60,
+     40,
+     "none"
+    ],
+    [
+     96,
+     40,
+     1,
+     "SHADOWS"
+    ]
+   ]
+  },
+  "BITE2": {
+   "what": "the wire 28 item BITE2: a demon bite",
+   "captures": 99,
+   "lethal": [
+    96,
+    40,
+    1,
+    "SERGEANT"
+   ],
+   "nocap_differs_at": 97,
+   "captures_with_a_fireball": 0,
+   "attacker_distance_after": 51,
+   "blows": [
+    [
+     0,
+     100,
+     80,
+     "none"
+    ],
+    [
+     32,
+     80,
+     60,
+     "none"
+    ],
+    [
+     64,
+     60,
+     40,
+     "none"
+    ],
+    [
+     96,
+     40,
+     1,
+     "SERGEANT"
+    ]
+   ]
+  }
+ }
+}
