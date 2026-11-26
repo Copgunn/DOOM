@@ -1,27 +1,19 @@
 #!/usr/bin/env python3
-"""Synthetic maps and demos of the block-walk overshoot items (certificate audit 1, item 4).
+"""Synthetic maps and demos of the block-walk overshoot items (certificate audit 1, item 4); nothing from an IWAD.
 
-Everything here is drawn by this tool: nothing comes from any IWAD. One IWAD, tests/reference/overshoot_wads/
-overshoot.wad, holds two map slots, each one room whose north wall near the player lies on a BLOCKMAP row line (the
-origin is the vertex minimum, tools/reference/m3h6_geometry.py). Each item runs its slot from a new game with the M6a
-WAD set after it, as the wire 27 items do (tools/reference/wire27_wad.py, imported read-only).
+tests/reference/overshoot_wads/overshoot.wad holds two map slots, each one room whose north wall near the player lies on
+a BLOCKMAP row line (the origin is the vertex minimum, m3h6_geometry.py); each item runs from a new game with the M6a
+WAD set of the wire 27 items (wire27_wad.py, read-only). The player runs east along the north wall (P_SlideMove's
+stairstep, p_map.c:706-710 and 763, keeps it a few raw units under it); one tic of a small forward move after a slide
+that zeroed the y momentum (p_map.c:596-599, 779-781) gives a slide trace (p_map.c:738) from a few raw units under the
+row line to above it, so P_PathTraverse's `ystep` is 0 (p_maputl.c:802) and the walk steps east 63 times past the end
+cell until the count of 64 runs out (p_maputl.c:846, 866-875). The north wall is listed in the row above only.
 
-In both, the player runs east along the north wall (the stairstep of P_SlideMove, p_map.c:706-710 and 763, keeps it a
-few raw units under the wall), then one tic of a small forward move after a slide that zeroed the momentum's y part
-(p_map.c:596-599, 779-781) leaves a y momentum of a few raw units: the slide trace from the leading corner (p_map.c:738)
-starts a few raw units under the row line and ends above it, so the walk of P_PathTraverse (p_maputl.c:772-876) has
-`ystep` 0 (FixedDiv of a few raw units by more than one unit, p_maputl.c:802) and never steps north: it steps east 63
-times, far past the trace's end cell, until the count of 64 (p_maputl.c:846) runs out. The north wall is listed in the
-row above only, so it is never met (and its intercept, from a y difference under 256 raw units, would lie beyond the
-trace, p_maputl.c:246-248).
-
-- SLIDE (E1M1): the trace is 11.3 units long (the side test of a trace under 16 units: the line's infinite line,
-  p_maputl.c:570-581). DIP_LINE, the bottom edge of a dip in the north wall 3,557 units east, lies in a visited cell
-  and its infinite line separates the trace's ends: the genuine engine slides along it (p_map.c:672-680, 779).
-- WRAP (E1M2): the trace is 18.2 units long (the divline side test, p_maputl.c:574-576), so every line in a visited
-  cell that crosses the trace's infinite line is intercepted; a notch's two 2,184-unit edges about 5,000 units east
-  make a FixedMul product of P_InterceptVector leave int (m_fixed.c:48) and the fraction wraps negative ("behind
-  source", p_maputl.c:591-592).
+- SLIDE (E1M1): an 11.3-unit trace (the side test against the line's infinite line, p_maputl.c:570-581) meets
+  DIP_LINE 3,557 units east, which separates its ends: the genuine engine slides along it (p_map.c:672-680, 779).
+- WRAP (E1M2): an 18.2-unit trace (the divline side test, p_maputl.c:574-576) meets a notch's 2,184-unit edges about
+  5,000 units east; a FixedMul product of P_InterceptVector leaves int (m_fixed.c:48) and the fractions come out
+  negative ("behind source", p_maputl.c:591-592).
 
     overshoot_wad.py            write the WAD and the script
     overshoot_wad.py --check    regenerate in memory and compare with the committed files (writes nothing)

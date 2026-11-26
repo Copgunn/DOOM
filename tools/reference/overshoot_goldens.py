@@ -1,29 +1,17 @@
 #!/usr/bin/env python3
-"""The block-walk overshoot item against the genuine engine: DSIM43 state digests and the observed walks (certificate
-audit 1, item 4). Expected values come from the genuine linuxdoom-1.10 runner and the independent encoder, never from
-Rust output.
+"""The block-walk overshoot items against the genuine engine (certificate audit 1, item 4): DSIM43 digests, the
+observed walks and the wrap witness, from the genuine linuxdoom-1.10 runner and the independent encoder, never from Rust.
 
-The runner and its strict build are tools/reference/wire27_goldens.py's (imported read-only: the M6a runner, the
-strict -fwrapv flags, the run and the DSIM43 projection by tools/reference/level_snapshot_wire27.py). Two more builds of
-the same runner, each from a scratch copy of the sources edited by this tool, never in the checkout; and the
-overflow, address and witness builds of wire27_goldens.py unchanged (the address build runs with
-ASAN_OPTIONS=detect_leaks=0: leak detection disabled, not LeakSanitizer coverage):
-
-  observer  strict plus prints to stderr, without changing a step: every P_PathTraverse walk (gametic, flags, the
-            nudged trace, the cell of every iteration, the line intercepts) and every P_SlideMove's best line and
-            fraction. Its dumps, sound and session streams must equal strict's.
-  fault     strict with a planted fault in the walk: the loop stops before a cell past the trace's end cell, the
-            reach-bounded walk this audit asks about. It must differ from strict, so the item depends on the overshoot.
-
-Per item of tools/reference/overshoot_wad.py: strict, overflow, address, witness and observer give identical dumps,
-sound and session streams and a clean exit; the strict and fault dumps are projected by the independent DSIM43 encoder
-(wire27_goldens.project); the witness build classifies every P_InterceptVector call (wire27_goldens.witness_facts),
-which gives the expected ends: wire 26 refuses the first tic with a wrapping call, wire 27 (and wire 28, whose intercept
-rule is wire 27's) the first tic with a call whose class it refuses for its caller. The observer must show, at the
-item's tic, a slide walk whose cells pass its end cell (the overshoot) and the far line it meets.
-
-Output (written without --check; --check regenerates and compares, writing nothing): tests/reference/overshoot_state.txt,
-DOOM-OVERSHOOT-STATE-v1 (rows in its header). Tic convention as wire27_goldens.py: capture j is the state after j tics.
+Builds of wire27_goldens.py's M6a runner (imported read-only): strict (-fwrapv, the claim), overflow, address
+(ASAN_OPTIONS=detect_leaks=0: leak detection disabled, not LeakSanitizer coverage) and witness unchanged, and two from
+scratch copies of the sources edited here: `observer` (prints, changing no step, every P_PathTraverse walk: gametic,
+flags, nudged trace, end cell, the cell of every iteration, the line intercepts; and P_SlideMove's best line) and
+`fault` (a planted fault: the walk stops before a cell past its end cell, the reach-bounded walk the audit asks about).
+Per item of overshoot_wad.py, every build but fault gives the strict streams (a sanitizer stop must be a strict prefix
+at the item's declared site); the strict and fault dumps are projected by level_snapshot_wire27.py; the witness
+classes give the expected ends (wire 26 refuses the first wrapping tic, wire 27 and 28 the first tic of a class wire
+27 refuses for its caller); the observer must show the overshooting walk at the item's tic. Output, compared by --check:
+tests/reference/overshoot_state.txt (rows in its header; capture j is the state after j tics).
 
     overshoot_goldens.py [--check] [--work DIR] [--cc CC]
 """
