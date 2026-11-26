@@ -1701,4 +1701,6 @@ mod m4p_elision_tests;
 #[cfg(test)]
 mod wire27_tests;
 #[cfg(test)]
+mod wire28_genuine_tests;
+#[cfg(test)]
 mod wire28_tests;
