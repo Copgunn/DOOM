@@ -360,7 +360,7 @@ Seven rulings on the three open decisions and on this record, applied the same d
 3. **`damage_actor` on the player without the sector-11 cap: not changed.** A known divergence from p_inter.c:836-842, API only; on the audit list below with the census.
 4. **The Demon and Spectre bite on wires 23 to 27: frozen, documented** ([COMPATIBILITY](../COMPATIBILITY.md#silent-divergence-in-wires-23-to-27-the-bite-on-a-sector-of-special-11)), and on the audit list.
 5. **Three more audit items, not changed** (list below).
-6. **cargo-mutants over `diagnostic.rs` 580:35 and 581:35**, and over the new lines of 1 and 2 (cargo-mutants 27.1.0, nextest, `-j 1`, a scratch clone of `95b61473` on the Linux disk):
+6. **cargo-mutants over `diagnostic.rs` 580:35 and 581:35**, and over the new lines of 1 and 2 (cargo-mutants 27.1.0, nextest, `-j 1`, a scratch clone of `95b61473` on the Linux disk; the spawn test was restyled afterwards for a Clippy lint, `clone_on_copy`, with no assertion changed):
 
 | Run | Mutants | Caught | Missed | Unviable | Exit |
 | --- | ---: | ---: | ---: | ---: | ---: |

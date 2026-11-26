@@ -96,10 +96,10 @@ fn a_direct_monster_spawn_follows_s_double_prime() {
     };
     let margin = Err(SimError::from(PerceptionError::Arithmetic));
     for x in [11, 10, 5, 1, -5] {
-        let (here, margin) = (Ok(Fixed::from_map_units(x)), || margin.clone());
-        let v6 = if x > 0 { here.clone() } else { margin() };
+        let here = Ok(Fixed::from_map_units(x));
+        let v6 = if x > 0 { here } else { margin };
         assert_eq!(spawn(true, x).unwrap(), v6, "{x}");
-        let v5 = if x >= 11 { here } else { margin() };
+        let v5 = if x >= 11 { here } else { margin };
         assert_eq!(spawn(false, x).unwrap(), v5, "{x}");
     }
 }
