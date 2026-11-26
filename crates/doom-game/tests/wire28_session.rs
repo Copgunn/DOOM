@@ -384,3 +384,141 @@ fn dses_version_3_round_trips_restores_and_refuses_the_other_versions() {
     let back = Session::restore_v3(data, &v3, b.level().clone()).expect("its own level");
     assert_eq!(back.save_v3().unwrap().encode(), v3.encode());
 }
+
+/// One call of a session: the next melt step if a melt runs, else the tic of the next command;
+/// `None` at the end. The result is the report's `Debug` text, the step's picture (empty for a
+/// tic) and the tic's kind (`None` for a step).
+type Call = (String, Vec<u8>, Option<FinaleMeltTicKind>);
+
+fn call(s: &mut Session, cmds: &[TicCommand], next: &mut usize) -> Option<Call> {
+    if s.melt_in_progress() {
+        let mut f = Frame::new();
+        let m = s.melt_step(&mut f).expect("a melt step");
+        return Some((format!("{m:?}"), f.pixels().to_vec(), None));
+    }
+    let cmd = *cmds.get(*next)?;
+    *next += 1;
+    let r = s.tic_finale_and_melt(cmd).expect("admitted");
+    Some((format!("{r:?}"), vec![], Some(r.kind)))
+}
+
+/// Where a boundary between two calls is, by kind of point.
+fn place(s: &Session) -> &'static str {
+    use doom_render::GameState::{Finale, Intermission, Level};
+    match (s.melt_in_progress(), s.gamestate()) {
+        (true, _) => "melt",
+        (_, Intermission) => "intermission",
+        (_, Finale) => "finale",
+        (_, Level) => "level",
+    }
+}
+
+/// `DSES` version 3 restore and continue at every kind of point, as `dses_v2_restore_and_continue`
+/// does for version 2: saved with `save_v3`, encoded, decoded and restored with `restore_v3`, the
+/// session continues to the end of its demo with every call (tic or melt step: report, picture)
+/// and the final saved bytes equal to the uninterrupted session's. Points per run: the middle of
+/// the level boundaries, the last level tic (the one before every completion or victory tic), the
+/// first and middle intermission boundaries, the first and middle finale boundaries, and the
+/// first, middle and last boundaries inside a melt (after the tic that starts it or between two
+/// of its steps). Runs: SKILL0 and SKILL1 at their own skills (map 1, 364 tics: the level, its
+/// completion, the intermission and the session-start melt), and the committed items INTFAST (map 7: intermission),
+/// CHAIN (level to intermission to level), FINRET (map 8: the victory, the finale and its melts)
+/// with their demos replayed under settings that set skill 0 and again skill 1. Those demos were
+/// recorded at skill 2, so the session may diverge from the genuine engine's goldens (they are
+/// not compared here); only restored-equals-uninterrupted is asserted, and the kinds reached are
+/// asserted per kind over all runs. Nothing is invented: a kind no run reaches fails the test.
+#[test]
+fn dses_version_3_restore_and_continue_at_every_kind_of_point() {
+    let mut reached: std::collections::BTreeMap<&str, usize> = Default::default();
+    let runs = [("SKILL0", 0), ("SKILL1", 1)].into_iter().chain(
+        ["INTFAST", "CHAIN", "FINRET"]
+            .into_iter()
+            .flat_map(|n| [(n, 0), (n, 1)]),
+    );
+    for (name, skill) in runs {
+        let item = m6a::item(name);
+        let lmp = std::fs::read(m6a::root(&item.lmp)).expect("demo");
+        let cmds = SessionDemo::parse_v3(&lmp)
+            .expect("the wire 28 reader")
+            .commands;
+        let data = m6a::data(&item, None);
+        let mut a =
+            Session::new_finale_and_melt_wire28(data.clone(), settings(&item, skill)).unwrap();
+        // Pass 1: the kind of every boundary, and which tic comes next.
+        let (mut probe, mut next, mut kinds) = (a.clone(), 0, vec![]);
+        let mut at = vec![place(&probe)];
+        while let Some((_, _, kind)) = call(&mut probe, &cmds, &mut next) {
+            kinds.push(kind);
+            at.push(place(&probe));
+        }
+        let mut points: Vec<(usize, &str)> = vec![];
+        for kind in ["level", "intermission", "finale", "melt"] {
+            let of: Vec<usize> = (0..at.len()).filter(|&i| at[i] == kind).collect();
+            let picks = match kind {
+                "level" => vec![of.get(of.len() / 2)],
+                "melt" => vec![of.first(), of.get(of.len() / 2), of.last()],
+                _ => vec![of.first(), of.get(of.len() / 2)],
+            };
+            points.extend(picks.into_iter().flatten().map(|&i| (i, kind)));
+        }
+        // The last level tic: a level boundary whose next tic completes the level or wins.
+        let tic_kinds = kinds
+            .iter()
+            .enumerate()
+            .filter_map(|(i, k)| k.map(|k| (i, k)));
+        for (i, k) in tic_kinds {
+            if matches!(
+                k,
+                FinaleMeltTicKind::Completion | FinaleMeltTicKind::Victory
+            ) && i > 0
+            {
+                points.push((i, "last level tic"));
+            }
+        }
+        points.sort();
+        points.dedup();
+        // Pass 2: the uninterrupted session, forked at every point.
+        let (mut next, mut done) = (0, 0);
+        for (i, kind) in points {
+            while done < i {
+                call(&mut a, &cmds, &mut next).expect("a call");
+                done += 1;
+            }
+            let state = a.save_v3().expect("saveable");
+            let bytes = state.encode();
+            let decoded = SessionStateV3::decode(&bytes).expect("decodes");
+            assert_eq!(decoded, state);
+            let mut r =
+                Session::restore_v3(data.clone(), &decoded, a.level().clone()).expect("restores");
+            assert_eq!(
+                r.save_v3().unwrap().encode(),
+                bytes,
+                "{name} {kind} at call {i}"
+            );
+            assert_eq!(place(&r), place(&a), "{name} {kind} at call {i}");
+            let (mut u, mut un, mut rn) = (a.clone(), next, next);
+            while let Some(x) = call(&mut u, &cmds, &mut un) {
+                assert_eq!(
+                    Some(x),
+                    call(&mut r, &cmds, &mut rn),
+                    "{name} {kind} at call {i}"
+                );
+            }
+            assert_eq!(call(&mut r, &cmds, &mut rn), None);
+            assert_eq!(
+                r.save_v3().unwrap().encode(),
+                u.save_v3().unwrap().encode(),
+                "{name} {kind} at call {i}: final bytes"
+            );
+            *reached.entry(kind).or_default() += 1;
+            println!(
+                "{name} skill {skill}: {kind} at call {i} (session tic {})",
+                a.gametic()
+            );
+        }
+    }
+    println!("{reached:?}");
+    for kind in ["level", "last level tic", "intermission", "finale", "melt"] {
+        assert!(reached.contains_key(kind), "no run reached: {kind}");
+    }
+}
