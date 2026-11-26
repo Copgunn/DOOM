@@ -3349,6 +3349,9 @@ python3 tools/local/e1_blockmap_listings.py --selftest
 python3 tools/local/wire27_session_real.py --iwad IWAD --work DIR --recording FILE [--construction FILE] [--idle N] --selftest
 ```
 
+- **Timing the witness (reported, not gated).** `wire28_witness_timing` replays one demo under wire 27 and wire 28, alternating, and prints ns per tic and the difference; run it alone on an idle machine from an ext4 build directory (section 1.17 condition 3).
+  `CARGO_TARGET_DIR=DIR cargo build -p doom-sim --example wire28_witness_timing --release --locked`, then `DIR/release/examples/wire28_witness_timing --wad tests/reference/m4b_wads/montele.wad --map E1M1 --demo tests/reference/m4b_scripts/MTELE1.lmp --runs 20`.
+  MTELE1 is skill 2 (both wires admit it) with an idle player and a walking Demon, so P_Move runs; it ends equal under both wires except `profile` and `context.schema`. Local only: `--wad "$IWAD" --map E1M1 --demo FILE` (a skill 2 or 3 demo of that map).
 - **Genuine items (CI).** `wire27_goldens.py` writes or `--check`s `wire27_state.txt` and `wire27_results.json`; its
   `--selftest` plants an extra `P_Random` draw, a witness row with a `FixedMul` result one off and a witness row with an
   unknown traverser, and each must be detected. The address build runs with `detect_leaks=0`: leak detection is disabled,
