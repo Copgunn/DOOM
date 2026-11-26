@@ -669,6 +669,11 @@ jobs:
         run: |
           python3 tools/reference/wire27_wad.py --check
           python3 tools/reference/wire27_goldens.py --work "$RUNNER_TEMP/wire27" --check --selftest
+      - name: Wire 28 synthetic map slots, easy-skill and escape-witness items, p_inter.c variants and DSIM44 state goldens, SKILL0 and SKILL1 over DSIM44 (strict, overflow and address builds; address with leak detection DISABLED, detect_leaks=0), and self-test
+        if: env.DOCS_ONLY != 'true'
+        run: |
+          python3 tools/reference/wire28_wad.py --check
+          python3 tools/reference/wire28_goldens.py --work "$RUNNER_TEMP/wire28" --check --selftest
       - name: Documentation-only fast path
         if: env.DOCS_ONLY == 'true'
         run: echo "documentation-only change, so the genuine M6a runs were skipped"
