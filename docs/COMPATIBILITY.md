@@ -3941,8 +3941,8 @@ Wire 27 does not wrap "whole" and does not wrap "for every caller".
 - **Evidence limits:** eight map slots, one room layout (not one synthetic map and not all four saturation cases); the
   genuine build is linuxdoom-1.10 compiled by GCC with `-fwrapv` (four of the eight items wrap by `FixedMul` narrowing
   alone and never overflow a sum), with two declared sanitizer adapters in the overflow and address builds
-  (address: leak detection disabled, not LeakSanitizer coverage); the block-walk overshoot (below) has **no genuine-compared
-  item**.
+  (address: leak detection disabled, not LeakSanitizer coverage); the block-walk overshoot (below) had **no genuine-compared
+  item** when this was written (**2026-11-26, certificate audit 1:** it has two now, SLIDE and WRAP, see below).
 
 ### Silent divergence in wires 23 to 26: an `INT_MIN` operand
 
@@ -3967,6 +3967,8 @@ short trace skip its end cell and run on. This is **shown in a stub harness only
 genuine-compared item for it, and the old certificate's premise that a visited cell lies within 2,048 + 128 + 1 units of
 the trace start does not hold when the walk overshoots. No code or certificate changed. See quirk row Q-p_maputl-846c and
 [the record](validation/WIRE27.md#7-the-block-walk-overshoot-a-stub-harness-not-a-full-engine-run).
+
+**2026-11-26 (certificate audit 1):** the text above said there was no genuine-compared item; there are two now ([AUDIT1 section 4](validation/AUDIT1.md#4-the-block-walk-overshoot-under-wires-26-and-27), `tests/reference/overshoot_state.txt`). SLIDE: a slide trace walks 64 cells past its end cell and slides along a line 3,557 units away, **equal** to the genuine engine at every capture under wires 26, 27 and 28. WRAP: the far intercept wraps; the genuine engine drops the negative fractions and goes on, wires 26, 27 and 28 **refuse the tic** with `MapScale(Arithmetic)` and keep the state (a refusal, not a silent divergence). The Rust walks (`movement::path`, `combat_trace`) visit the same cells as the C, the overshoot included (810 in-game walks and 4 direct calls compared in scratch). The old premise is refuted by a run; for the real-map policies of wires 17 to 22 the conclusion holds through the sight clause when the trace start lies in the vertex rectangle, and **a start up to 17 units outside it is open**: not proven either way. Not observed on a real map. No wire 29 item was found.
 
 ## Wire 28: the easy skills and E1M7 on skill 3
 
@@ -3997,13 +3999,15 @@ constructors `original_player_episode1_v6_level` and `_at`) is wire 27 in every 
   The session configuration is `Configuration::FinaleAndMeltWire28`; `doom-play` uses it for every skill and no longer offers wire 27's.
 - **Evidence limits:** the escape and the stuck imps are one synthetic room layout (twelve items; the escape's genuine item refuses at the witness);
   skill 0's rules are shown on the items, on SKILL0 and SKILL1 and, on real maps, by the replays and the hand test ([record §5](validation/WIRE28.md#5-real-maps-e1m7-on-skill-3-and-the-owners-five-sessions)); nightmare, other episodes and every
-  other monster, wall angle and blow are not covered. The `DSES` 3 restore test compares the session with itself.
+  other monster, wall angle and blow are not covered. The `DSES` 3 restore test compares the session with itself. The public `Simulation::damage_actor` still does not apply the sector-11 cap on the player (since wire 23; API only, nothing in `doom-play`, `doom-game` or the eight real sessions reaches it; pinned on 2026-11-26 by a test, [AUDIT1 section 3](validation/AUDIT1.md#3-the-public-damage_actor-on-the-player-without-the-cap)).
 
 ### Silent divergence in wires 23 to 27: the bite on a sector of special 11
 
 Found in wire 28's investigation and **left frozen**: a Demon or Spectre bite on the player whose damage is at least the player's health, on a sector of special 11,
 skipped the cap (p_inter.c:836-842) in `strike_player`, where the genuine engine leaves 1 health and the level exits at the next tic. Observed on wire 27
 (BITE2 first differs at capture 97: the player dies under wire 27); wires 23 to 26 share the code (observed Rust-only by the independent reader's scratch probe, below). No recorded run differs under wire 27 (inferred: none reached a lethal bite there). Wire 28 applies the cap (decision D4, [record](validation/WIRE28.md#2-decisions)).
+
+**2026-11-26 (certificate audit 1):** confirmed against the genuine engine on every wire 23 to 27, for the Demon bite (BITE2) and the Spectre bite (SPECTRE): each first differs at capture 97, the Rust player dead where the genuine one has health 1; wire 28 caps both. Every other damage path is capped on every wire that admits it ([AUDIT1 section 1](validation/AUDIT1.md#1-the-sector-11-cap-per-damage-path-and-per-wire)). **E1M8 is the only Episode 1 map with a sector of special 11**; Demons spawned there at skills 0, 1, 2 and 3: 8, 8, 14, 18 (inside that sector: 4, 4, 6, 6), Spectres 0, 0, 0, 10 (inside: 0, 0, 0, 10), so on wires 23 to 27 (skills 2 and 3 only) ordinary play of E1M8 can reach the divergence (inferred; no recorded run shows it). It is **not reachable through `doom-play`**, which plays wire 28 for every skill ([AUDIT1 section 2](validation/AUDIT1.md#2-the-demon-and-spectre-bite-on-wires-23-to-27)). Still frozen.
 
 ## Known gap: THING loading stops at the first Doom II type outside commercial mode
 

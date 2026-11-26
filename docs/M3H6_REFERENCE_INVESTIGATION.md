@@ -161,6 +161,17 @@ form of each product:
   > harness only, not in a full-engine run ([quirk row Q-p_maputl-846c](QUIRKS.md);
   > [evidence](validation/WIRE27.md#7-the-block-walk-overshoot-a-stub-harness-not-a-full-engine-run)). The certificate and
   > the code are unchanged; a later pull request audits what the argument covers. The text above is left as written.
+  >
+  > **Note of 2026-11-26: the overshoot in a full-engine run (certificate audit 1).** Two genuine-compared items show it
+  > (`tests/reference/overshoot_state.txt`): a slide trace a few raw units under a BLOCKMAP row line has `ystep` 0 and walks
+  > 64 cells past its end cell. In WRAP the map passes clause (i) and an admitted slide intercept leaves `int` (six
+  > calls): the premise above, and with it the bound of clause (i), does not hold. For the real-map policies (wires 17-22)
+  > the conclusion holds through clause (ii): the numerator of a line intercept is at most `256 * dist(t, v1) * L2 + L1 +
+  > 2` for any trace start t, so it fits whenever t lies in the vertex rectangle (WRAP's map is refused by clause (ii)
+  > alone); a start up to 17 units outside it (a slide trace's corner and the nudge) is not covered as written and is not
+  > proven either way. The slide-window certificate's "three cells" premise fails too (64 cells). Wires 23-28 check the
+  > arithmetic at run time and refuse such a tic (WRAP: tic 52). The Rust walks visit the same cells as the original
+  > ([record](validation/AUDIT1.md#4-the-block-walk-overshoot-under-wires-26-and-27)). The text above is left as written.
 - `P_InterceptVector2(v1 = strace, v2 = line)` ([p_sight.c:109](../linuxdoom-1.10/p_sight.c))
   has the roles swapped: `num = 256 · (Δ × s)` with `s` the sight delta and `Δ` from the
   observer to a vertex of a linedef whose endpoints straddle the sight line (`P_DivlineSide`

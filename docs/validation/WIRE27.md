@@ -264,6 +264,10 @@ overshoots ([dated note](../M3H6_REFERENCE_INVESTIGATION.md), after the bound on
 code or certificate was changed; the seven maps still pass under the map-extent bound of section 6, **which rests on the
 vertex-rectangle premise (step 7), a Rust admission rule (section 11).**
 
+**2026-11-26 (certificate audit 1, item 4):** now shown in a full-engine run and compared with Rust under wires 26, 27 and 28
+(items SLIDE and WRAP). Step 8's bound of section 6 holds in both (farthest visited cell 63 cells from the start). The certificate's
+premise fails as stated; the evidence and the restated argument are in [AUDIT1 section 4](AUDIT1.md#4-the-block-walk-overshoot-under-wires-26-and-27).
+
 ## 8. Fuzzing, by type (the run from the repository's seeds only)
 
 Target `fuzz/fuzz_targets/wire27_dsim43.rs` (the decoder `Diagnostic::decode_episode1_v5` only; Rust-only safety).
@@ -297,11 +301,21 @@ Target `fuzz/fuzz_targets/wire27_dsim43.rs` (the decoder `Diagnostic::decode_epi
   ed527aaf), full `doom-sim` suite: 7 generated, 6 caught, 0 missed, 1 unviable (`TraceKind::caller` replaced by
   `Default::default()` does not compile). Scopes 1 and 2 were not rerun.
 
+**2026-11-26 (certificate audit 1, item 5):** the survivor is killed by
+`slide_checked_flag_tests::a_slide_access_without_a_limit_never_takes_the_checked_intercept` (shown: the mutated tree
+fails it, the original passes). Its distinguishing state, a checked world with a slide access without an intercept
+limit, is built by hand; an instrumented run of the whole `doom-sim` suite (166,386 slide traces) never builds it and
+found the checked and plain walks identical on every real-map slide without checked arithmetic ([AUDIT1 section 5](AUDIT1.md#5-the-movementrs869-survivor)).
+
 ## 10. CI note
 
 On one earlier head the macOS job failed once in an existing `doom-play` wall-clock test
 (`a_stalled_disk_keeps_the_queue_bounded_and_loses_no_tic`: 747 ms against 500 ms), unrelated to this PR, and passed on
 rerun. The fix is for a later PR ([ROADMAP](../ROADMAP.md)).
+
+**2026-11-26 (certificate audit 1, item 7):** the cause is that the test bounds the wall-clock time of each `app.update`, which
+includes time spent waiting for a processor; a starved thread reproduced the failure with nothing waiting on the disk. The test now
+takes the least of up to three runs of the scenario; the 500 ms bound and every assertion are unchanged ([AUDIT1 section 7](AUDIT1.md#7-the-flaky-doom-play-wall-clock-test)).
 
 ## 11. The independent read (2026-11-24)
 
@@ -316,3 +330,7 @@ the genuine text of m_fixed.c:43-87 and p_maputl.c:231-251 built with the strict
 sets: **0 mismatches** in value, in admit or refuse per caller and class, and in the `INT_MIN` refusal. In the same run,
 of 33,155 operand sets with an `INT_MIN` operand and no wrap, **the wire 26 value differed from the C's in 9,008**: the
 silent divergence of wires 23 to 26 is real where it is reached. That run was made before ruling S1 (five callers).
+
+**2026-11-26 (certificate audit 1, item 6):** the reader's harness is committed as `tools/reference/wire27_read.py` (with `wire27_read_drv.c`,
+`wire27_read_main.rs` and the counts file `tests/reference/wire27_read_stats.txt`), adapted to six callers because it predated ruling S1; it runs
+in CI. 300,000 operand sets, 0 mismatches, and two planted faults reported ([AUDIT1 section 6](AUDIT1.md#6-the-independent-readers-differential-harness)).

@@ -673,7 +673,12 @@ The entries marked merged below are done; they keep their place here because thi
   - **Refused caller and wrap-class pairs are known gaps for a later wire**; the E1M8 finale is expected, not guaranteed.
   - **Wire 28:** the easy skills and E1M7 on skill 3, [built on the draft PR #86](COMPATIBILITY.md#wire-28-the-easy-skills-and-e1m7-on-skill-3)
     (see the Wire 28 item below). PR #80 (M6a part 2, merged 2026-11-25) ran its finale-and-melt session on wire 27.
-  - **A later pull request audits what the old certificate argument covers** (not started). Its first item: a full-engine
+  - **A later pull request audits what the old certificate argument covers** (**done in draft PR #87, 2026-11-26**:
+    [record](validation/AUDIT1.md)). It added tests, tools, synthetic goldens and CI steps, and no engine line. Results: the sector-11 cap
+    is run per damage path and wire (only the Demon and Spectre bite on wires 23 to 27 is uncapped, as known; E1M8 only); the overshoot is shown in a
+    full-engine run and the Rust walks visit the same cells (an overshoot that wraps is refused, not silent; no wire 29 item); the `movement.rs:869`
+    survivor is killed; the reader's harness and the flaky test are done. No silent divergence reachable in play on wire 28 was found. The owner alone
+    decides on a wire 29. The items as first written (history, kept): Its first item: a full-engine
     synthetic case where a short slide or use trace overshoots its block walk, compared tic for tic against Rust under wires
     26 and 27, and whether any Rust path substitutes a reach-bounded set of lines or things for the C's actual block walk
     ([the gap](COMPATIBILITY.md#known-gap-the-block-walk-can-overshoot-its-end-cell)). A named item of that audit: the
@@ -686,7 +691,8 @@ The entries marked merged below are done; they keep their place here because thi
   - **The independent read** of the bound derivation and of its premise (every actor's centre stays inside the map's vertex
     rectangle) was done on 2026-11-24; what it did not cover is in the record.
   - **A `doom-play` wall-clock test** (`a_stalled_disk_keeps_the_queue_bounded_and_loses_no_tic`) failed once on macOS
-    in an unrelated run; its fix is a later pull request.
+    in an unrelated run; **changed in draft PR #87** (the measurement, not the bound or the assertions;
+    [AUDIT1 section 7](validation/AUDIT1.md#7-the-flaky-doom-play-wall-clock-test)).
 - **Wire 28: the easy skills and E1M7 on skill 3 (draft PR #86, 2026-11-25).** `PlayerMonstersEpisode1V6`, `DSIM` 44, `DSES` 3: skills
   0 and 1 (double ammunition and half damage at skill 0), the Demon bite taking the sector-11 cap, and E1M7 on skill 3 through spawn rule S'' and
   the monster escape witness; `doom-play` plays skills 0 to 3 and refuses nightmare. Built and compared with the genuine engine on twelve

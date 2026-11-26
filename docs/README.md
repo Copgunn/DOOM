@@ -205,3 +205,5 @@ original evidence and former guide contents with exact-byte copies and digests.
   [source investigation](M6A_REFERENCE_INVESTIGATION.md#8-wire-28-the-easy-skills-and-e1m7-on-skill-3-source-investigation-2026-11-25),
   [support](COMPATIBILITY.md#wire-28-the-easy-skills-and-e1m7-on-skill-3) and
   [DSIM44](STATE_FORMAT.md#dsim-v44--wire-28-the-easy-skills-and-e1m7-on-skill-3).
+- Certificate audit 1, what the old certificate argument covers (draft PR #87; an audit, no new wire):
+  [observations](validation/AUDIT1.md) and [commands](TESTING.md#certificate-audit-1).
