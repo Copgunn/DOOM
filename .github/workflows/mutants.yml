@@ -252,7 +252,7 @@ jobs:
         shell: bash
         env:
           MUTANT_FILE: crates/doom-sim/src/carried_start.rs
-          MUTANT_RE: "^crates/doom-sim/src/carried_start\\.rs:\\d+:\\d+: replace Simulation::reborn_requested -> bool with false$"
+          MUTANT_RE: "^crates/doom-sim/src/carried_start\\.rs:[0-9]+:[0-9]+: replace Simulation::reborn_requested -> bool with false$"
         run: |
           set -uo pipefail
           outcome() {   # outcome NAME ARGS...: runs the one mutant, prints which list it landed in
@@ -262,7 +262,9 @@ jobs:
               --timeout 1500 --build-timeout 900 --output "$out" >&2
             echo "$name: cargo-mutants exit status: $?" >&2
             for kind in caught missed timeout unviable; do
-              if [ "$(grep -c . "$out/mutants.out/$kind.txt" 2>/dev/null || true)" = 1 ]; then found="$found$kind"; fi
+              # cargo-mutants 27.1.0 also selects struct-field deletions of the file that the
+              # regex does not match (docs/TESTING.md), so look for the named mutant itself.
+              if grep -Eq "$MUTANT_RE" "$out/mutants.out/$kind.txt" 2>/dev/null; then found="$found$kind"; fi
             done
             echo "${found:-none}"
           }
