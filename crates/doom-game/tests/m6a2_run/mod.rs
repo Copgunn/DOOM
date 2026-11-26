@@ -296,7 +296,7 @@ pub fn read_melts(path: &str) -> BTreeMap<i64, GoldenMelt> {
 }
 
 /// The genuine sound stream at `path` (as `m6a::read_sound` reads `m6a_sound`).
-fn read_sound(path: &str) -> GenuineSound {
+pub fn read_sound(path: &str) -> GenuineSound {
     let mut g = GenuineSound::default();
     for l in read(path).lines() {
         if l.starts_with('#') || l.starts_with("Z,") || l.starts_with("W,") {

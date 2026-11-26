@@ -77,6 +77,8 @@ The M6a session items SKILL0 and SKILL1 (the same scripts at skills 0 and 1) run
 364 tics, 685 sound rows, 210 mixer rows, 3 melts (119 steps) and the DSIM44 state over 2 levels (348 captures, screenblocks 10),
 all equal. Self-test: SKILL1's run against SKILL0's goldens fails at tic 32 (health 95 against 98).
 
+FIN0 and FIN1 (2026-11-25; `tools/reference/wire28_fin.py`, goldens under `tests/reference/wire28_fin/`) are FINRET's demo at skills 0 and 1, FIN0 with 128 empty tics inserted because the halved floor damage exits 128 tics later. The genuine victory falls on session tic 449 (FIN0, 2,079 tics) and 321 (FIN1, 1,951 tics), followed by 1,630 finale tics through the stage-1 melt. The same test (`victory_on_skills_0_and_1_against_every_genuine_stream`) compares every stream above plus the F row at screenblocks 10 and 11, with 3 melts per run and the DSIM44 state over E1M8 (449 and 321 captures), and all are equal. Self-test: FIN1 against FIN0's goldens fails at tic 192 (health 80 against 90).
+
 ![The same recorded commands on a synthetic map at skill 0 and skill 1, with their per-pixel difference.](../media/wire28-skills-side-by-side.gif)
 
 *SKILL0 and SKILL1 side by side, every 4th tic, Rust frames only; regenerate with `tools/media/wire28_readme_visual.py`.* The runs part at tic 32.

@@ -18,6 +18,8 @@
 //! state after every level tic (sequence digest and the sampled `D` rows).
 //!
 //! Self-test: SKILL1's session (no `sk_baby` rules) driven against SKILL0's goldens is caught.
+//! FIN0 and FIN1 (FINRET's demo at skills 0 and 1, to the victory and the finale's stage-1 melt;
+//! `tools/reference/wire28_fin.py`, the same layout under `wire28_fin/`) also compare the F row.
 mod m6a;
 mod m6a2_run;
 #[path = "../../doom-sound/tests/common/rows.rs"]
@@ -31,7 +33,7 @@ use doom_sim::{ActorId, PlayerBodyState, PlayerSlot, Snapshot, TicCommand};
 use doom_sound::logic::{SoundOrigin, SoundRecord};
 use doom_test_evidence::sha256;
 use m6a::{Item, Rows, int};
-use m6a2_run::{GoldenFrame, GoldenMelt, read_frames, read_melts};
+use m6a2_run::{GoldenFrame, GoldenMelt, read_frames, read_melts, read_sound};
 use rows::{Carry, GoldenWriter, drain, stream_rows_with};
 use std::collections::BTreeMap;
 
@@ -65,7 +67,7 @@ fn check(row: Option<&BTreeMap<String, String>>, kind: &str, got: &[(&str, i64)]
 /// `wire28_skill_state.txt`'s rows of `name`: per level its L row and its D rows by leveltime
 /// (session tic, state digest).
 fn state_levels(name: &str) -> Vec<StateLevel> {
-    let text = read("wire28_skill_state.txt");
+    let text = read(&format!("{}wire28_skill_state.txt", dir(name)));
     assert!(text.starts_with("#schema,DOOM-WIRE28-SKILL-STATE-v1\n"));
     let mut out: Vec<StateLevel> = Vec::new();
     for l in text.lines().filter(|l| !l.starts_with('#')) {
@@ -243,19 +245,25 @@ struct Golden {
     melts: BTreeMap<i64, GoldenMelt>,
 }
 
+/// Where the goldens of `name` are: `wire28_fin/` for FIN0 and FIN1.
+fn dir(name: &str) -> &'static str {
+    ["", "wire28_fin/"][usize::from(name.starts_with("FIN"))]
+}
+
 /// Drives `item`'s demo through the wire 28 session at `sb` against the goldens of `golden`:
 /// Ok(tics compared) or the first difference.
 fn gate(item: &Item, golden: &str, sb: u8) -> Result<usize, String> {
-    let mixer = read(&format!("m6a_mixer/goldens/{golden}.golden"));
+    let dir = dir(golden);
+    let mixer = read(&format!("{dir}m6a_mixer/goldens/{golden}.golden"));
     let melts = if sb == 10 {
-        format!("m6a_melt/{golden}.melt")
+        format!("{dir}m6a_melt/{golden}.melt")
     } else {
-        format!("m6a2_melt/{golden}.sb11.melt")
+        format!("{dir}m6a2_melt/{golden}.sb11.melt")
     };
     let g = Golden {
-        session: Rows::parse(&read(&format!("m6a_session/{golden}.session"))),
-        frames: read_frames(&format!("m6a_frames/{golden}.sb{sb}.frames")).0,
-        sound: m6a::read_sound(golden),
+        session: Rows::parse(&read(&format!("{dir}m6a_session/{golden}.session"))),
+        frames: read_frames(&format!("{dir}m6a_frames/{golden}.sb{sb}.frames")).0,
+        sound: read_sound(&format!("{dir}m6a_sound/{golden}.sound")),
         mixer: mixer
             .lines()
             .filter(|l| !l.starts_with("d ") && !l.starts_with("q "))
@@ -395,7 +403,7 @@ fn gate(item: &Item, golden: &str, sb: u8) -> Result<usize, String> {
     Ok(cmds.len())
 }
 
-/// The G, C, I, J rows of a tic and the absent F row.
+/// The G, C, I, J and F rows of a tic.
 fn tic_rows(s: &Session, g: &Golden, run: &Run, tic: i64, state: i64) -> Res {
     let at = |k: &str| g.session.at(k, tic);
     let (lv, d) = (s.level(), &run.draws);
@@ -414,8 +422,14 @@ fn tic_rows(s: &Session, g: &Golden, run: &Run, tic: i64, state: i64) -> Res {
     if at("C").is_some() {
         check(at("C"), "C", &player(s))?;
     }
-    if s.finale().is_some() || at("F").is_some() {
-        return Err("a finale".into());
+    if let Some(v) = s.finale() {
+        let got = [
+            ("finalestage", v.stage.into()),
+            ("finalecount", v.count.into()),
+        ];
+        check(at("F"), "F", &got)?;
+    } else if at("F").is_some() {
+        return Err("a genuine F row outside the finale".into());
     }
     if at("I").is_none() {
         return if state == 1 {
@@ -684,4 +698,31 @@ fn skills_0_and_1_against_every_genuine_stream() {
         gate(&m6a::item("SKILL1"), "SKILL0", 10).expect_err("skill 1 against skill 0's goldens");
     eprintln!("self-test: {caught}");
     assert!(caught.starts_with("SKILL1 sb10 tic "), "{caught}");
+}
+
+/// FIN0 or FIN1: FINRET's item with the demo, skill, end and tics of `wire28_fin/results.json`.
+fn fin_item(name: &str) -> Item {
+    let doc: serde_json::Value = serde_json::from_str(&read("wire28_fin/results.json")).unwrap();
+    let r = |k: &str| doc["items"][name][k].clone();
+    Item {
+        name: name.into(),
+        lmp: format!("tests/reference/wire28_fin/{name}.lmp"),
+        skill: r("skill").as_u64().unwrap() as u8,
+        end: r("end").as_str().unwrap().into(),
+        session_tics: r("session_tics").as_u64().unwrap() as usize,
+        ..m6a::item("FINRET")
+    }
+}
+
+/// FIN0 and FIN1 through the wire 28 session at screenblocks 10 and 11 against every genuine
+/// stream (the victory on the genuine tic); the self-test drives FIN1 against FIN0's goldens.
+#[test]
+fn victory_on_skills_0_and_1_against_every_genuine_stream() {
+    for (name, sb) in [("FIN0", 10), ("FIN0", 11), ("FIN1", 10), ("FIN1", 11)] {
+        let item = fin_item(name);
+        assert_eq!(gate(&item, name, sb), Ok(item.session_tics));
+    }
+    let caught = gate(&fin_item("FIN1"), "FIN0", 10).expect_err("FIN1 against FIN0's goldens");
+    eprintln!("self-test: {caught}");
+    assert!(caught.starts_with("FIN1 sb10 tic "), "{caught}");
 }

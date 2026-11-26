@@ -3388,6 +3388,7 @@ Commands for the synthetic items, the independent encoder, the Rust side, the fu
 python3 tools/reference/wire28_wad.py --check
 # genuine engine (C; Linux; --work outside the repository): strict, overflow and address builds, four p_inter.c variants
 python3 tools/reference/wire28_goldens.py --work DIR --check --selftest
+python3 tools/reference/wire28_fin.py --work DIR --check   # FIN0 and FIN1: FINRET's demo at skills 0 and 1, to the victory
 # the Rust side (also with --release)
 cargo test -p doom-sim --lib wire28_tests
 cargo test -p doom-sim --lib wire28_genuine
