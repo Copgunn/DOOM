@@ -3,7 +3,7 @@
 **Status (2026-11-25, America/Los_Angeles): M6a parts 1 and 2 are merged and closed out.** Part 2 is pull request #80 and its
 follow-up #84, both merged on 2026-11-25. The hitching finding of §9 is closed as not an engine defect, and the closeout's
 other notes (the README's evidence sum, the leak-detection check, the quirk index correction) are in
-[§14](#14-the-closeout-2026-11-25). Not built: the easy skills and E1M7 on skill 3, a later pull request under wire 28.
+[§14](#14-the-closeout-2026-11-25). Not built in M6a's merged parts: the easy skills and E1M7 on skill 3, which are wire 28 ([record](WIRE28.md)).
 The paragraphs below are earlier status lines, left as written.
 
 **Status (2026-11-23, America/Los_Angeles): M6a part 1 is merged** ([PR #65](https://github.com/Copgunn/DOOM/pull/65), 2026-11-23), and

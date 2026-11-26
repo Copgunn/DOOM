@@ -92,7 +92,8 @@ number in brackets is the policy's identifier in saved test snapshots; the earli
 | `PlayerMonstersEpisode1V2` (24) | Episode 1, part 2: teleporters, the Baron of Hell and the E1M8 boss floor, hard skill: the real E1M5, E1M8, E1M9 and `DEMO1` runs | [Episode 1, part 2](#original-episode-1-part-2-teleporters-the-baron-of-hell-a_bossdeath-and-hard-skill-wire-24) |
 | `PlayerMonstersEpisode1V3` (25) | Episode 1, part 3: wire 24 plus canonical sound records, the sound origins, the corrected hard-death scream and the original's THING-loading stop; it makes no sound itself, and `doom-play` runs on it | [Wire 25](#original-episode-1-part-3-canonical-sound-records-wire-25) |
 | `PlayerMonstersEpisode1V4` (26) | Episode 1, part 4 (M6a): wire 25 plus a level start (new game, carried player or reborn), the walk exits 52 and 124 and the session's `gametic` for the turbo test; the level chain, played by `doom-play`; skills 2 and 3 only. It stays the wire of part 1's session configuration, which the libraries keep | [One session](#episode-1-as-one-session-m6a) |
-| `PlayerMonstersEpisode1V5` (27) | Episode 1, part 5: wire 26 with `P_InterceptVector`'s `int` wrap reproduced for the caller and wrap-class pairs a genuine item takes, and refused for every other; sight stays checked; the real E1M8 skill 2 sessions that wire 26 refuses. M6a part 2's finale-and-melt session, which `doom-play` plays, runs on this wire (no new wire for the finale and the melt; pull request #80, not merged) | [Wire 27](#wire-27-the-wrapping-p_interceptvector) |
+| `PlayerMonstersEpisode1V5` (27) | Episode 1, part 5: wire 26 with `P_InterceptVector`'s `int` wrap reproduced for the caller and wrap-class pairs a genuine item takes, and refused for every other; sight stays checked; the real E1M8 skill 2 sessions that wire 26 refuses. M6a part 2's finale-and-melt session, which `doom-play` played until wire 28, ran on this wire (no new wire for the finale and the melt; pull request #80) | [Wire 27](#wire-27-the-wrapping-p_interceptvector) |
+| `PlayerMonstersEpisode1V6` (28) | Episode 1, part 6: wire 27 plus skills 0 and 1 (double ammunition and halved damage at skill 0), the Demon bite taking the sector-11 cap, and E1M7 on skill 3 (spawn rule S'' with the monster escape witness); `DSIM` 44. The session configuration on this wire, which `doom-play` plays for every skill; nightmare stays refused | [Wire 28](#wire-28-the-easy-skills-and-e1m7-on-skill-3) |
 
 ## Versioned gameplay profiles
 
@@ -3148,6 +3149,8 @@ genuine engine": the comparison runs are listed in the
 [real-map evidence](#original-episode-1-part-2-teleporters-the-baron-of-hell-a_bossdeath-and-hard-skill-wire-24)
 (the figures stay there; E1M7 on skill 3 has no comparison run).
 
+**This table is the single-level configurations' (M5b).** Under [wire 28](#wire-28-the-easy-skills-and-e1m7-on-skill-3), the session `doom-play` plays, skills 0 and 1 are admitted and E1M7 on skill 3 loads (observed locally on the owner's IWAD, [record](validation/WIRE28.md#5-real-maps-e1m7-on-skill-3-and-the-owners-five-sessions)); the refusals above are those configurations'.
+
 ### Presentation (outside the proven frame)
 
 The proven artefact is the 320x200 indexed frame and the palette number of each tic; everything below is outside
@@ -3695,7 +3698,7 @@ summary of raw button downs and ups on quit. A test shows it changes neither the
 pictures, the easy skills and E1M7 on skill 3 to part 2, a separate pull request; it was to take wire 27, which is now the [intercept wrap](#wire-27-the-wrapping-p_interceptvector), and the easy skills and E1M7 move to wire 28 by the owner's ruling of 2026-11-24).
 Part 2 (pull request #80, merged 2026-11-25 after the owner's hand test) builds the finale and the melt in a second
 session configuration on wire 27 (ruling V1 of 2026-11-23 and the ruling of 2026-11-24, which replaced V2's wire 26), which `doom-play` now plays; the easy skills and E1M7 on
-skill 3 are a later pull request (wire 28).** One
+skill 3 are [wire 28](#wire-28-the-easy-skills-and-e1m7-on-skill-3).** One
 `doom-play` run now plays Episode 1 as the original does between levels: both exits, the intermission, the next map with the
 carried player, the reborn reload and the secret route. What is built, compared and still missing is below; the
 observations are in the [evidence record](validation/M6A.md) and the design in the
@@ -3724,6 +3727,8 @@ for its tests and tools (`GameData::load_session`), as T15 and U6 did for the ea
 file), the owner's rulings U5 and U6. `BT_SPECIAL` is never recorded and is refused in every game state (the original's pause is M6b).
 
 ### What is refused or not built yet
+
+**Superseded for `doom-play` by [wire 28](#wire-28-the-easy-skills-and-e1m7-on-skill-3):** skills 0 and 1 and E1M7 on skill 3 now play, and only nightmare is refused at launch. The rest of this section describes parts 1 and 2's configurations, which the libraries keep with their refusals.
 
 The refusals keep the complete state and end the session with a plain screen: **NOT BUILT YET** (yellow) or **TIC REFUSED**
 (red), the session tic and the message below, and the demo kept so it replays to the same refusal. In the finale-and-melt
@@ -3950,6 +3955,43 @@ short trace skip its end cell and run on. This is **shown in a stub harness only
 genuine-compared item for it, and the old certificate's premise that a visited cell lies within 2,048 + 128 + 1 units of
 the trace start does not hold when the walk overshoots. No code or certificate changed. See quirk row Q-p_maputl-846c and
 [the record](validation/WIRE27.md#7-the-block-walk-overshoot-a-stub-harness-not-a-full-engine-run).
+
+## Wire 28: the easy skills and E1M7 on skill 3
+
+**Status: implemented on [PR #86](https://github.com/Copgunn/DOOM/pull/86) (draft, 2026-11-25, not merged).** `PlayerMonstersEpisode1V6` (28, `DSIM` 44,
+constructors `original_player_episode1_v6_level` and `_at`) is wire 27 in every respect except the rules below. Wires 1-27, `DSIM` 42 and 43,
+`DDSP` 3 and 4, `DSND` 2 and 3 and `DSES` 1 and 2 are unchanged byte for byte. It is the "wire 28" of the owner's rulings of 2026-11-22 to
+2026-11-24 (V7, option 1 of the load report). Evidence: [the wire 28 record](validation/WIRE28.md); the C facts:
+[M6a note §8](M6A_REFERENCE_INVESTIGATION.md#8-wire-28-the-easy-skills-and-e1m7-on-skill-3-source-investigation-2026-11-25).
+
+| Rule | What wire 28 does | Source |
+| --- | --- | --- |
+| Skill 1 (`sk_easy`) | Admitted; spawns THING bit 1 as skill 0 does; nothing else differs from skill 2 | p_mobj.c:743-751 |
+| Skill 0 (`sk_baby`), ammunition | Every `P_GiveAmmo` amount doubled after the load and before the cap; a dropped clip is half a clip, then doubled; the starting 50 bullets are not doubled | p_inter.c:87-113; g_game.c:828 |
+| Skill 0, damage | The player's damage halved first (before thrust, fall-forward draw, the sector-11 cap, armour and the pain roll); a halved blow of 1 is a zero-damage hit with its pain roll | p_inter.c:799-900 |
+| The bite | The Demon and Spectre bite on the player takes the sector-11 cap (below) | p_inter.c:836-842 |
+| E1M7 on skill 3 | Spawn rule S'' (S' without the margin clause for monsters; barrels and the player keep it) plus the monster escape witness: after every accepted XY move of a non-player, non-missile mover on a map with a boundary, a centre outside the boundary refuses the tic (`MapScale(Escape)`, state kept, RNG unchanged) | p_map.c:197-212; p_mobj.c:137-186 |
+| Skills 2 and 3 elsewhere | Equal to wire 27 (the same demos, 3,956 tics, equal saved states under projection) | [record](validation/WIRE28.md#6-dses-version-3-restore-and-continue) |
+
+- **Admitted:** skills 0 to 3, THING bit 1 for both easy skills, E1M7 on skill 3 with the one imp S'' admits. **Refused:** skill 4 (nightmare:
+  `doom-play` exits at launch, "--skill: nightmare (4) is not built yet"; the profile's skill check refuses it as before); every older wire still refuses skills 0
+  and 1 (`NotYet(EasySkill)` in the session) and keeps S' (E1M7 on skill 3 stays refused there).
+- **The witness is a refuse-the-tic witness, not behaviour.** The original lets a monster or a corpse that is thrust through a one-sided wall
+  carry on beyond the map; wire 28 admits the monster at spawn and stops the session at that tic with a TIC REFUSED screen and the demo kept.
+  Which blows can do it (barrels, rockets, a berserk punch, from short distances; west and south more readily than east and north) is in the
+  note's [§8.5](M6A_REFERENCE_INVESTIGATION.md#85-e1m7-on-skill-3-what-a-thrust-can-do-inferred-unless-marked). **A real session can meet it; no
+  recorded run has.** Maps without a boundary (decision D4 of M3h9b, E1M3) have no witness, as for barrels. Missiles are excluded; the player has none.
+- **Formats:** [DSIM44](STATE_FORMAT.md#dsim-v44--wire-28-the-easy-skills-and-e1m7-on-skill-3), [`DSES` 3 and demo version 3](STATE_FORMAT.md#session-state-dses-version-3-wire-28).
+  The session configuration is `Configuration::FinaleAndMeltWire28`; `doom-play` uses it for every skill and no longer offers wire 27's.
+- **Evidence limits:** the escape and the stuck imps are one synthetic room layout (twelve items; the escape's genuine item refuses at the witness);
+  skill 0's rules are shown on the items and on SKILL0 and SKILL1; nightmare, other episodes and every
+  other monster, wall angle and blow are not covered. The `DSES` 3 restore test compares the session with itself.
+
+### Silent divergence in wires 24 to 27: the bite on a sector of special 11
+
+Found in wire 28's investigation and **left frozen**: a Demon or Spectre bite on the player whose damage is at least the player's health, on a sector of special 11,
+skipped the cap (p_inter.c:836-842) in `strike_player`, where the genuine engine leaves 1 health and the level exits at the next tic. Observed on wire 27
+(BITE2 first differs at capture 97: the player dies under wire 27); wires 24 to 26 share the code and were not run. No recorded run differs under wire 27 (inferred: none reached a lethal bite there). Wire 28 applies the cap (decision D4, [record](validation/WIRE28.md#2-decisions)).
 
 ## Known gap: THING loading stops at the first Doom II type outside commercial mode
 

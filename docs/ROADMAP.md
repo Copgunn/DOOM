@@ -410,7 +410,8 @@ the finale of Episode 1), which lands in two parts by the owner's ruling of 2026
 merged: [PR #65](https://github.com/Copgunn/DOOM/pull/65), 2026-11-23, with the held-keys fix
 ([PR #79](https://github.com/Copgunn/DOOM/pull/79)) merged the same day. **Part 2** (the finale and the melt
 pictures) is merged (pull request #80, 2026-11-25) after it passed the owner's hand test on 2026-11-24
-([record](validation/M6A.md#9-the-owners-hand-test-of-9e3734ae-and-his-five-sessions-against-the-genuine-engine-2026-11-24)); a follow-up (pull request #84, merged 2026-11-25) ends the session on a refused victory-tic frame and adds mutation-survivor tests. The easy skills and E1M7 on skill 3 are a later pull request. Both are
+([record](validation/M6A.md#9-the-owners-hand-test-of-9e3734ae-and-his-five-sessions-against-the-genuine-engine-2026-11-24)); a follow-up (pull request #84, merged 2026-11-25) ends the session on a refused victory-tic frame and adds mutation-survivor tests. The easy skills and E1M7 on skill 3 are **wire 28**, in progress as the draft
+[PR #86](https://github.com/Copgunn/DOOM/pull/86) (below). Both are
 described under [Later](#later), with the merged M4b to M5d milestones before them. The items of the
 [vanilla completeness checklist](#vanilla-completeness-checklist) that waited for a ruling were ruled on on
 2026-11-21 (declined, or in M6b, or in a later milestone the owner will name). Exact review
@@ -430,7 +431,7 @@ state belongs to GitHub.
 - **Later bounds and skills.** Barrels beyond 16 and pickups beyond 64 for the rest of
   Episode 1 need more actor slots (the M3h9b note's §5.3 formula) and their own evidence.
   Easy and hard skill (E4 option ii) were deferred by decision F10, not dropped: hard skill came
-  with M4b, and easy skill is ruled into M6a (owner's ruling, 2026-11-21, under [Later](#later); parts 1 and 2 merged without it, and by his ruling of 2026-11-24 it is a later pull request under wire 28).
+  with M4b, and easy skill is ruled into M6a (owner's ruling, 2026-11-21, under [Later](#later); parts 1 and 2 merged without it, and by his ruling of 2026-11-24 it is wire 28, built on the draft [PR #86](https://github.com/Copgunn/DOOM/pull/86)).
 
 Also revisit the rules the 14 other IWAD maps break (13 with one-sided walls of odd
 degree, crossing or facing away from their sector, one BLOCKMAP with missing listings)
@@ -510,7 +511,7 @@ The entries marked merged below are done; they keep their place here because thi
   performance milestone below).
 - **M4c (proposed, pending the owner): superseded by the owner's rulings of 2026-11-21.** It proposed pause, easy
   skill and the reborn reload as an admitted transition. By the rulings, pause goes to M6b below, and easy skills
-  and the reborn reload to M6a (the reborn reload merged with part 1, PR #65; easy skills were not in part 2, merged 2026-11-25, and are a later pull request under wire 28); no M4c will be made. Level transitions stay a
+  and the reborn reload to M6a (the reborn reload merged with part 1, PR #65; easy skills were not in part 2, merged 2026-11-25, and are wire 28, draft PR #86); no M4c will be made. Level transitions stay a
   later direction.
 - **M6b, nightmare skill and the original's pause (named by the owner's ruling of 2026-11-21; not started).**
   Nightmare: respawning monsters (`P_NightmareRespawn`, `p_mobj.c:357-407`, with its trigger at `p_mobj.c:452-470`
@@ -670,8 +671,8 @@ The entries marked merged below are done; they keep their place here because thi
   sessions that wire 26 refuses ([rule](COMPATIBILITY.md#wire-27-the-wrapping-p_interceptvector),
   [evidence](validation/WIRE27.md)). Not done, by the owner's rulings:
   - **Refused caller and wrap-class pairs are known gaps for a later wire**; the E1M8 finale is expected, not guaranteed.
-  - **Wire 28:** the easy skills and E1M7 on skill 3, a later pull request. PR #80 (M6a part 2, merged 2026-11-25) merged master on
-    2026-11-24 and runs its finale-and-melt session on wire 27.
+  - **Wire 28:** the easy skills and E1M7 on skill 3, [built on the draft PR #86](COMPATIBILITY.md#wire-28-the-easy-skills-and-e1m7-on-skill-3)
+    (see the Wire 28 item below). PR #80 (M6a part 2, merged 2026-11-25) ran its finale-and-melt session on wire 27.
   - **A later pull request audits what the old certificate argument covers** (not started). Its first item: a full-engine
     synthetic case where a short slide or use trace overshoots its block walk, compared tic for tic against Rust under wires
     26 and 27, and whether any Rust path substitutes a reach-bounded set of lines or things for the C's actual block walk
@@ -683,6 +684,14 @@ The entries marked merged below are done; they keep their place here because thi
     rectangle) was done on 2026-11-24; what it did not cover is in the record.
   - **A `doom-play` wall-clock test** (`a_stalled_disk_keeps_the_queue_bounded_and_loses_no_tic`) failed once on macOS
     in an unrelated run; its fix is a later pull request.
+- **Wire 28: the easy skills and E1M7 on skill 3 (draft PR #86, 2026-11-25).** `PlayerMonstersEpisode1V6`, `DSIM` 44, `DSES` 3: skills
+  0 and 1 (double ammunition and half damage at skill 0), the Demon bite taking the sector-11 cap, and E1M7 on skill 3 through spawn rule S'' and
+  the monster escape witness; `doom-play` plays skills 0 to 3 and refuses nightmare. Built and compared with the genuine engine on twelve
+  synthetic items, SKILL0 and SKILL1, and locally on E1M7 at skill 3 and the owner's five sessions of 2026-11-25
+  ([rule](COMPATIBILITY.md#wire-28-the-easy-skills-and-e1m7-on-skill-3), [evidence](validation/WIRE28.md),
+  [source note](M6A_REFERENCE_INVESTIGATION.md#8-wire-28-the-easy-skills-and-e1m7-on-skill-3-source-investigation-2026-11-25)). Not done, by design:
+  the witness is a refuse-the-tic stop, not the original's behaviour, and no recorded run has reached it; nightmare is M6b; the wires 24 to 27
+  keep the bite divergence ([COMPATIBILITY](COMPATIBILITY.md#silent-divergence-in-wires-24-to-27-the-bite-on-a-sector-of-special-11)).
 - **Simulation follow-up (decided: the THING-loading truncation is closed under wire 25 only).** `P_LoadThings` ends the
   whole THINGS loop at the first Doom II type (doomednums 64-69, 71, 84, 88, 89) when `gamemode != commercial`
   (p_setup.c:317-337). Wire 25 (decision T4, confirmed 2026-11-18) stops loading there, with a synthetic map and
@@ -723,8 +732,8 @@ and in [COMPATIBILITY](COMPATIBILITY.md) on 2026-11-21:
 - **done (M…)**: delivered by that milestone, within the support and limits COMPATIBILITY gives it. "Baseline"
   means the merged foundations at the top of [Done](#done).
 - **partly done (M…)**: what is done, then what is not.
-- **in M6a (wire 28, a later pull request)** and **in M6b**: the milestone the owner's rulings of 2026-11-21 name for the item
-  (see [Later](#later)). M6a part 2 and its follow-up merged on 2026-11-25 (pull requests #80 and #84): the finale and the melt are marked "(M6a part 2)"; the easy skills and E1M7 on skill 3 (wire 28) are not built; what part 1 delivered
+- **in M6a (wire 28, draft PR #86)** and **in M6b**: the milestone the owner's rulings of 2026-11-21 name for the item
+  (see [Later](#later)). M6a part 2 and its follow-up merged on 2026-11-25 (pull requests #80 and #84): the finale and the melt are marked "(M6a part 2)"; the easy skills and E1M7 on skill 3 (wire 28) are built on the draft PR #86 and not yet merged; what part 1 delivered
   ([PR #65](https://github.com/Copgunn/DOOM/pull/65), merged 2026-11-23) is marked "(M6a part 1)". Two broader directions under Later are
   also named where they apply: "M4 — Demo compatibility" and the M3e direction for moving sectors.
 - **in a later milestone, to be named by the owner**: ruled in on 2026-11-21, no milestone named yet.
@@ -848,15 +857,15 @@ Every `M_CheckParm` call in `linuxdoom-1.10/`; the DOS drivers' own options are 
 | --- | --- | --- |
 | Skill: Hurt Me Plenty (medium) | `p_mobj.c:743-751` | done (M3h9c, M4a) |
 | Skill: Ultra-Violence (hard) | `p_mobj.c:743-751` | done (M4b) |
-| Skills: I'm Too Young To Die (double ammunition, half damage) and Hey, Not Too Rough | `p_mobj.c:743-751`, `p_inter.c:95-101`, `p_inter.c:799-800` | in M6a (wire 28, a later pull request): the owner ruled easy skills into M6a on 2026-11-21; parts 1 and 2 merged without them |
+| Skills: I'm Too Young To Die (double ammunition, half damage) and Hey, Not Too Rough | `p_mobj.c:743-751`, `p_inter.c:95-101`, `p_inter.c:799-800` | partly done (M6a, wire 28, draft PR #86): skills 0 and 1 built and compared on synthetic items and the session items ([COMPATIBILITY](COMPATIBILITY.md#wire-28-the-easy-skills-and-e1m7-on-skill-3)); the owner ruled them into M6a on 2026-11-21 and parts 1 and 2 merged without them |
 | Skill: Nightmare: fast monsters, respawning monsters, double ammunition, its own chase rules | `g_game.c:1379-1380`, `g_game.c:1416-1436`, `p_mobj.c:357-407` (`P_NightmareRespawn`), `p_mobj.c:452-470`, `p_mobj.c:503-504`, `p_enemy.c:672` (`A_Chase`), `p_enemy.c:719-720`, `p_enemy.c:738-742`, `m_menu.c:898` | in M6b (owner's ruling, 2026-11-21) |
 | A new game: the skill and episode limits of each game mode, the random reset, each episode's sky | `g_game.c:1345`, `g_game.c:1365` (`G_InitNew`) | partly done (M4b, M5b): a new game straight onto an Episode 1 map on medium or hard; the rest not started |
 | The level exit and the secret exit | `g_game.c:1002`, `g_game.c:1009` | done (M3h8, M4a, M6a part 1): the exit tic completes and is recorded; under wire 26 the session goes on to the intermission, under wires 1-25 the next tic is still refused ([COMPATIBILITY](COMPATIBILITY.md#episode-1-as-one-session-m6a)) |
 | Finishing a level: the players finish, statistics and par times go to the intermission | `g_game.c:779`, `g_game.c:978-998`, `g_game.c:1020` | partly done (M6a part 1): one player, Episode 1 ([COMPATIBILITY](COMPATIBILITY.md#episode-1-as-one-session-m6a)); the rest not started |
 | The next map: the normal order, the secret level and the way back, Doom II's maps 15, 31 and 32 | `g_game.c:1064-1110`, `g_game.c:1147-1179` | partly done (M6a part 1): Episode 1's order, E1M3's secret exit to E1M9 and the way back to E1M4 ([COMPATIBILITY](COMPATIBILITY.md#episode-1-as-one-session-m6a)); after E1M8 the finale follows (M6a part 2); the other episodes and Doom II not started |
 | What the player carries to the next map (health, armour, weapons, ammunition, backpack) and loses (keys, powers) | `g_game.c:779-792`, `p_mobj.c:642` | done (M6a part 1), on skills 2 and 3 ([COMPATIBILITY](COMPATIBILITY.md#episode-1-as-one-session-m6a)) |
-| Every Episode 1 map on every skill (E1M1-E1M9 x skills 0-4): each pair loads and plays, with no thing refused at spawn | `p_mobj.c:743-751` (the skill spawn bits) | partly done (M4b, M5b): skills 2 and 3 load on 17 of the 18 pairs and E1M7 on skill 3 is refused at load, skills 0 and 1 are not admitted, skill 4 is not admitted ([the table](COMPATIBILITY.md#skills-and-maps-load-table)). Milestones, confirmed by the owner on 2026-11-21: **M6a** for skills 0-3 (its load report for all 36 pairs, naming the refusing thing and rule for each refusal, comes before easy skills are admitted; if M6a's size cap is reached first, the owner names the milestone the remainder moves to, and nothing is dropped) and **M6b** for skill 4. Proving a refused spawn takes: (a) the thing and the bound that refuses it (M6a's report); (b) a source investigation of what linuxdoom-1.10 does for that case, cited by file:line; (c) a synthetic scene reproducing it, run through the genuine engine and Rust in CI; (d) admission under a new explicit configuration (wire 26; wires 1-25 keep refusing, their rules are frozen); (e) real-map runs on that map and skill compared tic for tic, locally |
-| A monster or a corpse ending up behind a one-sided wall, with the game continuing: a move is refused only when the thing's box would straddle a one-sided line, so a thing whose box already overlaps such a wall can be carried wholly behind it in one move, for example by the thrust of damage | `p_map.c:189-212` (`PIT_CheckLine`), `p_mobj.c:137-164` (`P_XYMovement`), `p_inter.c:817-831` (the damage thrust) | not started, milestone to be named by the owner: not optional. By the owner's ruling of 2026-11-21, M6a (not in its merged parts 1 and 2; with E1M7 on skill 3 under wire 28, a later pull request) admits such a monster at spawn under its new configuration only and refuses the tic, with the state preserved, if a move would put its centre behind the walls; that refusal is a declared limit, not this behaviour. Its size and a proposed milestone follow M6a's investigation |
+| Every Episode 1 map on every skill (E1M1-E1M9 x skills 0-4): each pair loads and plays, with no thing refused at spawn | `p_mobj.c:743-751` (the skill spawn bits) | partly done (M4b, M5b): skills 2 and 3 load on 17 of the 18 pairs and E1M7 on skill 3 is refused at load, skills 0 and 1 are not admitted, skill 4 is not admitted ([the table](COMPATIBILITY.md#skills-and-maps-load-table)); under wire 28 (draft PR #86) skills 0 and 1 are admitted and E1M7 on skill 3 loads, nightmare still refused. Milestones, confirmed by the owner on 2026-11-21: **M6a** for skills 0-3 (its load report for all 36 pairs, naming the refusing thing and rule for each refusal, comes before easy skills are admitted; if M6a's size cap is reached first, the owner names the milestone the remainder moves to, and nothing is dropped) and **M6b** for skill 4. Proving a refused spawn takes: (a) the thing and the bound that refuses it (M6a's report); (b) a source investigation of what linuxdoom-1.10 does for that case, cited by file:line; (c) a synthetic scene reproducing it, run through the genuine engine and Rust in CI; (d) admission under a new explicit configuration (wire 26; wires 1-25 keep refusing, their rules are frozen); (e) real-map runs on that map and skill compared tic for tic, locally |
+| A monster or a corpse ending up behind a one-sided wall, with the game continuing: a move is refused only when the thing's box would straddle a one-sided line, so a thing whose box already overlaps such a wall can be carried wholly behind it in one move, for example by the thrust of damage | `p_map.c:189-212` (`PIT_CheckLine`), `p_mobj.c:137-164` (`P_XYMovement`), `p_inter.c:817-831` (the damage thrust) | not started, milestone to be named by the owner: not optional. By the owner's ruling of 2026-11-21, M6a (not in its merged parts 1 and 2; with E1M7 on skill 3 under wire 28, draft PR #86) admits such a monster at spawn under its new configuration only and refuses the tic, with the state preserved, if a move would put its centre behind the walls; that refusal is a declared limit, not this behaviour. Built in wire 28 as the monster escape witness ([COMPATIBILITY](COMPATIBILITY.md#wire-28-the-easy-skills-and-e1m7-on-skill-3)). Its size and a proposed milestone follow M6a's investigation |
 | Death and the reborn reload | `p_user.c:182` (`P_DeathThink`), `g_game.c:800`, `g_game.c:924` (`G_DoReborn`) | done (M3h9c, M6a part 1): the death view and the reborn request; the reload in a `doom-play` session under wire 26 ([COMPATIBILITY](COMPATIBILITY.md#episode-1-as-one-session-m6a)) |
 | The original's pause: the Pause key, the pause command in the demo, the stopped game, the pause picture, paused music | `g_game.c:426-430`, `g_game.c:561-565`, `g_game.c:698-712`, `p_tick.c:135-136`, `d_main.c:303-311`, `s_sound.c:497` | in M6b (owner's ruling, 2026-11-21); `doom-play`'s Esc pause is the app's own (M5b) |
 | The turbo message | `g_game.c:671-679` | done (M4a) |

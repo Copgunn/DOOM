@@ -3375,6 +3375,52 @@ python3 tools/local/wire27_session_real.py --iwad IWAD --work DIR --recording FI
   `--in-diff`, excluding `intercept_vector.rs` and the tests, over the full `doom-sim` suite. Counts and survivors are in
   [the record](validation/WIRE27.md#9-mutation-testing-cargo-mutants-2710-nextest--j-1).
 
+### Wire 28: the easy skills and E1M7 on skill 3
+
+Commands for the synthetic items, the independent encoder, the Rust side, the fuzz targets and the local real-map tool. The rule is in
+[COMPATIBILITY](COMPATIBILITY.md#wire-28-the-easy-skills-and-e1m7-on-skill-3), the formats in
+[STATE_FORMAT](STATE_FORMAT.md#dsim-v44--wire-28-the-easy-skills-and-e1m7-on-skill-3), the C facts in the
+[M6a note §8](M6A_REFERENCE_INVESTIGATION.md#8-wire-28-the-easy-skills-and-e1m7-on-skill-3-source-investigation-2026-11-25), observations in the
+[wire 28 record](validation/WIRE28.md).
+
+```sh
+# the synthetic WAD (nine map slots) and the twelve demo scripts
+python3 tools/reference/wire28_wad.py --check
+# genuine engine (C; Linux; --work outside the repository): strict, overflow and address builds, four p_inter.c variants
+python3 tools/reference/wire28_goldens.py --work DIR --check --selftest
+# the Rust side (also with --release)
+cargo test -p doom-sim --lib wire28_tests
+cargo test -p doom-sim --lib wire28_genuine
+cargo test -p doom-game --test wire28_genuine
+cargo test -p doom-game --test wire28_session
+cargo test -p doom-play wire28
+# fuzz (nightly, cargo-fuzz; targets wire28_dsim44, wire28_dses3, wire28_demo3)
+cargo +nightly fuzz build --sanitizer address
+# local only (reads the owner's IWAD in place, never in CI; sets: e1m7, sessions, skill0, skill1, own)
+python3 -u tools/local/wire28_real.py --iwad IWAD --work DIR --set e1m7 --selftest
+python3 -u tools/local/wire28_real.py --iwad IWAD --work DIR --set sessions --wire27 --recording FILE [--recording FILE ...]
+```
+
+- **Genuine items (CI).** `wire28_goldens.py` writes or `--check`s `wire28_state.txt`, `wire28_skill_state.txt` and `wire28_results.json`; its
+  `--selftest` adds an extra `P_Random` draw before tic 40 of HURT0, which must be detected. The altered genuine builds (no doubling, no
+  halving, the halving after the thrust, the halving after the sector-11 cap) must each differ from strict at the capture the record lists. The
+  address build runs with `detect_leaks=0`: leak detection is disabled, not LeakSanitizer coverage. The CI step is in `.github/workflows/rust.yml`,
+  in the job "M6a genuine session". Tool details: [tools/reference/README.md](../tools/reference/README.md#wire-28-the-easy-skills-and-the-monster-escape-witness-against-the-genuine-engine).
+- **`wire28_tests` (21, Rust-only)**: skills, the doubling and its cap, the halving and its order, the DSIM44 differences, S'' and the witness,
+  the bite. **`wire28_genuine` in `doom-sim` (3)**: wire 28 equals the genuine engine on the twelve items; wire 27 diverges on the bite; planted
+  faults in the port are caught. **`wire28_genuine` in `doom-game` (1)**: SKILL0 and SKILL1 against every genuine stream.
+  **`wire28_session` (4)**: the wire 28 session, wire 28 against wire 27 on skills 2 and 3, `DSES` 3, restore and continue at 60 save points.
+  **`doom-play` `wire28_tests` (3)**: the skills and the help, and a skill 0 recording.
+- **Fuzzing the three wire 28 readers.** Seeds were made by a scratch helper that is **not committed**, so a campaign starts from any corpus you
+  supply (DSIM44 captures, `DSES` 3 states, demos). The recorded runs used `-max_total_time=240 -seed=1 -timeout=20 -rss_limit_mb=2048` with
+  `-max_len` 131072 (`wire28_dsim44`), 300000 (`wire28_dses3`) and 4096 (`wire28_demo3`): `cargo +nightly fuzz run TARGET CORPUS --sanitizer none --
+  OPTIONS` for the coverage-guided campaign, `--sanitizer address` for the sanitizer campaign (leak detection **on**, default options) and
+  `-runs=0` for the seed replay. A leak plant to confirm that detection works is in [the record](validation/WIRE28.md#7-fuzzing-by-type).
+- **`wire28_real.py` is local-only.** It runs every demo through the whole session path against the genuine build at screenblocks 10 and 11
+  (rows, frames, sound, melt steps, mixer buffers and the DSIM44 state after every level tic) and `--selftest` flips a ticcmd and adds a draw. A
+  finished demo leaves `done/NAME.json` under `--work/ref`, so a rerun skips it; never run two on one `--work`. The goldens are IWAD-derived and stay
+  in scratch.
+
 ## Mutation testing
 
 M4a used cargo-mutants 27.1.0 with cargo-nextest 0.9.151. These are separate
