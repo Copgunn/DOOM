@@ -1,7 +1,7 @@
 # Wire 28 evidence record (the easy skills and E1M7 on skill 3)
 
 Observed results of wire 28 (`PlayerMonstersEpisode1V6`, captures `DSIM` 44, session state `DSES` 3), recorded 2026-11-25
-(America/Los_Angeles) on branch `feat/wire28-easy-skills`, [PR #86](https://github.com/Copgunn/DOOM/pull/86). The rule and what
+(America/Los_Angeles; sections 5.3, 5.4, 9 and 11 added 2026-11-26) on branch `feat/wire28-easy-skills`, [PR #86](https://github.com/Copgunn/DOOM/pull/86). The rule and what
 is admitted are in [COMPATIBILITY](../COMPATIBILITY.md#wire-28-the-easy-skills-and-e1m7-on-skill-3), the format in
 [STATE_FORMAT](../STATE_FORMAT.md#dsim-v44--wire-28-the-easy-skills-and-e1m7-on-skill-3), the C facts in the
 [M6a note §8](../M6A_REFERENCE_INVESTIGATION.md#8-wire-28-the-easy-skills-and-e1m7-on-skill-3-source-investigation-2026-11-25), the
@@ -31,8 +31,8 @@ merge**. Options not taken are named.
 | D1 | DSIM44 is DSIM43 field for field; only the version (44), the profile (28) and `context.schema` (`PLAYER-MONSTERS-EPISODE1-6-v1`) differ, at byte offsets 4, 82 and 181. Not taken: new fields. | Nothing in the state is new: the skill is already in `actors.options`, the baby flag follows from it, and the witness keeps no state. |
 | D2 | `DSES` 3 is version 2's layout with an embedded DSIM44 (`Diagnostic::decode_episode1_v6`); versions 1 and 2 are frozen. No new `DDSP` or `DSND` version: version 3 embeds `DDSP` 4 and `DSND` 3 unchanged. Not taken: redefine version 2. | Frozen formats are not redefined; wire 28 changes nothing the display or sound hold. |
 | D3 | A third session configuration, `Configuration::FinaleAndMeltWire28`; `doom-play` uses it for every skill (`GameData::load_wire28_session`). Not taken: wire 28 only for skills 0 and 1 and E1M7 on skill 3, wire 27 elsewhere. | One configuration for the player; wire 28 equals wire 27 on skills 2 and 3 in the tests of section 6. |
-| D4 | The Demon and Spectre bite on the player takes the sector-11 cap under wire 28 (gated on `has_easy_skills`). Under wires 24 to 27 it skipped it (p_inter.c:836-842), a silent divergence that stays frozen. Evidence: BITE2 equals the genuine engine under wire 28; wire 27 first differs at capture 97. Not taken: leave wire 28 diverging; refuse the tic. | A divergence the item showed should not be carried into the new wire; refusing would stop a legal tic. |
-| D5 | The stop message for `MapScale(Escape)` is a plain sentence; it also replaces the debug text for a barrel's escape under older configurations (text only, the old text kept as its prefix; no test pins it). | A player-facing stop needs a sentence. |
+| D4 | The Demon and Spectre bite on the player takes the sector-11 cap under wire 28 (gated on `has_easy_skills`). Under wires 23 to 27 it skipped it (p_inter.c:836-842), a silent divergence that stays frozen. Evidence: BITE2 equals the genuine engine under wire 28; wire 27 first differs at capture 97; wires 23 to 26 by the independent reader's Rust-only scratch probe (section 11), not run against the genuine engine. Not taken: leave wire 28 diverging; refuse the tic. | A divergence the item showed should not be carried into the new wire; refusing would stop a legal tic. |
+| D5 | The stop message for `MapScale(Escape)` is a plain sentence; it also replaces the debug text for a barrel's escape under older configurations (text only, the old text kept as its prefix; no test pins it). That touches the frozen app's text although `app/mod.rs`'s module doc says `load_session` keeps the frozen app exactly; the doc comment is not edited here. | A player-facing stop needs a sentence. |
 | D6 | **Superseded.** The first note said to time the witness once the owner said the machine was idle. The owner's ruling of 2026-11-25 replaces it: the timing is taken only with nothing else running and said so, otherwise listed as not run. | Owner's ruling. |
 
 Owner's rulings of 2026-11-25 for this pull request that bear on the record: existing-test changes only for expectations that
@@ -129,6 +129,59 @@ Level-state captures: 767, 623, 4,671, 3,722 and 3,171. No tic was refused and n
 or refusal it stops at the first one, and the whole-state and mixer comparisons come after the run, so a refusal case would need a
 separate state-only check.
 
+### 5.3 Real maps on skills 0 and 1
+
+Local only, 2026-11-25 and 2026-11-26 (`wire28_real.py --set skill0` and `--set skill1`), the same whole-session gate as above. **These are the
+same 61 committed command recordings (the E1M1 to E1M9 scripts and `DEMO1`, made on skills 2 and 3), plus two constructions of ours (M8WALK_FIN and
+M8WALK3_FIN: a recording followed by 2,400 idle tics): 63 demos, replayed with the header's skill byte set to 0 and then to 1.** On another skill
+different things spawn and the game plays out differently, so these are different simulation states from the same commands. They are not new
+recordings and no one played them; they show that the port and the genuine engine agree on these inputs.
+
+| Map | Demos | Session tics | Skill 0: pass, refused | Skill 1: pass, refused |
+| --- | ---: | ---: | --- | --- |
+| E1M1 | 5 | 10,029 | 5, 0 | 5, 0 |
+| E1M2 | 5 | 12,544 | 5, 0 | 5, 0 |
+| E1M3 | 5 | 15,388 | 5, 0 | 5, 0 |
+| E1M4 | 5 | 12,717 | 5, 0 | 5, 0 |
+| E1M5 | 11 | 47,146 | 11, 0 | 11, 0 |
+| E1M6 | 5 | 16,724 | 5, 0 | 5, 0 |
+| E1M7 | 5 | 16,424 | 5, 0 | 5, 0 |
+| E1M8 | 12 | 52,095 | 12, 0 | 12, 0 |
+| E1M9 | 10 | 29,884 | 10, 0 | 10, 0 |
+| **Total** | **63** | **212,951** | **63, 0** | **63, 0** |
+
+**63 of 63 pass at screenblocks 10 and 11 on each skill (126 runs each), 212,951 session tics per skill, 0 refusals, every stream compared**
+(session rows, frames, sound rows, melt steps; at screenblocks 10 also the mixer buffers and the whole DSIM44 state after every level tic). The per-map
+counts are the same on both skills because the commands are. **Distinct tics per skill:** 212,951 less 5,813 (M8WALK, repeated inside M8WALK_FIN) and 5,505
+(M8WALK3, inside M8WALK3_FIN) is **201,633**, of which 4,800 are our appended idle tics.
+
+**One failure and its resume.** The first run of skill 0 stopped with exit 1 on the genuine side (`OSError: [Errno 12] Cannot allocate memory`, reading the
+WAD, at demo 55 of 63) because too many jobs ran at once on the machine; the tool skips demos it has finished, the run was resumed and compared all 63.
+**One helper difference.** The first comparison pass of each skill used a copy of the test helper (`m6a2_run/mod.rs`) in which `read_sound` was `pub`, a one-word
+change later reverted. Confirming reruns of both skills on the restored helper (tree `fff2a40d`, 2026-11-26 about 00:55): 63 of 63 pass at both sizes, 212,951 tics,
+0 refusals, exit 0 on each skill, and every one of the 126 result lines of each rerun equals the first pass's (a diff of the result lines is empty).
+
+### 5.4 E1M8 on the easy skills
+
+The owner's ruling V5 (2026-11-25): valid inputs even where they stop reaching their exits; a recording made on another skill that does not reach the victory on
+skill 0 or 1 is expected, and an equal run that never reaches it still counts as compared tics. **No route was constructed and nothing here is derived from the
+owner's own recordings.** What each of the twelve E1M8 demos of section 5.3 does on each easy skill:
+
+| Demo | Tics compared | Equal | Ends (genuine and Rust alike) |
+| --- | ---: | --- | --- |
+| M8CHAOS, M8CHAOS3 | 5,000 each | both skills | the demo's end marker |
+| M8DIE / M8DIE3 | 553 / 344 | both skills | the demo's end marker |
+| M8FIGHT / M8FIGHT3 | 5,740 / 3,822 | both skills | the demo's end marker |
+| M8IDLE, M8IDLE3 | 2,100 each | both skills | the demo's end marker |
+| M8WALK / M8WALK3 | 5,813 / 5,505 | both skills | the demo's end marker |
+| M8WALK_FIN / M8WALK3_FIN (our constructions: M8WALK and M8WALK3 plus 2,400 idle tics each) | 8,213 / 7,905 | both skills | the demo's end marker |
+
+All twelve are equal on skill 0 and on skill 1 (52,095 tics each), **none reaches the victory**, and the tic counts are the same on both skills. The victory
+is reached by the synthetic items FIN0 and FIN1 instead ([section 4](#4-skill0-and-skill1-against-every-genuine-stream); not repeated here), compared with the
+genuine engine in CI: their cost was 149 lines plus 21 (the orchestrator's count when they were built, not recounted here).
+**E1M8 to the finale on skills 0 and 1, real map: not yet covered** (as of 2026-11-26). It is to be supplied by the owner's hand-test sessions on the Windows
+build and verified against the genuine engine afterward; their verification is running and is not recorded here.
+
 ## 6. `DSES` version 3: restore and continue
 
 Rust-only (a session compared with itself, not with the genuine engine). Test
@@ -136,7 +189,7 @@ Rust-only (a session compared with itself, not with the genuine engine). Test
 (`save_v3`), encoded, decoded, restored (`restore_v3`), re-saved (bytes equal), then continued beside the uninterrupted session to the
 demo's end; every call (tic or melt step) and the final saved bytes are equal. Runs: SKILL0 and SKILL1 at their own skills, and INTFAST,
 CHAIN and FINRET each replayed at skill 0 and at skill 1 (their demos were recorded on skill 2, so only restored-equals-uninterrupted
-is asserted there, not agreement with a genuine golden). **60 save points**: level 8, last level tic 20, intermission 12, finale 4,
+is asserted there, not agreement with a genuine golden). **68 save points**: level 8, last level tic 20, intermission 12, finale 4,
 melt 24. The file's four tests pass in debug and in release. **Limit:** melt save points are the first, middle and last of all melt boundaries, not
 labelled per melt kind, so the finale's text-to-art melt is not specifically asserted. The version-3 round trip, the refusals of
 versions 1 and 2 and the older configurations' refusal of skills 0 and 1 are the other tests of that file (section 8).
@@ -176,10 +229,10 @@ header, the DSIM44 differences at offsets 4, 82 and 181, the doubling and its ca
 for barrels and the player, the witness on both sides of the wall, refusal with the state kept, every non-player move carrying the
 witness, the bite and its cap); `wire28_genuine_tests.rs` (3: `wire_28_equals_the_genuine_engine_on_every_item`,
 `wire_27_diverges_on_the_bite_and_refuses_the_embedded_rooms`, `planted_faults_in_the_port_are_caught`);
-`crates/doom-game/tests/wire28_genuine.rs` (1: SKILL0 and SKILL1, section 4); `crates/doom-game/tests/wire28_session.rs` (4: the
+`crates/doom-game/tests/wire28_genuine.rs` (2: `skills_0_and_1_against_every_genuine_stream`, section 4, and `victory_on_skills_0_and_1_against_every_genuine_stream`, FIN0 and FIN1, section 4); `crates/doom-game/tests/wire28_session.rs` (4: the
 session starts on skills 0 to 3 and the older ones refuse 0 and 1; wire 28 equals wire 27 on skills 2 and 3; `DSES` 3 round trip,
 restore and refusals; section 6); `crates/doom-play/src/wire28_tests.rs` (3: skills 0 to 3 accepted and nightmare refused; the help;
-a skill 0 recording round-trips its header and replays). Fuzz targets: section 7.
+a skill 0 recording round-trips its header and replays); `crates/doom-game/tests/wire28_mutants.rs` (3, for three doom-game mutation survivors, section 9); `crates/doom-sim/src/wire28_mutant_tests.rs` (1, `dsim44_counts_a_skill_2_capture_with_thing_bit_2`, test-only, wired in by one `#[cfg(test)] mod` line in `lib.rs`). Fuzz targets: section 7.
 
 **Existing tests touched** (the two whose expectations pinned the easy skills as refused; the owner's ruling of 2026-11-25), both
 in `crates/doom-play/src/main.rs`, each with a dated comment: `tests::arguments` (`"--iwad a --skill 1"` left the list of refused
@@ -187,6 +240,66 @@ arguments; `4` and `nightmare` stay) and `tests::the_game_mode_flag_and_the_sess
 now parse and give skills 0 and 1 where the test expected "easy skills (0, 1) are not built yet"). **No other existing test, fixture
 or golden is changed**: everything under `tests/reference` that this branch touches is a new file, and no frozen format's
 documentation was edited beyond cross-links.
+
+## 9. Mutation testing
+
+cargo-mutants 27.1.0 with cargo-nextest, `-j 1`, a scratch worktree on the Linux disk, 2026-11-25 and 2026-11-26. The mutants are the lines this pull request changed in
+`crates/` (`--in-diff` of `git diff origin/master...cd1f7b05 -- crates/`; the crate sources did not change after `cd1f7b05` except for test files and one
+`#[cfg(test)]` line, so the survivors are the same at `fff2a40d`). The command forms are in [TESTING](../TESTING.md#wire-28-the-easy-skills-and-e1m7-on-skill-3).
+Exit code 2 is cargo-mutants' "a mutant was missed"; the runs that exited 2 are marked.
+
+| Mutants run against | Head | Mutants | Caught | Missed | Timeout | Unviable | Exit |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| `doom-sim`, its own tests | diff at `cd1f7b05` | 178 | 150 | 11 | 0 | 17 | 2 |
+| `doom-sim`'s 11 survivors, with `doom-sim`'s and `doom-game`'s tests | `cbe88eba` | 11 | 4 | 7 | 0 | 0 | 2 |
+| `doom-game`, its own tests | diff at `cd1f7b05` | 75 | 49 | 4 | 0 | 22 | 2 |
+| `doom-game`'s 4 survivors, `doom-game`'s tests (now with `wire28_mutants.rs`) | `4f78d30a` | 4 | 3 | 1 | 0 | 0 | 2 |
+| `doom-play`, its own tests (local) | diff at `cd1f7b05` | 3 | 2 | 0 | 0 | 1 | 0 |
+| `doom-render`, `doom-sound` | | 0 | | | | | this pull request changes no line in either |
+
+**Every survivor and its answer** (15: the 11 of `doom-sim` and the 4 of `doom-game`):
+
+| Survivor | Answer |
+| --- | --- |
+| `doom-sim` `diagnostic.rs:580:25`, `581:25` (match guard to `false`), `580:40`, `581:40` (`==` to `!=`) in `v40_skill` | **killed once `doom-game`'s tests run** (4 caught in the second row; the run does not name the test); no new test |
+| `diagnostic.rs:580:35`, `581:35` (`&&` to `\|\|`) in `v40_skill` | **killed** by `wire28_mutant_tests::dsim44_counts_a_skill_2_capture_with_thing_bit_2` (`fff2a40d`: a DSIM44 capture at skill 2 on a map whose bit-1 and bit-2 thing counts differ). Observed by applying each mutation by hand and seeing the test fail; the expected behaviour is read from the C (p_mobj.c:743-751, 789-790; info.c:1416), not observed against the genuine engine. **cargo-mutants was not rerun over these two** |
+| `demon.rs:154:35` (`&&` to `\|\|`), `154:31` (`>` to `>=`), `154:52` (`&` to `\|`, and `&` to `^`) in `strike_player` | **argued equivalent, no test.** The line is `live = health > 0 && flags & MF_SHOOTABLE != 0`. Only two body states reach it: (A) health 1 or more with `MF_SHOOTABLE` set, (B) health 0 or less with it clear (a kill clears the flag). In A and B each of the four mutants gives the original value (the `^` one because a live player body also carries `MF_SOLID`, an invariant checked at `original_player.rs:404`, so the XOR stays nonzero). The independent reader (section 11) agreed |
+| `doom-game` `recorder.rs:83:13` (field `v3` deleted) | **killed** by `a_wire_28_recording_writes_the_easy_skills` (`wire28_mutants.rs`, `4f78d30a`); hand-applied mutation, and caught in the cargo-mutants rerun of the fourth row |
+| `app/mod.rs:541:50` (`==` to `!=`) | **killed** by `the_wire_28_app_records_the_easy_skills`; the same two observations |
+| `session/state_v3.rs:45:9` (`check` to `Ok(())`) | **killed** by `check_refuses_a_state_out_of_its_domain`; the same two observations |
+| `app/mod.rs:541:35` (`&&` to `\|\|`) in `GameData::recorder` | **argued equivalent, no test** (missed in the rerun). Older configurations refuse skills 0 and 1 at load, and on skills 2 and 3 the version 2 and version 3 demo writers give equal bytes, so which writer the `\|\|` picks cannot be seen in any recording. The independent reader agreed |
+| `doom-sim` `spawning.rs:201:38` (`&& self.margined(ty)` to `\|\|`) in `spawn_type_checks` | **OPEN: not proven equivalent; no test.** Finding: the margin clause this pull request added on that line does not change what a direct `spawn_type` admits. For a policy monster under wire 28, `preflight_monster_spawn` (`monsters.rs:644`, not changed here) still applies the margin, so the spawn is refused either way and only the error differs (`Monster(Arithmetic)` against `Perception(Arithmetic)`). Not a defect against the C (`P_SpawnMobj` has no position check, and the C has no direct-spawn call; map THINGs under S'' take a different path, covered by `s_double_prime_admits_an_embedded_monster_under_wire_28_alone`). **Owner decision needed:** either `preflight_monster_spawn` follows S'' too (a behaviour change) or line 201's change is dead and is reverted; left as is, no engine change in this pull request |
+
+**Not rerun:** cargo-mutants was not rerun over the two `v40_skill` kills (`580:35`, `581:35`), and the 150 `doom-sim` mutants caught by `doom-sim`'s own tests were not
+rerun with `doom-game`'s tests. Each hand-applied kill is an observation of one mutation, not of the whole selection. Reading a mutant as equivalent is an argument,
+not a run.
+
+## 11. The independent read
+
+A fresh reviewer that did not write the code, read-only, at `fff2a40d`, 2026-11-26 about 00:45 (America/Los_Angeles). **It found no place where wire 28 differs from
+the C without refusing** in the damage order, `P_GiveAmmo`, the bite, the thing-spawn bits or the escape witness (both move paths); that nothing frozen changed (wires 27
+and below, DSIM 43 and below, `DSES` 2 and below, the older configurations; `tests/reference` and `crates/*/tests` hold only new files; `doom-play` changes only inside the two
+allowed tests); that every golden is from the genuine engine; that FIN0's 128 inserted empty tics are honestly described; and that no IWAD coordinate is committed. It ran
+scratch probes (a Demon bite on a special-11 sector on wires 23 to 28; `damage_actor` at skill 2 on wire 28), uncommitted and Rust-only.
+
+| Finding | What it said | What was done |
+| --- | --- | --- |
+| M1 | the bite divergence is on wires 23 to 27, not 24 to 27 (player health 4, every sector special 11: wires 23 to 27 end dead, wire 28 leaves health 1) | fixed in COMPATIBILITY (the heading and its anchor, now linked from ROADMAP and the quirk page), D4, Limits, the M6a note §8.3, Q-p_inter-838 and QUIRKS; wire 27 stays observed by BITE2, wires 23 to 26 by the probe |
+| M2 | the restore test has 68 save points, not 60 | fixed in section 6, STATE_FORMAT |
+| M3 | `wire28_genuine.rs` has two tests; section 8 omitted `wire28_mutants.rs` and `wire28_mutant_tests.rs` | fixed in section 8; TESTING now links instead of counting (N8) |
+| M4 | the M6a note says a corpse's lack of thrust was "observed" | relabelled "(read)" in §8.5 |
+| S1 | `DSES` 3 accepts a skill byte that disagrees with the embedded level's `actors.options[0]` (`check_as` checks only the skill domain); inherited from version 2, widened to skills that change rules; no session writes such a state | **not changed** (engine): named limit in Limits and STATE_FORMAT; open decision for the owner |
+| S2 | the public `damage_actor` on the player halves at `sk_baby` but never applies the sector-11 cap (all sectors special 11, health 100, skill 2, amount 150: killed; the C leaves 1); API only, not reachable from `doom-play` | **not changed** (engine, since wire 23): named at M6a §8.2 and in Limits; open decision for the owner |
+| S3 | "embedded walkers never move" is too broad: a box overlapping a wall by less than the step can walk away | reworded in §8.4 and Q-p_mobj-777: only what S'' alone admits (overlap above 2r - 31, at least 9 for r = 20, 29 for the Demon, against speeds 8 to 10) is stuck, inferred from the arithmetic, not run |
+| Notes | N2 the demo3 fuzz doc said the two readers agree (never compared on one input); in `wire28_dses3` `state.check()` after a decode cannot fail. N3 "cannot be stored across tics" holds for a blocked or embedded body only. N4 the pain state is entered for the player unless `P_Random` returns 255. N5 Q-p_map-189's effect column was stale. N6 D5 touches the frozen app's text. N7 §8.5 omitted the chaingunner (health 70: barrels alone 24.6, an escape for d under 4.6, inferred) | N2 doc comment fixed in `fuzz/fuzz_targets/wire28_demo3.rs`; the `state.check()` remark is recorded here only, the `wire28_dses3` target is unchanged; N3, N4, N5, N7 fixed in the note and the quirk rows; N6 a clause at D5, no source edit |
+
+**Its three verdicts.** `app/mod.rs:541:35` is equivalent (agreed). The four `demon.rs:154` mutants are equivalent (agreed). For `spawning.rs:201:38` it agreed the admitted set is
+unchanged but the error differs (wire 28 `Monster(Arithmetic)`; wire 27 or the mutant `Perception(Arithmetic)`), so the mutant is killable only on the error variant, and
+it is not reachable in play (the only non-test `spawn_type` callers spawn the player body); the map-THING path does drop the margin (`spawning.rs` about 656 and 680), covered
+by `s_double_prime_admits_an_embedded_monster_under_wire_28_alone`. Section 9 keeps it open.
+
+**What the reader did not read or check:** no genuine build, no generator `--check`, `tools/local/wire28_real.py` beyond its paths, no fuzzing, mutation, clippy, full test suite or
+release build, the unwritten record sections, every `A_Chase` path after a `P_Move` witness refusal for panics, and `Boundary::derive` edge cases on real maps.
 
 ## Limits
 
@@ -197,10 +310,19 @@ documentation was edited beyond cross-links.
   only west was observed.
 - ESCAPE, SMALL and the rooms behind them are one room layout built to the witness; they show equality, refusal and standing still,
   not every monster, wall angle or blow.
-- Wires 24 to 27 keep the bite divergence (D4); only wire 27 was observed to differ (BITE2), wires 24 to 26 share the code.
+- Wires 23 to 27 keep the bite divergence (D4); only wire 27 was observed to differ against the genuine engine (BITE2), wires 23 to 26 by the independent reader's
+  Rust-only probe (section 11).
+- **S1, open decision for the owner:** `DSES` 3 accepts a state whose skill byte disagrees with its embedded level's `actors.options[0]`; no session writes one.
+  **S2, open decision for the owner:** the public `damage_actor` on the player halves at skill 0 but never applies the sector-11 cap (since wire 23); API only, not
+  reachable from `doom-play`. Neither is changed in this pull request.
+- **Open mutation survivor, open decision for the owner:** `spawning.rs:201:38` is not proven equivalent and has no test (section 9): `preflight_monster_spawn` follows
+  S'' too, or line 201's change is reverted.
+- **Real-map E1M8 to the finale on skills 0 and 1: not yet covered** as of 2026-11-26 (section 5.4); the 63 demos per skill never reach the victory, only the synthetic
+  FIN0 and FIN1 do. The skill 0 and 1 runs are the same recordings as on other skills, not new play.
 - The DSES version 3 restore test compares a session with itself, and its melt save points are not labelled by melt kind.
 - Fuzz seeds are not committed (section 7). `cargo clippy --manifest-path fuzz/Cargo.toml --bins -- -D warnings` fails on an existing
   file, `game_input_events.rs` (`manual_range_patterns`), not on a wire 28 file.
 - `Snapshot::diagnostic_bytes` handles versions 20 to 40 only and refuses 44; DSIM44 bytes come from `snapshot().canonical_bytes()`.
 - `StartError::Domain`'s text still says "skill 2 or 3" (shared with frozen configurations; API only).
-- Not checked here: nightmare (refused), skills 0 and 1 beyond the items and the real maps recorded above, and any other episode.
+- Not checked here: nightmare (refused), skills 0 and 1 beyond the items, FIN0 and FIN1 and the replays of section 5.3, and any other episode. Section 9: cargo-mutants
+  not rerun over two kills; `doom-sim`'s 150 own-test kills not rerun with `doom-game`'s tests.

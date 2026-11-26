@@ -687,11 +687,11 @@ The entries marked merged below are done; they keep their place here because thi
 - **Wire 28: the easy skills and E1M7 on skill 3 (draft PR #86, 2026-11-25).** `PlayerMonstersEpisode1V6`, `DSIM` 44, `DSES` 3: skills
   0 and 1 (double ammunition and half damage at skill 0), the Demon bite taking the sector-11 cap, and E1M7 on skill 3 through spawn rule S'' and
   the monster escape witness; `doom-play` plays skills 0 to 3 and refuses nightmare. Built and compared with the genuine engine on twelve
-  synthetic items, SKILL0 and SKILL1, and locally on E1M7 at skill 3 and the owner's five sessions of 2026-11-25
+  synthetic items, SKILL0 and SKILL1, and locally on E1M7 at skill 3, the owner's five sessions of 2026-11-25 and the 61 committed recordings replayed on skills 0 and 1 (2026-11-26, [§5.3](validation/WIRE28.md#53-real-maps-on-skills-0-and-1))
   ([rule](COMPATIBILITY.md#wire-28-the-easy-skills-and-e1m7-on-skill-3), [evidence](validation/WIRE28.md),
   [source note](M6A_REFERENCE_INVESTIGATION.md#8-wire-28-the-easy-skills-and-e1m7-on-skill-3-source-investigation-2026-11-25)). Not done, by design:
-  the witness is a refuse-the-tic stop, not the original's behaviour, and no recorded run has reached it; nightmare is M6b; the wires 24 to 27
-  keep the bite divergence ([COMPATIBILITY](COMPATIBILITY.md#silent-divergence-in-wires-24-to-27-the-bite-on-a-sector-of-special-11)).
+  the witness is a refuse-the-tic stop, not the original's behaviour, and no recorded run has reached it; E1M8 to the finale on skills 0 and 1 on the real map is not yet covered ([§5.4](validation/WIRE28.md#54-e1m8-on-the-easy-skills)); three engine questions (`damage_actor` without the sector-11 cap, the `DSES` 3 skill byte, one mutation survivor) are open decisions for the owner ([Limits](validation/WIRE28.md#limits)); nightmare is M6b; the wires 23 to 27
+  keep the bite divergence ([COMPATIBILITY](COMPATIBILITY.md#silent-divergence-in-wires-23-to-27-the-bite-on-a-sector-of-special-11)).
 - **Simulation follow-up (decided: the THING-loading truncation is closed under wire 25 only).** `P_LoadThings` ends the
   whole THINGS loop at the first Doom II type (doomednums 64-69, 71, 84, 88, 89) when `gamemode != commercial`
   (p_setup.c:317-337). Wire 25 (decision T4, confirmed 2026-11-18) stops loading there, with a synthetic map and
@@ -857,7 +857,7 @@ Every `M_CheckParm` call in `linuxdoom-1.10/`; the DOS drivers' own options are 
 | --- | --- | --- |
 | Skill: Hurt Me Plenty (medium) | `p_mobj.c:743-751` | done (M3h9c, M4a) |
 | Skill: Ultra-Violence (hard) | `p_mobj.c:743-751` | done (M4b) |
-| Skills: I'm Too Young To Die (double ammunition, half damage) and Hey, Not Too Rough | `p_mobj.c:743-751`, `p_inter.c:95-101`, `p_inter.c:799-800` | partly done (M6a, wire 28, draft PR #86): skills 0 and 1 built and compared on synthetic items and the session items ([COMPATIBILITY](COMPATIBILITY.md#wire-28-the-easy-skills-and-e1m7-on-skill-3)); the owner ruled them into M6a on 2026-11-21 and parts 1 and 2 merged without them |
+| Skills: I'm Too Young To Die (double ammunition, half damage) and Hey, Not Too Rough | `p_mobj.c:743-751`, `p_inter.c:95-101`, `p_inter.c:799-800` | partly done (M6a, wire 28, draft PR #86): skills 0 and 1 built and compared on synthetic items, the session items and, locally, the 61 recordings replayed on both skills (63 demos each; no run reached the E1M8 victory, [WIRE28 §5.4](validation/WIRE28.md#54-e1m8-on-the-easy-skills)) ([COMPATIBILITY](COMPATIBILITY.md#wire-28-the-easy-skills-and-e1m7-on-skill-3)); the owner ruled them into M6a on 2026-11-21 and parts 1 and 2 merged without them |
 | Skill: Nightmare: fast monsters, respawning monsters, double ammunition, its own chase rules | `g_game.c:1379-1380`, `g_game.c:1416-1436`, `p_mobj.c:357-407` (`P_NightmareRespawn`), `p_mobj.c:452-470`, `p_mobj.c:503-504`, `p_enemy.c:672` (`A_Chase`), `p_enemy.c:719-720`, `p_enemy.c:738-742`, `m_menu.c:898` | in M6b (owner's ruling, 2026-11-21) |
 | A new game: the skill and episode limits of each game mode, the random reset, each episode's sky | `g_game.c:1345`, `g_game.c:1365` (`G_InitNew`) | partly done (M4b, M5b): a new game straight onto an Episode 1 map on medium or hard; the rest not started |
 | The level exit and the secret exit | `g_game.c:1002`, `g_game.c:1009` | done (M3h8, M4a, M6a part 1): the exit tic completes and is recorded; under wire 26 the session goes on to the intermission, under wires 1-25 the next tic is still refused ([COMPATIBILITY](COMPATIBILITY.md#episode-1-as-one-session-m6a)) |

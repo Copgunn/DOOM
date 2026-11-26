@@ -3409,11 +3409,24 @@ python3 -u tools/local/wire28_real.py --iwad IWAD --work DIR --set sessions --wi
   halving, the halving after the thrust, the halving after the sector-11 cap) must each differ from strict at the capture the record lists. The
   address build runs with `detect_leaks=0`: leak detection is disabled, not LeakSanitizer coverage. The CI step is in `.github/workflows/rust.yml`,
   in the job "M6a genuine session". Tool details: [tools/reference/README.md](../tools/reference/README.md#wire-28-the-easy-skills-and-the-monster-escape-witness-against-the-genuine-engine).
-- **`wire28_tests` (21, Rust-only)**: skills, the doubling and its cap, the halving and its order, the DSIM44 differences, S'' and the witness,
-  the bite. **`wire28_genuine` in `doom-sim` (3)**: wire 28 equals the genuine engine on the twelve items; wire 27 diverges on the bite; planted
-  faults in the port are caught. **`wire28_genuine` in `doom-game` (1)**: SKILL0 and SKILL1 against every genuine stream.
-  **`wire28_session` (4)**: the wire 28 session, wire 28 against wire 27 on skills 2 and 3, `DSES` 3, restore and continue at 60 save points.
-  **`doom-play` `wire28_tests` (3)**: the skills and the help, and a skill 0 recording.
+- **Test files.** Which tests each file holds, and what they show, is listed in [the record §8](validation/WIRE28.md#8-tests-added-and-existing-ones-touched)
+  (not repeated here): `wire28_tests.rs`, `wire28_genuine_tests.rs`, `wire28_mutant_tests.rs` (`doom-sim`), `wire28_genuine.rs`,
+  `wire28_session.rs`, `wire28_mutants.rs` (`doom-game`) and `wire28_tests.rs` (`doom-play`). `wire28_fin.py --check` above regenerates FIN0 and FIN1
+  from the genuine engine and compares them with `tests/reference/wire28_fin/`; the Rust side of both is the second test of `wire28_genuine.rs`.
+- **Mutation testing of wire 28** (cargo-mutants 27.1.0, cargo-nextest, `-j 1`, a scratch worktree on the Linux disk; counts and every
+  survivor's answer in [the record §9](validation/WIRE28.md#9-mutation-testing)). The changed lines are selected by a diff of the branch's `crates/`
+  against master, one run per crate over that crate's own tests:
+  ```sh
+  git diff --no-ext-diff origin/master...HEAD -- crates/ > MUTANTS.patch   # HEAD was cd1f7b05 for the recorded runs
+  cargo mutants -p doom-sim --test-tool nextest -j 1 --in-diff MUTANTS.patch --output OUT   # likewise -p doom-game and -p doom-play
+  ```
+  A survivor of `doom-sim` is rerun with `doom-game`'s tests included, one file and one anchored `--re` per mutant (`--list` first to check the
+  selection). cargo-mutants 27.1.0 also matched 17 struct-field deletions outside the filters when only `--re` was given, so `--file` is not optional:
+  ```sh
+  cargo mutants --test-tool nextest -j 1 --test-package doom-sim --test-package doom-game \
+    --file crates/doom-sim/src/demon.rs --re '^crates/doom-sim/src/demon\.rs:154:35: replace && with \|\| in strike_player$' --output OUT
+  ```
+  Exit code 2 means a mutant was missed; it is not a harness failure.
 - **Fuzzing the three wire 28 readers.** Seeds were made by a scratch helper that is **not committed**, so a campaign starts from any corpus you
   supply (DSIM44 captures, `DSES` 3 states, demos). The recorded runs used `-max_total_time=240 -seed=1 -timeout=20 -rss_limit_mb=2048` with
   `-max_len` 131072 (`wire28_dsim44`), 300000 (`wire28_dses3`) and 4096 (`wire28_demo3`): `cargo +nightly fuzz run TARGET CORPUS --sanitizer none --

@@ -3147,9 +3147,20 @@ witness; this page does not say which fires). The refusal is the existing `Monst
 the existing bounds", `crates/doom-sim/src/monsters.rs:21-22`). "Loads" means admitted, not "compared with the
 genuine engine": the comparison runs are listed in the
 [real-map evidence](#original-episode-1-part-2-teleporters-the-baron-of-hell-a_bossdeath-and-hard-skill-wire-24)
-(the figures stay there; E1M7 on skill 3 has no comparison run).
+(the figures stay there; the wire 28 comparison runs are in the table below).
 
-**This table is the single-level configurations' (M5b).** Under [wire 28](#wire-28-the-easy-skills-and-e1m7-on-skill-3), the session `doom-play` plays, skills 0 and 1 are admitted and E1M7 on skill 3 loads (observed locally on the owner's IWAD, [record](validation/WIRE28.md#5-real-maps-e1m7-on-skill-3-and-the-owners-five-sessions)); the refusals above are those configurations'.
+**This table is the single-level configurations' (M5b).** Under [wire 28](#wire-28-the-easy-skills-and-e1m7-on-skill-3), the session `doom-play` plays, the refusals above are those configurations'. **Wire 28's load table** (observed locally on the owner's IWAD on 2026-11-25; counts are runs, each compared with the genuine engine at both screen sizes, [record §5](validation/WIRE28.md#5-real-maps-e1m7-on-skill-3-and-the-owners-five-sessions)):
+
+| Map | Skill 0 | Skill 1 | Skill 3 (`uv`) |
+| --- | --- | --- | --- |
+| E1M1 to E1M6, E1M9 | loads and runs (5, 5, 5, 5, 11, 5 and 10 runs) | loads and runs (the same runs) | not run here |
+| E1M7 | loads and runs (5) | loads and runs (5) | loads and runs (6 constructions; the imp S'' admits is no longer refused) |
+| E1M8 | loads and runs (12) | loads and runs (12) | not run here |
+
+Skill 2 under wire 28 is not in this table. **Evidence limits:** the runs are the 61 committed recordings (made on skill 2) plus two constructions
+replayed on skills 0 and 1, and our own constructions on E1M7 at skill 3, so this shows that every map loads and plays equal to the genuine engine on
+those inputs, not that every thing, blow or route on those skills is covered; no run reached the victory on E1M8 at these skills
+([§5.3 and §5.4](validation/WIRE28.md#53-real-maps-on-skills-0-and-1)); the escape witness was reached 0 times on E1M7 at skill 3.
 
 ### Presentation (outside the proven frame)
 
@@ -3971,7 +3982,7 @@ constructors `original_player_episode1_v6_level` and `_at`) is wire 27 in every 
 | Skill 0, damage | The player's damage halved first (before thrust, fall-forward draw, the sector-11 cap, armour and the pain roll); a halved blow of 1 is a zero-damage hit with its pain roll | p_inter.c:799-900 |
 | The bite | The Demon and Spectre bite on the player takes the sector-11 cap (below) | p_inter.c:836-842 |
 | E1M7 on skill 3 | Spawn rule S'' (S' without the margin clause for monsters; barrels and the player keep it) plus the monster escape witness: after every accepted XY move of a non-player, non-missile mover on a map with a boundary, a centre outside the boundary refuses the tic (`MapScale(Escape)`, state kept, RNG unchanged) | p_map.c:197-212; p_mobj.c:137-186 |
-| Skills 2 and 3 elsewhere | Equal to wire 27 (the same demos, 3,956 tics, equal saved states under projection) | [record](validation/WIRE28.md#6-dses-version-3-restore-and-continue) |
+| Skills 2 and 3 elsewhere | Equal to wire 27 on the demos of the record's comparison (equal saved states under the projection of the three differing values) | [record](validation/WIRE28.md#6-dses-version-3-restore-and-continue) |
 
 - **Admitted:** skills 0 to 3, THING bit 1 for both easy skills, E1M7 on skill 3 with the one imp S'' admits. **Refused:** skill 4 (nightmare:
   `doom-play` exits at launch, "--skill: nightmare (4) is not built yet"; the profile's skill check refuses it as before); every older wire still refuses skills 0
@@ -3987,11 +3998,11 @@ constructors `original_player_episode1_v6_level` and `_at`) is wire 27 in every 
   skill 0's rules are shown on the items and on SKILL0 and SKILL1; nightmare, other episodes and every
   other monster, wall angle and blow are not covered. The `DSES` 3 restore test compares the session with itself.
 
-### Silent divergence in wires 24 to 27: the bite on a sector of special 11
+### Silent divergence in wires 23 to 27: the bite on a sector of special 11
 
 Found in wire 28's investigation and **left frozen**: a Demon or Spectre bite on the player whose damage is at least the player's health, on a sector of special 11,
 skipped the cap (p_inter.c:836-842) in `strike_player`, where the genuine engine leaves 1 health and the level exits at the next tic. Observed on wire 27
-(BITE2 first differs at capture 97: the player dies under wire 27); wires 24 to 26 share the code and were not run. No recorded run differs under wire 27 (inferred: none reached a lethal bite there). Wire 28 applies the cap (decision D4, [record](validation/WIRE28.md#2-decisions)).
+(BITE2 first differs at capture 97: the player dies under wire 27); wires 23 to 26 share the code (observed Rust-only by the independent reader's scratch probe, below). No recorded run differs under wire 27 (inferred: none reached a lethal bite there). Wire 28 applies the cap (decision D4, [record](validation/WIRE28.md#2-decisions)).
 
 ## Known gap: THING loading stops at the first Doom II type outside commercial mode
 
