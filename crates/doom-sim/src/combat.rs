@@ -373,7 +373,7 @@ impl DamagePlan {
     }
     /// [`Self::current_armored_body`] with the pre-armor damage `amount` after
     /// the player-specific cap.
-    fn current_armored_body_capped(
+    pub(crate) fn current_armored_body_capped(
         registry: &ActorRegistry,
         actor: Actor,
         request: DamageRequest,
@@ -390,6 +390,33 @@ impl DamagePlan {
             Ok(())
         })
     }
+}
+/// The "end of game hell hack" (p_inter.c:837-842) for a live player body
+/// `victim`: `amount` capped at `health - 1` when the body's sector special is
+/// 11; `special` as in [`DamagePlan::current_original_in`].
+pub(crate) fn hell_cap<A: ActorAccess>(
+    host: &LifeHost<'_, A>,
+    victim: &Actor,
+    amount: i32,
+    special: Option<i16>,
+) -> Result<i32, SimError> {
+    let health = victim.life().ok_or(CombatError::Metadata)?.health;
+    let sector = usize::from(victim.location.ok_or(PlayerBodyError::Invariant)?.sector);
+    let special = match special {
+        Some(special) => special,
+        None => {
+            host.specials
+                .ok_or(PlayerBodyError::Profile)?
+                .get(sector)
+                .ok_or(PlayerBodyError::Invariant)?
+                .special
+        }
+    };
+    Ok(if special == 11 && amount >= health {
+        health - 1
+    } else {
+        amount
+    })
 }
 /// P_KillMobj item for an admitted former human (p_inter.c drop switch).
 pub(crate) fn source_drop(ty: ActorTypeId) -> Option<identity::OriginalActorType> {
@@ -432,6 +459,9 @@ impl DamagePlan {
         if !(0..=1000).contains(&request.amount) {
             return Err(CombatError::Damage.into());
         }
+        // Wire 28 at `sk_baby`: the player's damage halved before everything
+        // below reads it (p_inter.c:799-800).
+        let request = player.player_damage(request);
         let victim = *host
             .access
             .get(request.target)
@@ -494,23 +524,11 @@ impl DamagePlan {
             if let (true, Some(origin)) = (live && thrust, inflictor.as_ref()) {
                 impulse(origin, mass)?;
             }
-            let mut amount = request.amount;
-            if policy.has_episode1() && live {
-                let sector = usize::from(victim.location.ok_or(PlayerBodyError::Invariant)?.sector);
-                let special = match special {
-                    Some(special) => special,
-                    None => {
-                        host.specials
-                            .ok_or(PlayerBodyError::Profile)?
-                            .get(sector)
-                            .ok_or(PlayerBodyError::Invariant)?
-                            .special
-                    }
-                };
-                if special == 11 && amount >= life.health {
-                    amount = life.health - 1;
-                }
-            }
+            let amount = if policy.has_episode1() && live {
+                hell_cap(host, &victim, request.amount, special)?
+            } else {
+                request.amount
+            };
             return Self::current_armored_body_capped(
                 host.registry,
                 victim,
@@ -837,6 +855,11 @@ impl Simulation {
     ) -> Result<DamagePlan, SimError> {
         self.preflight_player_damage(request)?;
         self.preflight_map_damage(request)?;
+        // Wire 28 at `sk_baby` (p_inter.c:799-800), as in the thinkers' plans.
+        let request = self
+            .original_player
+            .as_ref()
+            .map_or(request, |p| p.player_damage(request));
         let base = self.combat_actor(request.target)?;
         let actor = match lookup {
             Some(f) => f(request.target).ok_or(CombatError::Reference)?,

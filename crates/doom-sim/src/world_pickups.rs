@@ -707,13 +707,15 @@ pub(crate) const INFRATICS: i32 = 120 * 35;
 const CLIP_AMMO: [u16; 4] = [10, 4, 20, 1];
 /// `P_GiveAmmo` (p_inter.c:73–160) for `ammo` in `ammotype_t` order (clip,
 /// shell, cell, misl): refused at `maxammo`; `loads` clip loads, or half a clip
-/// for 0; no doubling at the medium skill; capped at `maxammo` (doubled once by
-/// the backpack); and from zero the weapon preference switch. Only the Episode 1
-/// policy reaches cells and rockets.
-fn ammo(
+/// for 0; doubled when `double` (wire 28 at `sk_baby`, p_inter.c:95-101: after
+/// the loads or the half clip, before the cap); capped at `maxammo` (doubled
+/// once by the backpack); and from zero the weapon preference switch. Only the
+/// Episode 1 policy reaches cells and rockets.
+pub(crate) fn ammo(
     p: &mut PlayerWeaponState,
     ammo: usize,
     loads: u16,
+    double: bool,
     events: &mut Vec<movement::MotionEvent>,
 ) -> Result<bool, SimError> {
     let counts = [p.bullets, p.shells, p.cells, p.rockets];
@@ -732,8 +734,14 @@ fn ammo(
         } else {
             loads.checked_mul(clip).ok_or(WeaponError::Inventory)?
         };
-        // Private callers supply at most five loads: before<=600 and count<=100,
-        // so the checked source addition is representable before capping.
+        let count = if double {
+            count.checked_mul(2).ok_or(WeaponError::Inventory)?
+        } else {
+            count
+        };
+        // Private callers supply at most five loads: before<=600 and count<=200
+        // (100 doubled), so the checked source addition is representable before
+        // capping.
         after = before
             .checked_add(count)
             .ok_or(WeaponError::Inventory)?
@@ -871,6 +879,7 @@ impl<A: ActorAccess> movement::MotionAccess for Contacts<'_, A> {
                 PickupOutcome::NotNeeded
             };
             if outcome == PickupOutcome::NotNeeded {
+                let baby = self.player.baby;
                 let weapon = self.player.weapon.as_mut().ok_or(WeaponError::Player)?;
                 let PlayerWeaponRuntime::Pack(w) = weapon else {
                     return Err(WeaponError::Inventory.into());
@@ -946,12 +955,16 @@ impl<A: ActorAccess> movement::MotionAccess for Contacts<'_, A> {
                         );
                         accepted
                     }
-                    PickupKind::Clip => {
-                        ammo(w, 0, if l.flags & MF_DROPPED != 0 { 0 } else { 1 }, events)?
-                    }
-                    PickupKind::BulletBox => ammo(w, 0, 5, events)?,
-                    PickupKind::Shells => ammo(w, 1, 1, events)?,
-                    PickupKind::ShellBox => ammo(w, 1, 5, events)?,
+                    PickupKind::Clip => ammo(
+                        w,
+                        0,
+                        if l.flags & MF_DROPPED != 0 { 0 } else { 1 },
+                        baby,
+                        events,
+                    )?,
+                    PickupKind::BulletBox => ammo(w, 0, 5, baby, events)?,
+                    PickupKind::Shells => ammo(w, 1, 1, baby, events)?,
+                    PickupKind::ShellBox => ammo(w, 1, 5, baby, events)?,
                     PickupKind::Stimpack | PickupKind::Medikit => {
                         let before = self.player.health;
                         let accepted = before < 100;
@@ -1068,8 +1081,8 @@ impl<A: ActorAccess> movement::MotionAccess for Contacts<'_, A> {
                         sound = "sfx_getpow";
                         accepted
                     }
-                    PickupKind::Rocket => ammo(w, 3, 1, events)?,
-                    PickupKind::RocketBox => ammo(w, 3, 5, events)?,
+                    PickupKind::Rocket => ammo(w, 3, 1, baby, events)?,
+                    PickupKind::RocketBox => ammo(w, 3, 5, baby, events)?,
                     PickupKind::Backpack => {
                         // p_inter.c:589–599: the first backpack doubles every
                         // maximum; then one clip load of each type, in order,
@@ -1078,7 +1091,7 @@ impl<A: ActorAccess> movement::MotionAccess for Contacts<'_, A> {
                         w.backpack = true;
                         observe(events, PickupEvent::Backpack(first));
                         for ty in 0..4 {
-                            ammo(w, ty, 1, events)?;
+                            ammo(w, ty, 1, baby, events)?;
                         }
                         true
                     }
@@ -1102,7 +1115,7 @@ impl<A: ActorAccess> movement::MotionAccess for Contacts<'_, A> {
                         let dropped = l.flags & MF_DROPPED != 0
                             && matches!(k, PickupKind::Shotgun | PickupKind::Chaingun);
                         let gave = match weapon.ammo() {
-                            Some(kind) => ammo(w, kind, if dropped { 1 } else { 2 }, events)?,
+                            Some(kind) => ammo(w, kind, if dropped { 1 } else { 2 }, baby, events)?,
                             None => false,
                         };
                         let fresh = before & (1 << weapon as u8) == 0;

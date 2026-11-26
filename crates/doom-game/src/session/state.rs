@@ -114,12 +114,23 @@ pub enum DsesError {
     NotSaveable,
     /// Save: the session's configuration saves only the other version (owner's ruling 3 of
     /// 2026-11-23: a [`super::finale_melt::Configuration::FinaleAndMelt`] session saves as `DSES`
-    /// version 2 only, a frozen one as version 1 only). Nothing is written.
+    /// version 2 only, a frozen one as version 1 only, a
+    /// [`super::finale_melt::Configuration::FinaleAndMeltWire28`] one as version 3 only).
+    /// Nothing is written.
     Configuration(super::finale_melt::Configuration),
     /// `DSES` version 2: the embedded display's melt in progress and the embedded sound's pending
     /// display disagree (a session mixes the owed buffer exactly when its melt ends, so a saved
     /// state has a pending display exactly when it has a melt in progress).
     MeltAndPendingDisplay,
+    /// `DSES` version 3 only (owner's ruling 2 of 2026-11-26): the skill byte and the embedded
+    /// level's skill (`actors.options[0]` of its DSIM44 capture) disagree. Versions 1 and 2 make
+    /// no such check; their acceptance is frozen.
+    SkillAndLevel {
+        /// The state's skill byte.
+        skill: u8,
+        /// The embedded level's skill byte, if the capture names one.
+        level: Option<u8>,
+    },
 }
 
 impl fmt::Display for DsesError {

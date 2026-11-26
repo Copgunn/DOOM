@@ -30,14 +30,20 @@ matches, which is what speedrun and tool-assisted (TAS) research need.
 
 *The end-of-episode text crawl (sampled) and its melt: the difference stays black ([how](docs/TESTING.md#readme-animations)).*
 
+![The same recorded commands on a synthetic map at skill 0 and skill 1 side by side with their per-pixel difference; the runs part at tic 32.](docs/media/wire28-skills-side-by-side.gif)
+
+*One recording on skill 0 and skill 1 (Rust frames, each equal to the original engine's; [how](docs/TESTING.md#wire-28-the-easy-skills-and-e1m7-on-skill-3)).*
+
 ## Where it stands
 
 - **Game logic.** One player, six weapons, seven kinds of monster and Episode 1's map features
   ([what is admitted](docs/COMPATIBILITY.md#policies)).
 - **Real maps.** All nine Episode 1 maps and the original's own `DEMO1`: every scripted run stays in sync with the
-  original C code, tic for tic, and so do the more than 70 hand-played sessions checked so far (over 238,000 tics).
-  In all, more than 500,000 distinct real-map tics have been compared with the original, every one equal
-  ([the sum, and what it leaves out](docs/validation/M6A.md#142-the-readmes-evidence-figures-summed-from-the-records);
+  original C code, tic for tic, and so do the 80 hand-played sessions checked so far (over 280,000 tics).
+  Two honest figures. From distinct recordings, more than 540,000 real-map tics have been compared with the original,
+  every one equal. Counting also the same recordings replayed on other skills (where different things spawn and the game
+  plays out differently, but which no one played), more than 960,000 tics in all, every one equal
+  ([how each is summed, and what it leaves out](docs/validation/M6A.md#142-the-readmes-evidence-figures-summed-from-the-records);
   [scripted runs](docs/validation/M4B.md#real-maps-and-demo1); by hand: [M5c](docs/validation/M5C.md#hand-played-checks),
   [M5d](docs/validation/M5D.md#hand-played-checks), [M6a](docs/validation/M6A.md#5-after-the-hand-test-gate-2026-11-22-evening)).
 - **Picture.** Renderer, status bar, messages and palette flashes: frames equal the original's wherever compared ([what is and is not](docs/COMPATIBILITY.md#playable-build-m5b)).
@@ -50,13 +56,18 @@ matches, which is what speedrun and tool-assisted (TAS) research need.
   own engine tic by tic, on synthetic maps and locally on real ones, and the owner has played it through E1M8 to the
   finale on Windows ([evidence](docs/validation/M6A.md)).
 
-Not yet, and next (a later pull request): the two easy skills and E1M7 on `uv`. Not yet, later: the automap, music, menus,
-general demo playback, other episodes, nightmare skill, or any claim of a match beyond the runs recorded so far
+- **Easy skills, and E1M7 on `uv`.** Skills 0 and 1 (double ammunition and half damage on 0) and E1M7 on `uv` play. They are compared with
+  the original's engine on synthetic maps, and E1M7 on `uv`, the owner's sessions, the owner's hand test of 2026-11-26 (E1M8 to the finale on skills 0 and 1) and the existing recordings replayed on both easy skills also locally on real maps
+  ([evidence](docs/validation/WIRE28.md)). If a monster or a corpse would be thrown through a wall, which the original lets happen, the
+  session stops at that tic instead of guessing ([what it supports](docs/COMPATIBILITY.md#wire-28-the-easy-skills-and-e1m7-on-skill-3)).
+
+Not yet, later: the automap, music, menus, general demo playback, other episodes, nightmare skill, or any claim of a match beyond the runs
+recorded so far
 ([what is missing](docs/ROADMAP.md#vanilla-completeness-checklist)).
 
 ## Play it
 
-`doom-play` plays Episode 1 from the map you pick (E1M1 to E1M9, skill `hmp` or `uv`) with your own `DOOM.WAD`: each exit
+`doom-play` plays Episode 1 from the map you pick (E1M1 to E1M9, skill 0 to 3: `hmp` and `uv` are 2 and 3) with your own `DOOM.WAD`: each exit
 leads to the tally screen and the next map, and E1M8's exit leads to the episode's ending text and picture. To really play
 Doom, use an established source port such as [Chocolate Doom](https://www.chocolate-doom.org/).
 
@@ -69,7 +80,7 @@ cargo run --release -p doom-play -- --iwad /path/to/DOOM.WAD --map 1 --skill hmp
 
 - **Controls.** The original's defaults: arrows move and turn, right Ctrl fires, Space uses, right Shift runs, `1`-`8`
   pick weapons, mouse left fires (`--bindings modern` gives WASD). Esc pauses (R restarts, Q quits), End mutes.
-- **Limits.** Needs an OpenGL 2.1 driver; no menus, saving or cheat codes; E1M7 on `uv` is refused
+- **Limits.** Needs an OpenGL 2.1 driver; no menus, saving or cheat codes; nightmare is refused
   ([every limit, and what has been tried](docs/COMPATIBILITY.md#playable-build-m5b)).
 
 ## How it's verified

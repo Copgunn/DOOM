@@ -82,6 +82,9 @@ pub struct Diagnostic<'a> {
     start: bool,
     /// DSIM43 (wire 27): the DSIM42 layout under policy 27 (`start` is set too).
     wrap: bool,
+    /// DSIM44 (wire 28): the DSIM43 layout under policy 28 (`wrap` is set too);
+    /// `actors.options` may also read skills 0 and 1.
+    easy: bool,
     fields: Vec<Field<'a>>,
     sorted: Vec<usize>,
 }
@@ -393,6 +396,20 @@ impl<'a> Diagnostic<'a> {
     ) -> Result<Self, DiagnosticError> {
         Self::decode_selected(bytes, limits, Some(43))
     }
+    /// Explicit DSIM44 Episode 1 part 6 reader (wire 28, rulings U12 (iii) and
+    /// §1.17 option 1); every earlier reader, `decode_episode1_v5` included,
+    /// rejects 44 and this reader rejects every earlier version. DSIM44 is DSIM43
+    /// field for field, with every DSIM43 rule, under policy 28 and the
+    /// `PLAYER-MONSTERS-EPISODE1-6-v1` context, except that `actors.options` may
+    /// also read skill 0 or 1, whose bounds and totals are counted with THING
+    /// bit 1 (p_mobj.c:743-751): the version, `profile` and `context.schema`
+    /// values are the only bytes that name the wire.
+    pub fn decode_episode1_v6(
+        bytes: &'a [u8],
+        limits: DiagnosticLimits,
+    ) -> Result<Self, DiagnosticError> {
+        Self::decode_selected(bytes, limits, Some(44))
+    }
     /// Explicit DSIM30 real-map-scale reader; every earlier reader rejects 30 and
     /// this reader rejects every earlier version.
     pub fn decode_map_scale(
@@ -471,15 +488,17 @@ impl<'a> Diagnostic<'a> {
         {
             return Err(DiagnosticError::Structure);
         }
-        let sounds = matches!(version, 41..=43);
-        let start = matches!(version, 42 | 43);
-        let wrap = version == 43;
+        let sounds = matches!(version, 41..=44);
+        let start = matches!(version, 42..=44);
+        let wrap = matches!(version, 43 | 44);
+        let easy = version == 44;
         let result = Self {
             bytes,
             version: if sounds { 40 } else { version },
             sounds,
             start,
             wrap,
+            easy,
             fields,
             sorted,
         };
@@ -496,7 +515,9 @@ impl<'a> Diagnostic<'a> {
     }
     /// Explicit format version, separate from the execution profile field.
     pub const fn version(&self) -> u32 {
-        if self.wrap {
+        if self.easy {
+            44
+        } else if self.wrap {
             43
         } else if self.start {
             42
@@ -555,6 +576,9 @@ impl<'a> Diagnostic<'a> {
     fn v40_skill(&self) -> crate::Skill {
         match self.field("actors.options").and_then(|o| o.first()) {
             Some(&b) if b == crate::Skill::Hard as u8 => crate::Skill::Hard,
+            // DSIM44 alone: skills 0 and 1 count with THING bit 1.
+            Some(&b) if self.easy && b == crate::Skill::Baby as u8 => crate::Skill::Baby,
+            Some(&b) if self.easy && b == crate::Skill::Easy as u8 => crate::Skill::Easy,
             _ => crate::Skill::Medium,
         }
     }
@@ -630,6 +654,9 @@ impl<'a> Diagnostic<'a> {
                 || crate::barrels::is_barrel(self.policy(), actor))
     }
     fn policy(&self) -> OriginalExecutionProfile {
+        if self.easy {
+            return OriginalExecutionProfile::PlayerMonstersEpisode1V6;
+        }
         if self.wrap {
             return OriginalExecutionProfile::PlayerMonstersEpisode1V5;
         }
@@ -1814,8 +1841,11 @@ impl<'a> Diagnostic<'a> {
         // DSIM36 keeps its historical contract and leaves the skill unchecked.
         // DSIM40 (wire 24, M4b decision I4) also admits skill 3 (`sk_hard`).
         let skill = self.required("actors.options")?.first().copied();
+        // DSIM44 (wire 28, ruling U12 (iii)) also admits skills 0 and 1.
         let admitted = skill == Some(crate::Skill::Medium as u8)
-            || (self.version == 40 && skill == Some(crate::Skill::Hard as u8));
+            || (self.version == 40 && skill == Some(crate::Skill::Hard as u8))
+            || (self.easy
+                && matches!(skill, Some(s) if s == crate::Skill::Baby as u8 || s == crate::Skill::Easy as u8));
         if !admitted {
             return Err(DiagnosticError::Identity);
         }

@@ -42,7 +42,6 @@ use super::state::{
 };
 use super::{
     CarriedPlayer, DeclaredMode, ModeSource, Session, SessionData, SessionMode, SessionSettings,
-    skill_of,
 };
 use doom_render::{Display, DisplayConfig, FinaleView, Frame, GameState, SessionDisplayStateV4};
 use doom_sim::{CarriedStart, Diagnostic, DiagnosticLimits, LevelExit, Simulation};
@@ -54,6 +53,43 @@ use std::sync::Arc;
 pub const VERSION: u16 = 2;
 /// The sound slot kind of `DSND` version 3.
 pub const SOUND_DSND3: u8 = 3;
+
+/// The two versions sharing this layout: version 2 (wire 27, DSIM43) and version 3 (wire 28,
+/// DSIM44, [`super::state_v3`]). Each names its version, its configuration (whose skills the
+/// settings may hold) and the reader of its embedded level.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(super) enum Layout {
+    /// `DSES` version 2.
+    V2,
+    /// `DSES` version 3.
+    V3,
+}
+
+impl Layout {
+    fn version(self) -> u16 {
+        match self {
+            Self::V2 => VERSION,
+            Self::V3 => super::state_v3::VERSION,
+        }
+    }
+
+    fn config(self) -> Configuration {
+        match self {
+            Self::V2 => Configuration::FinaleAndMelt,
+            Self::V3 => Configuration::FinaleAndMeltWire28,
+        }
+    }
+
+    /// The embedded level's reader: DSIM43 alone for version 2, DSIM44 alone for version 3.
+    fn level(self, bytes: &[u8]) -> Result<Diagnostic<'_>, DsesError> {
+        let limits = DiagnosticLimits::default();
+        match self {
+            Self::V2 => Diagnostic::decode_episode1_v5(bytes, limits),
+            Self::V3 => Diagnostic::decode_episode1_v6(bytes, limits),
+        }
+        .map_err(|e| DsesError::Level(format!("{e:?}")))
+    }
+}
 
 /// A decoded `DSES` version 2 state.
 #[derive(Clone, Debug, PartialEq)]
@@ -167,9 +203,14 @@ fn read_carried(r: &mut Reader<'_>) -> Result<Option<CarriedPlayer>, DsesError> 
 impl SessionStateV2 {
     /// The encoding (module documentation).
     pub fn encode(&self) -> Vec<u8> {
+        self.encode_as(Layout::V2)
+    }
+
+    /// The encoding under `layout`'s version number.
+    pub(super) fn encode_as(&self, layout: Layout) -> Vec<u8> {
         let mut w = Writer(Vec::new());
         w.0.extend_from_slice(MAGIC);
-        w.u16(VERSION);
+        w.u16(layout.version());
         w.u8(u8::from(self.mode.mode == SessionMode::Retail));
         w.u8(u8::from(self.mode.source == ModeSource::Forced));
         w.u8(self.settings.map);
@@ -225,6 +266,11 @@ impl SessionStateV2 {
     /// the bytes left before anything is allocated, every field is checked in its domain, and the
     /// embedded states are read by their own readers. Never panics.
     pub fn decode(bytes: &[u8]) -> Result<Self, DsesError> {
+        Self::decode_as(bytes, Layout::V2)
+    }
+
+    /// [`Self::decode`] for `layout`'s version (any other is refused) and checked by its rules.
+    pub(super) fn decode_as(bytes: &[u8], layout: Layout) -> Result<Self, DsesError> {
         if bytes.len() > MAX_BYTES {
             return Err(DsesError::TooLarge);
         }
@@ -233,7 +279,7 @@ impl SessionStateV2 {
             return Err(DsesError::Magic);
         }
         let version = r.u16()?;
-        if version != VERSION {
+        if version != layout.version() {
             return Err(DsesError::Version(version));
         }
         let mode = DeclaredMode {
@@ -302,7 +348,7 @@ impl SessionStateV2 {
             display,
             sound,
         };
-        state.check()?;
+        state.check_as(layout)?;
         Ok(state)
     }
 
@@ -331,6 +377,11 @@ impl SessionStateV2 {
     ///   process's with a fresh `wminfo`, or a finished intermission's whose `next` led to the
     ///   current map (`G_DoWorldDone` loads `wminfo.next + 1`, g_game.c:1176; a reborn keeps it).
     pub fn check(&self) -> Result<(), DsesError> {
+        self.check_as(Layout::V2)
+    }
+
+    /// [`Self::check`] under `layout`: its skills and its embedded level's reader.
+    pub(super) fn check_as(&self, layout: Layout) -> Result<(), DsesError> {
         let value = |ok: bool, name| {
             if ok {
                 Ok(())
@@ -346,7 +397,7 @@ impl SessionStateV2 {
             }
         };
         value((1..=9).contains(&self.settings.map), "start map")?;
-        value(skill_of(self.settings.skill).is_ok(), "skill")?;
+        value(layout.config().skill(self.settings.skill).is_ok(), "skill")?;
         value(
             (10..=11).contains(&self.settings.screenblocks),
             "screenblocks",
@@ -360,8 +411,17 @@ impl SessionStateV2 {
         self.wi.check().map_err(DsesError::Value)?;
         let in_level = self.gamestate == GameState::Level;
         let sound = &self.sound.state;
-        let level = Diagnostic::decode_episode1_v5(&self.level, DiagnosticLimits::default())
-            .map_err(|e| DsesError::Level(format!("{e:?}")))?;
+        let level = layout.level(&self.level)?;
+        // Version 3 alone: every level is set up on the one `gameskill` (g_game.c:484, 1450).
+        let level_skill = level
+            .field("actors.options")
+            .and_then(|o| o.first().copied());
+        if layout == Layout::V3 && level_skill != Some(self.settings.skill) {
+            return Err(DsesError::SkillAndLevel {
+                skill: self.settings.skill,
+                level: level_skill,
+            });
+        }
         let level_u64 = |path: &str| {
             level
                 .field(path)
@@ -547,7 +607,12 @@ impl Session {
     /// [`Session::save`]), and after a rule-2 refusal or with a planted fault
     /// ([`DsesError::NotSaveable`]).
     pub fn save_v2(&self) -> Result<SessionStateV2, DsesError> {
-        if self.config != Configuration::FinaleAndMelt {
+        self.save_as(Layout::V2)
+    }
+
+    /// [`Self::save_v2`] for `layout`'s configuration alone.
+    pub(super) fn save_as(&self, layout: Layout) -> Result<SessionStateV2, DsesError> {
+        if self.config != layout.config() {
             return Err(DsesError::Configuration(self.config));
         }
         if self.ended.is_some() || self.fault.is_some() {
@@ -597,14 +662,27 @@ impl Session {
         state: &SessionStateV2,
         level: Simulation,
     ) -> Result<Self, DsesError> {
-        state.check()?;
+        Self::restore_as(data, state, level, Layout::V2)
+    }
+
+    /// [`Self::restore_v2`] under `layout`: its rules and its configuration.
+    pub(super) fn restore_as(
+        data: Arc<SessionData>,
+        state: &SessionStateV2,
+        level: Simulation,
+        layout: Layout,
+    ) -> Result<Self, DsesError> {
+        state.check_as(layout)?;
         if data.mode != state.mode {
             return Err(DsesError::Mode);
         }
         if level.snapshot().canonical_bytes() != state.level {
             return Err(DsesError::LevelMismatch);
         }
-        let skill = skill_of(state.settings.skill).map_err(|_| DsesError::Value("skill"))?;
+        let skill = layout
+            .config()
+            .skill(state.settings.skill)
+            .map_err(|_| DsesError::Value("skill"))?;
         let (_, lvl) = data.map(state.map).map_err(DsesError::Map)?;
         let in_level = state.gamestate == GameState::Level;
         let exit = level.level_exit_request();
@@ -656,7 +734,7 @@ impl Session {
             data.res.clone(),
             lvl.clone(),
             cfg,
-            Configuration::FinaleAndMelt.display_config(data.mode.mode.game_mode()),
+            layout.config().display_config(data.mode.mode.game_mode()),
         )
         .map_err(|_| DsesError::Value("display"))?;
         let scene_level = in_level.then(|| (lvl.clone(), &level));
@@ -698,7 +776,7 @@ impl Session {
             frame: Frame::new(),
             ended: None,
             fault: None,
-            config: Configuration::FinaleAndMelt,
+            config: layout.config(),
             finale: state.finale,
             data,
         })

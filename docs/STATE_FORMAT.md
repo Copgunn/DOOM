@@ -2568,6 +2568,29 @@ context names the other is refused (`Schema`). A DSIM43 writer is built only by 
 reader is fuzzed ([TESTING](TESTING.md#wire-27-the-wrapping-p_interceptvector)). DSIM1-42 bytes, encoders and fixtures are
 unchanged.
 
+## DSIM v44 — wire 28: the easy skills and E1M7 on skill 3
+
+`PlayerMonstersEpisode1V6` captures are version 44 (wire 28, [rule](COMPATIBILITY.md#wire-28-the-easy-skills-and-e1m7-on-skill-3),
+[evidence](validation/WIRE28.md)). **The layout is the DSIM43 layout field for field; exactly three values differ** (decision D1;
+no field is new: the skill is already in `actors.options`, the baby flag follows from it and is not state, and the escape witness
+keeps none):
+
+| Value | Where | DSIM43 | DSIM44 |
+| --- | --- | --- | --- |
+| version word | byte offset 4 | 43 | 44 |
+| `profile` | byte offset 82 | 27 | 28 |
+| `context.schema` string | byte offset 181, the digit of the part | `PLAYER-MONSTERS-EPISODE1-5-v1` | `PLAYER-MONSTERS-EPISODE1-6-v1` (same length, 29 bytes) |
+
+The unit test `dsim44_is_dsim43_but_for_the_three_values_naming_the_wire` checks, tic by tic on a level run under both wires, that the
+snapshots differ at offsets 4, 82 and 181 and nowhere else, and that changing any one of the three in a blob makes the reader of the
+other version refuse it. **Frozen-reader rule:** the v43 reader (`Diagnostic::decode_episode1_v5`) and every older one refuse 44
+(`Version`), and the v44 reader (`Diagnostic::decode_episode1_v6`) reads 44 only; a blob whose version names one wire and whose profile or
+context names the other is refused (`Schema`). A skill 0 or 1 capture relabelled as DSIM43 is refused by the v43 reader's options check
+(`Identity`) and admitted for skills 2 and 3 (`dsim44_round_trips_every_admitted_skill`). A DSIM44 writer is built only by the level-start
+constructors `original_player_episode1_v6_level` and `_at`. The independent encoder is `tools/reference/level_snapshot_wire28.py`.
+`Snapshot::diagnostic_bytes` handles versions 20 to 40 only and refuses 44: DSIM44 bytes come from `snapshot().canonical_bytes()`. The
+reader is fuzzed ([TESTING](TESTING.md#wire-28-the-easy-skills-and-e1m7-on-skill-3)). DSIM1-43 bytes, encoders and fixtures are unchanged.
+
 ## Sound session state (`DSND` version 1, M5c)
 
 Not a DSIM version and not a change to `DRST` or `DDSP`. `DSND` is the saved state of one sound session
@@ -2973,7 +2996,7 @@ nothing follows the last field.
 | Field | Encoding | Meaning |
 | --- | --- | --- |
 | magic, version | 4 bytes `DSES`, u16 = 2 | |
-| mode, mode source, start map, skill, screenblocks, `gametic` | as version 1 | skill 2 or 3 (the easy skills come with wire 28) |
+| mode, mode source, start map, skill, screenblocks, `gametic` | as version 1 | skill 2 or 3 (the easy skills are in [version 3](#session-state-dses-version-3-wire-28)) |
 | `gamestate` | u8: 0 level, 1 intermission, 2 finale | |
 | `gamemap`, `gameaction`, `secretexit`, `didsecret` | as version 1 | in the finale map 8 and `gameaction` 0 |
 | `wminfo`, wi_stuff.c statics | as version 1 | in a level and in the finale, the last intermission's or a fresh process's |
@@ -3009,6 +3032,26 @@ buffer). A restored session continues call for call as the uninterrupted one (`t
 version 1's (the carried view heights and the latches after the first intermission tic cannot be tied exactly), and the
 finale adds none.
 
+## Session state (`DSES` version 3, wire 28)
+
+Written by `Session::save_v3`, read by `SessionStateV3::decode`, restored by `Session::restore_v3(data, state, level)`, for a session of the
+wire 28 configuration only (`Session::new_finale_and_melt_wire28`; decisions D2 and D3), at any point between two calls, melt included.
+**Versions 1 and 2 keep their bytes and rules**: their readers refuse version 3 (`Version(3)`), the version 3 reader refuses both
+(`Version(1)`, `Version(2)`), and each configuration saves only its own version (`DsesError::Configuration` otherwise). **Layout: version 2's,
+field for field** ([table](#session-state-dses-version-2-m6a-part-2)), with three differences: the version is 3; the skill byte may be 0 to 3;
+and the embedded level is a [`DSIM` version 44](#dsim-v44--wire-28-the-easy-skills-and-e1m7-on-skill-3) capture (a version 42 or 43 capture
+is refused, `DsesError::Level`). The embedded display and sound are `DDSP` version 4 and `DSND` version 3, **unchanged**: no new version of
+either. The decoder's checks and the restore are version 2's with those three differences and the skill rule below. The older configurations refuse skills 0 and 1
+(`NotYet(EasySkill)`). Tests, and the restore-and-continue test at 68 save points (Rust-only):
+[record §6](validation/WIRE28.md#6-dses-version-3-restore-and-continue). The reader is fuzzed. **Version 3 alone also refuses a state whose skill byte differs from its embedded level's `actors.options[0]`**
+(`DsesError::SkillAndLevel`, the owner's ruling of 2026-11-26; every level of a game is set up on the one `gameskill`, g_game.c:484, 1450, so no session writes such a
+state). Version 2 accepts a 2/3 disagreement as before: its acceptance is frozen ([record §12](validation/WIRE28.md#12-the-owners-rulings-of-2026-11-26)).
+
+**Demo version 3** is not a new file format: it is the version-110 Episode 1 demo of the session, with the header's skill byte (byte 1,
+`DEMO_SKILL_INDEX`) allowed to be 0 to 3 where version 2 allows 2 and 3 (`parse_demo_episode1_v3`, `write_demo_episode1_v3`,
+`EPISODE1_V3_DEMO_SKILLS`; `SessionDemo::parse_v3` and `bytes_v3`). For skills 2 and 3 its bytes equal version 2's; any other skill byte
+is `DemoError::Header`. The version 2 readers keep refusing 0 and 1. Both v3 readers are fuzzed (`wire28_demo3`).
+
 ## M6a golden files that hold state digests
 
 | File | Schema | Rows |
@@ -3033,3 +3076,13 @@ schema is unchanged by the stale-attacker rule; the fired loads have their own f
 
 A session tic is the 0-based index of a tic; a refusal at session tic N keeps capture N. Digests come from the genuine runner's
 dumps, never from Rust output.
+
+## Wire 28 golden files
+
+| File | Schema | Rows |
+| --- | --- | --- |
+| `tests/reference/wire28_state.txt` | `DOOM-WIRE28-STATE-v1` | `I,item,map,skill,tics,captures,end,map_sha256,sequence_sha256` (end is `complete`, `exit:N` or `escape:N`); `C,item,capture,state_sha256`: the genuine strict build's DSIM44 state after each tic, through the independent encoder; `V,variant,item,first_differing_capture,variant_state_sha256`: an altered genuine build |
+| `tests/reference/wire28_skill_state.txt` | `DOOM-WIRE28-SKILL-STATE-v1` | the L and D rows of `m6a_state.txt` over DSIM44 for SKILL0 and SKILL1 |
+| `tests/reference/wire28_results.json` | `DOOM-WIRE28-RESULTS-v1` | the builds, the declared in-process overrides and the observed pickups, hits, the escape and the stuck imps (what [the record](validation/WIRE28.md) quotes) |
+
+Digests come from the genuine runner's dumps, never from Rust output.

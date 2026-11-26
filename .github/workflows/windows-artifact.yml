@@ -75,7 +75,9 @@ jobs:
             echo
             echo "Run doom-play.exe --help for every option. Useful ones:"
             echo "  --map N              the map to start at, 1 to 9 (E1M1 to E1M9; default 1)"
-            echo "  --skill 3            Ultra-Violence (the default, 2, is Hurt Me Plenty)"
+            echo "  --skill N            0 I'm Too Young To Die, 1 Hey Not Too Rough, 2 Hurt Me"
+            echo "                       Plenty (the default), 3 Ultra-Violence. Nightmare (4)"
+            echo "                       is not built and is refused at launch."
             echo "  --game-mode MODE     retail or registered (see below)"
             echo
             echo "This build plays Episode 1 as ONE session (milestone M6a, up to the hand"
@@ -101,8 +103,9 @@ jobs:
             echo
             echo "Expected stops (not built yet; the screen says TIC REFUSED and the"
             echo "session ends; R starts a new game, Q quits):"
-            echo "  - on skill 3, the start of E1M7 (reached from E1M6): not admitted yet"
-            echo "  - skills 0 and 1 are refused at launch"
+            echo "  - a monster or a corpse shoved through a one-sided wall by a strong"
+            echo "    enough blow while it stands close to the wall (the original lets it"
+            echo "    through; this build stops at that tic and does not guess)"
             echo "A music file that is missing from your IWAD also stops a session, as it"
             echo "stops the original. So does the finale picture in registered mode if"
             echo "your IWAD has no HELP2 picture."

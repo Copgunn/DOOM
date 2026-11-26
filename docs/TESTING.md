@@ -3349,6 +3349,9 @@ python3 tools/local/e1_blockmap_listings.py --selftest
 python3 tools/local/wire27_session_real.py --iwad IWAD --work DIR --recording FILE [--construction FILE] [--idle N] --selftest
 ```
 
+- **Timing the witness (reported, not gated).** `wire28_witness_timing` replays one demo under wire 27 and wire 28, alternating, and prints ns per tic and the difference; run it alone on an idle machine from an ext4 build directory (section 1.17 condition 3).
+  `CARGO_TARGET_DIR=DIR cargo build -p doom-sim --example wire28_witness_timing --release --locked`, then `DIR/release/examples/wire28_witness_timing --wad tests/reference/m4b_wads/montele.wad --map E1M1 --demo tests/reference/m4b_scripts/MTELE1.lmp --runs 20`.
+  MTELE1 is skill 2 (both wires admit it) with an idle player and a walking Demon, so P_Move runs; it ends equal under both wires except `profile` and `context.schema`. Local only: `--wad "$IWAD" --map E1M1 --demo FILE` (a skill 2 or 3 demo of that map).
 - **Genuine items (CI).** `wire27_goldens.py` writes or `--check`s `wire27_state.txt` and `wire27_results.json`; its
   `--selftest` plants an extra `P_Random` draw, a witness row with a `FixedMul` result one off and a witness row with an
   unknown traverser, and each must be detected. The address build runs with `detect_leaks=0`: leak detection is disabled,
@@ -3374,6 +3377,69 @@ python3 tools/local/wire27_session_real.py --iwad IWAD --work DIR --recording FI
   the filter `test(wire27) | test(wire_27) | test(intercept)`, and the lines this PR changed elsewhere in `doom-sim` with
   `--in-diff`, excluding `intercept_vector.rs` and the tests, over the full `doom-sim` suite. Counts and survivors are in
   [the record](validation/WIRE27.md#9-mutation-testing-cargo-mutants-2710-nextest--j-1).
+
+### Wire 28: the easy skills and E1M7 on skill 3
+
+Commands for the synthetic items, the independent encoder, the Rust side, the fuzz targets and the local real-map tool. The rule is in
+[COMPATIBILITY](COMPATIBILITY.md#wire-28-the-easy-skills-and-e1m7-on-skill-3), the formats in
+[STATE_FORMAT](STATE_FORMAT.md#dsim-v44--wire-28-the-easy-skills-and-e1m7-on-skill-3), the C facts in the
+[M6a note §8](M6A_REFERENCE_INVESTIGATION.md#8-wire-28-the-easy-skills-and-e1m7-on-skill-3-source-investigation-2026-11-25), observations in the
+[wire 28 record](validation/WIRE28.md).
+
+```sh
+# the synthetic WAD (nine map slots) and the twelve demo scripts
+python3 tools/reference/wire28_wad.py --check
+# genuine engine (C; Linux; --work outside the repository): strict, overflow and address builds, four p_inter.c variants
+python3 tools/reference/wire28_goldens.py --work DIR --check --selftest
+python3 tools/reference/wire28_fin.py --work DIR --check   # FIN0 and FIN1: FINRET's demo at skills 0 and 1, to the victory
+# the Rust side (also with --release)
+cargo test -p doom-sim --lib wire28_tests
+cargo test -p doom-sim --lib wire28_genuine
+cargo test -p doom-game --test wire28_genuine
+cargo test -p doom-game --test wire28_session
+# the skills 0 and 1 animation, docs/media/wire28-skills-side-by-side.gif (--work outside the repository; --check compares; runs cargo)
+python3 tools/media/wire28_readme_visual.py --work DIR
+cargo test -p doom-play wire28
+# fuzz (nightly, cargo-fuzz; targets wire28_dsim44, wire28_dses3, wire28_demo3)
+cargo +nightly fuzz build --sanitizer address
+# local only (reads the owner's IWAD in place, never in CI; sets: e1m7, sessions, skill0, skill1, own)
+python3 -u tools/local/wire28_real.py --iwad IWAD --work DIR --set e1m7 --selftest
+python3 -u tools/local/wire28_real.py --iwad IWAD --work DIR --set sessions --wire27 --recording FILE [--recording FILE ...]
+```
+
+- **Genuine items (CI).** `wire28_goldens.py` writes or `--check`s `wire28_state.txt`, `wire28_skill_state.txt` and `wire28_results.json`; its
+  `--selftest` adds an extra `P_Random` draw before tic 40 of HURT0, which must be detected. The altered genuine builds (no doubling, no
+  halving, the halving after the thrust, the halving after the sector-11 cap) must each differ from strict at the capture the record lists. The
+  address build runs with `detect_leaks=0`: leak detection is disabled, not LeakSanitizer coverage. The CI step is in `.github/workflows/rust.yml`,
+  in the job "M6a genuine session". Tool details: [tools/reference/README.md](../tools/reference/README.md#wire-28-the-easy-skills-and-the-monster-escape-witness-against-the-genuine-engine).
+- **Test files.** Which tests each file holds, and what they show, is listed in [the record §8](validation/WIRE28.md#8-tests-added-and-existing-ones-touched)
+  (not repeated here): `wire28_tests.rs`, `wire28_genuine_tests.rs`, `wire28_mutant_tests.rs` (`doom-sim`), `wire28_genuine.rs`,
+  `wire28_session.rs`, `wire28_mutants.rs` (`doom-game`) and `wire28_tests.rs` (`doom-play`). `wire28_fin.py --check` above regenerates FIN0 and FIN1
+  from the genuine engine and compares them with `tests/reference/wire28_fin/`; the Rust side of both is the second test of `wire28_genuine.rs`.
+- **Mutation testing of wire 28** (cargo-mutants 27.1.0, cargo-nextest, `-j 1`, a scratch worktree on the Linux disk; counts and every
+  survivor's answer in [the record §9](validation/WIRE28.md#9-mutation-testing)). The changed lines are selected by a diff of the branch's `crates/`
+  against master, one run per crate over that crate's own tests:
+  ```sh
+  git diff --no-ext-diff origin/master...HEAD -- crates/ > MUTANTS.patch   # HEAD was cd1f7b05 for the recorded runs
+  cargo mutants -p doom-sim --test-tool nextest -j 1 --in-diff MUTANTS.patch --output OUT   # likewise -p doom-game and -p doom-play
+  ```
+  A survivor of `doom-sim` is rerun with `doom-game`'s tests included, one file and one anchored `--re` per mutant (`--list` first to check the
+  selection). cargo-mutants 27.1.0 also matched 17 struct-field deletions outside the filters when only `--re` was given, so `--file` is not optional:
+  ```sh
+  cargo mutants --test-tool nextest -j 1 --test-package doom-sim --test-package doom-game \
+    --file crates/doom-sim/src/demon.rs --re '^crates/doom-sim/src/demon\.rs:154:35: replace && with \|\| in strike_player$' --output OUT
+  ```
+  Exit code 2 means a mutant was missed; it is not a harness failure.
+- **Fuzzing the three wire 28 readers.** Seeds were made by a scratch helper that is **not committed** (one is: `fuzz/corpus/wire28_dses3/skill_and_level`,
+  a refused `DSES` 3 state, [provenance](../fuzz/corpus/README.md#wire-28-dses-version-3-seed)), so a campaign starts from any corpus you
+  supply (DSIM44 captures, `DSES` 3 states, demos). The recorded runs used `-max_total_time=240 -seed=1 -timeout=20 -rss_limit_mb=2048` with
+  `-max_len` 131072 (`wire28_dsim44`), 300000 (`wire28_dses3`) and 4096 (`wire28_demo3`): `cargo +nightly fuzz run TARGET CORPUS --sanitizer none --
+  OPTIONS` for the coverage-guided campaign, `--sanitizer address` for the sanitizer campaign (leak detection **on**, default options) and
+  `-runs=0` for the seed replay. A leak plant to confirm that detection works is in [the record](validation/WIRE28.md#7-fuzzing-by-type).
+- **`wire28_real.py` is local-only.** It runs every demo through the whole session path against the genuine build at screenblocks 10 and 11
+  (rows, frames, sound, melt steps, mixer buffers and the DSIM44 state after every level tic) and `--selftest` flips a ticcmd and adds a draw. A
+  finished demo leaves `done/NAME.json` under `--work/ref`, so a rerun skips it; never run two on one `--work`. The goldens are IWAD-derived and stay
+  in scratch.
 
 ## Mutation testing
 

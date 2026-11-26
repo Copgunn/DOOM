@@ -34,6 +34,9 @@ pub const PLAYER_EPISODE1_V4_CONTEXT_SCHEMA: &[u8] = b"PLAYER-MONSTERS-EPISODE1-
 /// wrapping `P_InterceptVector` and sight's `INT_MIN` `FixedDiv` refusal. Its own
 /// string, as every profile has; reusing wire 26's is this one line.
 pub const PLAYER_EPISODE1_V5_CONTEXT_SCHEMA: &[u8] = b"PLAYER-MONSTERS-EPISODE1-5-v1";
+/// Explicit Episode 1 part 6 context (wire 28, DSIM44): wire 27's world with
+/// skills 0 and 1 and the spawn rule S″ with the monster escape witness.
+pub const PLAYER_EPISODE1_V6_CONTEXT_SCHEMA: &[u8] = b"PLAYER-MONSTERS-EPISODE1-6-v1";
 
 /// The largest tic count a flash psprite can hold with a null state at a carried
 /// start: `P_SetupPsprites` nulls the state and keeps the count (p_pspr.c:836-837),
@@ -465,7 +468,41 @@ impl Simulation {
             gametic,
         )
     }
-    /// The level load of wires 26 and 27 (`policy`).
+    /// Wire 28 (`PlayerMonstersEpisode1V6`, rulings U12 (iii) and §1.17 option
+    /// 1): [`Self::original_player_episode1_v5_level`] under wire 28, which is
+    /// wire 27 plus skills 0 and 1 (`sk_baby`'s double ammunition and halved
+    /// player damage) and the spawn rule S″ with the monster escape witness.
+    /// Captures are DSIM44, read by [`crate::Diagnostic::decode_episode1_v6`]:
+    /// the DSIM43 layout under policy 28 and [`PLAYER_EPISODE1_V6_CONTEXT_SCHEMA`].
+    pub fn original_player_episode1_v6_level(
+        map: Map,
+        map_number: u8,
+        skill: Skill,
+        context: MapContextOptions,
+        start: LevelStart,
+    ) -> Result<Self, LevelStartError> {
+        Self::original_player_episode1_v6_level_at(map, map_number, skill, context, start, 0)
+    }
+    /// [`Self::original_player_episode1_v4_level_at`] under wire 28.
+    pub fn original_player_episode1_v6_level_at(
+        map: Map,
+        map_number: u8,
+        skill: Skill,
+        context: MapContextOptions,
+        start: LevelStart,
+        gametic: u64,
+    ) -> Result<Self, LevelStartError> {
+        Self::episode1_level_at(
+            OriginalExecutionProfile::PlayerMonstersEpisode1V6,
+            map,
+            map_number,
+            skill,
+            context,
+            start,
+            gametic,
+        )
+    }
+    /// The level load of wires 26 to 28 (`policy`).
     fn episode1_level_at(
         policy: OriginalExecutionProfile,
         map: Map,

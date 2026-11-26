@@ -1,0 +1,260 @@
+{
+ "schema": "DOOM-WIRE28-FIN-RESULTS-v1",
+ "base": "FINRET",
+ "items": {
+  "FIN0": {
+   "skill": 0,
+   "inserted": [
+    263,
+    128
+   ],
+   "mode": "retail",
+   "wadset": "episode",
+   "lmp_sha256": "304b3f212728f0a67ee18b93b8d7d333381f71c7fb1b33a40713fdc2045acd69",
+   "end": "marker",
+   "session_tics": 2079,
+   "loads": 1,
+   "wipes": 3,
+   "level_frames": 449,
+   "other_frames": 1630,
+   "sound_starts": 20,
+   "dumps": 450,
+   "variants": {
+    "overflow": {
+     "identical_to_strict": true
+    },
+    "address": {
+     "identical_to_strict": true
+    },
+    "address_bounds": {
+     "identical_to_strict": true,
+     "bounds_reports": []
+    }
+   },
+   "melt": {
+    "claim": "none",
+    "melts": 3,
+    "steps": [
+     42,
+     41,
+     38
+    ],
+    "start_differs_from_end": 3,
+    "kinds": {
+     "session start": {
+      "melts": 1,
+      "start_differs_from_end": 1
+     },
+     "level to finale": {
+      "melts": 1,
+      "start_differs_from_end": 1
+     },
+     "finale text to art screen": {
+      "melts": 1,
+      "start_differs_from_end": 1
+     }
+    },
+    "other_rows_equal_to_counter_clock": true
+   },
+   "whole_frames_2d_undefined": 0,
+   "flagged_level_frames": 0,
+   "other_draws": 0,
+   "dump_set_sha256": "d362ef0a83ac6825d7ee135542cbed9c6367bd122ac51fc25cebbc86946da46c",
+   "dumps_per_load": [
+    {
+     "load": 0,
+     "snapshots": 450,
+     "sha256": "d362ef0a83ac6825d7ee135542cbed9c6367bd122ac51fc25cebbc86946da46c"
+    }
+   ],
+   "goldens": {
+    "tests/reference/wire28_fin/m6a_session/FIN0.session": "f3fcd076d5b07ba40e1b693af5490f0caac51c0e347dc8187978595099064e17",
+    "tests/reference/wire28_fin/m6a_sound/FIN0.sound": "7be5ba754db633854d23f9ddfe0dc6c881b89ba5702a4b225d81975081f7330e",
+    "tests/reference/wire28_fin/m6a_frames/FIN0.sb10.frames": "d57b3babd3ad24886c0f48ad1f2cdaaaa6e8283151fc90b2da948621a1929f13",
+    "tests/reference/wire28_fin/m6a_frames/FIN0.sb11.frames": "167accf5d84086ffb49add986fb9af710b985f0a0e538394ce3006f7fb5347ee",
+    "tests/reference/wire28_fin/m6a_melt/FIN0.melt": "9c64686fb2ed4b9bc97f9e566bc3b9728bdf309922c356f9eeca482b0da19704",
+    "tests/reference/wire28_fin/m6a2_melt/FIN0.sb11.melt": "31f519a37406ce46ba7b7e32c9d59c46887bca1be9f32367a3c034482d3e2314",
+    "tests/reference/wire28_fin/m6a_mixer/goldens/FIN0.golden": "79802a15102967cb0a6818532ff92e0d1e5265d1a6bcef924b1354de656619c8",
+    "tests/reference/wire28_fin/FIN0.lmp": "304b3f212728f0a67ee18b93b8d7d333381f71c7fb1b33a40713fdc2045acd69"
+   },
+   "witnesses": {
+    "1": [
+     "E1M8 exit on tic 448; tic 449 is the finale (gamestate 2): no intermission, no intermission draws"
+    ],
+    "11": [
+     "finale tics 449-2078: stage 1 from tic 2019 (finale tic 1571), still stage 1 with no game action at the last tic; presses on tics [549, 649, 2019] changed nothing; no finale M_Random draw"
+    ]
+   },
+   "melt_sb11": {
+    "end": "marker",
+    "melts": 3,
+    "steps": [
+     42,
+     41,
+     38
+    ],
+    "predicted_steps_equal": 3,
+    "other_rows_equal_to_golden": {
+     "frames": true,
+     "sound": true,
+     "session": true
+    },
+    "kinds": {
+     "session start": {
+      "melts": 1,
+      "steps": 42
+     },
+     "level to finale": {
+      "melts": 1,
+      "steps": 41
+     },
+     "finale text to art screen": {
+      "melts": 1,
+      "steps": 38
+     }
+    },
+    "variants": {
+     "overflow": {
+      "identical_to_strict": true
+     },
+     "address": {
+      "identical_to_strict": true
+     },
+     "address_bounds": {
+      "identical_to_strict": true,
+      "bounds_reports": []
+     }
+    },
+    "golden": "31f519a37406ce46ba7b7e32c9d59c46887bca1be9f32367a3c034482d3e2314"
+   },
+   "victory_tic": 449
+  },
+  "FIN1": {
+   "skill": 1,
+   "inserted": [
+    0,
+    0
+   ],
+   "mode": "retail",
+   "wadset": "episode",
+   "lmp_sha256": "475fd706db6a6072519a697b1d8d6bf9be3ffff5071705487734fc1f307bff47",
+   "end": "marker",
+   "session_tics": 1951,
+   "loads": 1,
+   "wipes": 3,
+   "level_frames": 321,
+   "other_frames": 1630,
+   "sound_starts": 16,
+   "dumps": 322,
+   "variants": {
+    "overflow": {
+     "identical_to_strict": true
+    },
+    "address": {
+     "identical_to_strict": true
+    },
+    "address_bounds": {
+     "identical_to_strict": true,
+     "bounds_reports": []
+    }
+   },
+   "melt": {
+    "claim": "none",
+    "melts": 3,
+    "steps": [
+     42,
+     38,
+     38
+    ],
+    "start_differs_from_end": 3,
+    "kinds": {
+     "session start": {
+      "melts": 1,
+      "start_differs_from_end": 1
+     },
+     "level to finale": {
+      "melts": 1,
+      "start_differs_from_end": 1
+     },
+     "finale text to art screen": {
+      "melts": 1,
+      "start_differs_from_end": 1
+     }
+    },
+    "other_rows_equal_to_counter_clock": true
+   },
+   "whole_frames_2d_undefined": 0,
+   "flagged_level_frames": 0,
+   "other_draws": 0,
+   "dump_set_sha256": "2c91efe694dc1e7bb00965e1d92b44e84cc7d2be3a64d101b0098a461573c03e",
+   "dumps_per_load": [
+    {
+     "load": 0,
+     "snapshots": 322,
+     "sha256": "2c91efe694dc1e7bb00965e1d92b44e84cc7d2be3a64d101b0098a461573c03e"
+    }
+   ],
+   "goldens": {
+    "tests/reference/wire28_fin/m6a_session/FIN1.session": "74d81a4d1f40898f33c5fa6fd5ac90fd37e84fc436d5cc5868ae17cb5fe90c7b",
+    "tests/reference/wire28_fin/m6a_sound/FIN1.sound": "57027ee27ec48221c991cf323260ad2fcda19fcd4928752aaee6e0e633c76b72",
+    "tests/reference/wire28_fin/m6a_frames/FIN1.sb10.frames": "573def63c7a70075d4a46d9bf219a0f5c7b8a96f0af0283aba873f9cb39087a7",
+    "tests/reference/wire28_fin/m6a_frames/FIN1.sb11.frames": "2adc3f0ded0fdd1bad82a08ef220bc9fde9289ba2c3e8db247ffdc5996d30402",
+    "tests/reference/wire28_fin/m6a_melt/FIN1.melt": "521f4510a081cd22b3adc0b234d7c9f638b5d4078da5c783c818adb0f932a109",
+    "tests/reference/wire28_fin/m6a2_melt/FIN1.sb11.melt": "73f39bc821856db52f93c527214dfde55d2e0a1db503e27c8cf275135adc814f",
+    "tests/reference/wire28_fin/m6a_mixer/goldens/FIN1.golden": "54580de24dc79f5f2e6041c2e67dcdf76a98211f7730524052c2398eaf35098b",
+    "tests/reference/wire28_fin/FIN1.lmp": "475fd706db6a6072519a697b1d8d6bf9be3ffff5071705487734fc1f307bff47"
+   },
+   "witnesses": {
+    "1": [
+     "E1M8 exit on tic 320; tic 321 is the finale (gamestate 2): no intermission, no intermission draws"
+    ],
+    "11": [
+     "finale tics 321-1950: stage 1 from tic 1891 (finale tic 1571), still stage 1 with no game action at the last tic; presses on tics [421, 521, 1891] changed nothing; no finale M_Random draw"
+    ]
+   },
+   "melt_sb11": {
+    "end": "marker",
+    "melts": 3,
+    "steps": [
+     42,
+     38,
+     38
+    ],
+    "predicted_steps_equal": 3,
+    "other_rows_equal_to_golden": {
+     "frames": true,
+     "sound": true,
+     "session": true
+    },
+    "kinds": {
+     "session start": {
+      "melts": 1,
+      "steps": 42
+     },
+     "level to finale": {
+      "melts": 1,
+      "steps": 38
+     },
+     "finale text to art screen": {
+      "melts": 1,
+      "steps": 38
+     }
+    },
+    "variants": {
+     "overflow": {
+      "identical_to_strict": true
+     },
+     "address": {
+      "identical_to_strict": true
+     },
+     "address_bounds": {
+      "identical_to_strict": true,
+      "bounds_reports": []
+     }
+    },
+    "golden": "73f39bc821856db52f93c527214dfde55d2e0a1db503e27c8cf275135adc814f"
+   },
+   "victory_tic": 321
+  }
+ }
+}

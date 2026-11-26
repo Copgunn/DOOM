@@ -55,7 +55,8 @@ pub use player_monsters::{
 mod carried_start;
 pub use carried_start::{
     CarriedField, CarriedStart, LevelExit, LevelFinish, LevelStart, LevelStartError,
-    PLAYER_EPISODE1_V4_CONTEXT_SCHEMA, PLAYER_EPISODE1_V5_CONTEXT_SCHEMA, StartKind,
+    PLAYER_EPISODE1_V4_CONTEXT_SCHEMA, PLAYER_EPISODE1_V5_CONTEXT_SCHEMA,
+    PLAYER_EPISODE1_V6_CONTEXT_SCHEMA, StartKind,
 };
 mod player_commands;
 mod player_pistol;
@@ -1699,3 +1700,9 @@ mod wire25_tests;
 mod m4p_elision_tests;
 #[cfg(test)]
 mod wire27_tests;
+#[cfg(test)]
+mod wire28_genuine_tests;
+#[cfg(test)]
+mod wire28_mutant_tests;
+#[cfg(test)]
+mod wire28_tests;

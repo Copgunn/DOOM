@@ -201,3 +201,7 @@ original evidence and former guide contents with exact-byte copies and digests.
 - Wire 27, the wrapping `P_InterceptVector`: [observations](validation/WIRE27.md),
   [support](COMPATIBILITY.md#wire-27-the-wrapping-p_interceptvector) and
   [DSIM43](STATE_FORMAT.md#dsim-v43--wire-27-the-wrapping-p_interceptvector).
+- Wire 28, the easy skills and E1M7 on skill 3: [observations](validation/WIRE28.md),
+  [source investigation](M6A_REFERENCE_INVESTIGATION.md#8-wire-28-the-easy-skills-and-e1m7-on-skill-3-source-investigation-2026-11-25),
+  [support](COMPATIBILITY.md#wire-28-the-easy-skills-and-e1m7-on-skill-3) and
+  [DSIM44](STATE_FORMAT.md#dsim-v44--wire-28-the-easy-skills-and-e1m7-on-skill-3).

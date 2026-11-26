@@ -39,7 +39,9 @@
 //! wall time; the schedule, the input held during a melt and the sound are in the documentation of
 //! the private module `finale_melt`, summarised at [`App::melt_in_progress`]). Data loaded with
 //! [`GameData::load_session`] keeps the frozen app exactly, its "not built yet" stop at E1M8's
-//! exit included, for the frozen tests and tools; doom-play plays only the new one.
+//! exit included, for the frozen tests and tools. [`GameData::load_wire28_session`] runs the same
+//! app in the session's wire 28 configuration (decision D3 of 2026-11-25: the finale and the melt
+//! over wire 28, skills 0 to 3); doom-play plays only that one.
 
 mod audio;
 mod finale_melt;
@@ -458,8 +460,9 @@ impl GameData {
     /// [`Self::load_session`] in the session's finale-and-melt configuration (owner's ruling V1
     /// of 2026-11-23; M6a part 2): every session of the app a
     /// [`crate::session::Session::new_finale_and_melt`], with the victory, the Episode 1 finale and
-    /// every wipe's melt shown one step per tic of wall time. What doom-play plays. The same starts
-    /// are refused (the easy skills stay refused: the next pull request).
+    /// every wipe's melt shown one step per tic of wall time. What doom-play played before wire
+    /// 28. The same starts are refused (the easy skills stay refused here: they are
+    /// [`Self::load_wire28_session`]'s).
     pub fn load_finale_and_melt_session(
         wads: &[&[u8]],
         setting: ModeSetting,
@@ -467,6 +470,26 @@ impl GameData {
         skill: u8,
     ) -> Result<Self, LoadError> {
         Self::load_session_in(wads, setting, map, skill, Configuration::FinaleAndMelt)
+    }
+
+    /// [`Self::load_finale_and_melt_session`] in the session's wire 28 configuration (decision D3
+    /// of 2026-11-25): every session a [`crate::session::Session::new_finale_and_melt_wire28`],
+    /// the same finale, melt, display and sound over wire 28, with skills 0 and 1 admitted
+    /// besides 2 and 3 and its demo written by the wire 28 writer ([`Recorder::new_v3`]). What
+    /// doom-play plays. Nightmare (4) is refused as before.
+    pub fn load_wire28_session(
+        wads: &[&[u8]],
+        setting: ModeSetting,
+        map: u8,
+        skill: u8,
+    ) -> Result<Self, LoadError> {
+        Self::load_session_in(
+            wads,
+            setting,
+            map,
+            skill,
+            Configuration::FinaleAndMeltWire28,
+        )
     }
 
     fn load_session_in(
@@ -508,7 +531,18 @@ impl GameData {
 
     /// Whether every session runs the finale-and-melt configuration.
     fn finale_and_melt(&self) -> bool {
-        self.session.is_some() && self.config == Configuration::FinaleAndMelt
+        self.session.is_some() && self.config.melts()
+    }
+
+    /// An empty recording of this data's sessions, bounded at `cap` tics: written by the wire 28
+    /// demo writer in the wire 28 configuration ([`Recorder::new_v3`]), by the earlier one
+    /// otherwise.
+    fn recorder(&self, cap: usize) -> Recorder {
+        if self.session.is_some() && self.config == Configuration::FinaleAndMeltWire28 {
+            Recorder::new_v3(self.map, self.skill, cap)
+        } else {
+            Recorder::new(self.map, self.skill, cap)
+        }
     }
 
     /// The declared game mode, for data loaded with [`Self::load_session`].
@@ -763,6 +797,13 @@ fn session_message(w: &SessionWitness) -> String {
                 music.lump_name().to_ascii_uppercase()
             )
         }
+        SessionWitness::Simulation(SimError::MapScale(doom_sim::MapScaleError::Escape)) => {
+            "simulation: MapScale(Escape). A monster, a corpse or a barrel was moved with its \
+             centre through a one-sided wall (the escape witness: for monsters and corpses \
+             under wire 28, for barrels since wire 21). The original lets it through. The \
+             session stops here instead of playing on differently from the original."
+                .into()
+        }
         SessionWitness::Special => "a pause or save command (BT_SPECIAL): the original pause \
                                     comes with M6b, saving later"
             .into(),
@@ -947,6 +988,7 @@ fn new_session(
     match config {
         Configuration::RefusesFinaleAndMelt => Session::new(data, settings),
         Configuration::FinaleAndMelt => Session::new_finale_and_melt(data, settings),
+        Configuration::FinaleAndMeltWire28 => Session::new_finale_and_melt_wire28(data, settings),
     }
 }
 
@@ -962,7 +1004,7 @@ impl App {
             frame: Frame::new(),
             palette: 0,
             drawn: false,
-            recorder: Recorder::new(data.map, data.skill, cfg.tic_cap),
+            recorder: data.recorder(cfg.tic_cap),
             name: String::new(),
             started: Timestamp::default(),
             claimed: false,
@@ -1002,7 +1044,7 @@ impl App {
         self.frame = Frame::new();
         self.palette = 0;
         self.drawn = false;
-        self.recorder = Recorder::new(self.data.map, self.data.skill, self.cfg.tic_cap);
+        self.recorder = self.data.recorder(self.cfg.tic_cap);
         self.save = SaveStatus::NotSaved;
         self.retry_from = None;
         self.clock = TicClock::default();

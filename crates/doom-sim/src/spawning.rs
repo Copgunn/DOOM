@@ -66,6 +66,15 @@ impl Simulation {
         !((policy.has_world_pickups() && world_pickups::kind_for(policy, ty).is_some())
             || e1m1_rules::is_decoration(policy, ty))
     }
+    /// Whether S′'s margin clause applies to a mover of type `ty`: always, except
+    /// for a monster under wire 28, whose spawn rule S″ drops it (§1.17 option 1;
+    /// barrels and the player keep it). The monster escape witness takes its
+    /// place (`StaticWorld::escape_witness`).
+    pub(crate) fn margined(&self, ty: ActorTypeId) -> bool {
+        let policy = self.player_policy();
+        !(policy.has_monster_escape_witness()
+            && crate::original_registry::is_policy_monster(policy, ty))
+    }
     /// Profile 4, all recognized source metadata, medium single-player skill,
     /// 1024 slots. Map THINGS are not spawned implicitly.
     pub fn actor_states(map: Map) -> Result<Self, SimError> {
@@ -189,7 +198,7 @@ impl Simulation {
                     .and_then(|r| r.actor_type(ty))
                     .map_or(Fixed::ZERO, ActorTypeDef::radius),
                 1024,
-                self.spawn_mover(ty),
+                self.spawn_mover(ty) && self.margined(ty),
             ) || matches!(height,SpawnHeight::Absolute(z) if !crate::sight::within(z,1024)))
         {
             return Err(PerceptionError::Arithmetic.into());
@@ -644,7 +653,7 @@ impl Simulation {
                     ],
                     info.radius(),
                     978,
-                    !pickup && !decoration && !landing,
+                    !pickup && !decoration && !landing && self.margined(ty),
                 ) {
                     return Err(MonsterError::Arithmetic.into());
                 }
@@ -668,7 +677,7 @@ impl Simulation {
                     ],
                     info.radius(),
                     1024,
-                    self.spawn_mover(ty),
+                    self.spawn_mover(ty) && self.margined(ty),
                 ) {
                     return Err(PerceptionError::Arithmetic.into());
                 }

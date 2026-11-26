@@ -24,9 +24,12 @@ use crate::app::Timestamp;
 use doom_render::Frame;
 use doom_sim::TicCommand;
 use doom_sim::demo::{
-    DEMO_HEADER, DEMO_MAP_INDEX, DemoError, EPISODE1_DEMO_MAPS, parse_demo_episode1_v2,
-    write_demo_episode1_v2,
+    DEMO_HEADER, DEMO_MAP_INDEX, DemoError, DemoHeaderV2, EPISODE1_DEMO_MAPS,
+    parse_demo_episode1_v2, parse_demo_episode1_v3, write_demo_episode1_v2, write_demo_episode1_v3,
 };
+
+/// One of doom-sim's version-110 Episode 1 demo readers.
+type DemoReader = fn(&[u8], u8) -> Result<(DemoHeaderV2, doom_sim::demo::Demo), DemoError>;
 
 /// A parsed session demo.
 #[derive(Clone, Debug, Default, Eq, PartialEq)]
@@ -45,6 +48,17 @@ impl SessionDemo {
     /// the marker (`G_ReadDemoTiccmd`, g_game.c:1491-1503), with no level boundary. The commands'
     /// buttons are not judged here: a replayed `BT_SPECIAL` is refused at its tic by the session.
     pub fn parse(bytes: &[u8]) -> Result<Self, DemoError> {
+        Self::parse_with(bytes, parse_demo_episode1_v2)
+    }
+
+    /// [`Self::parse`] for the wire 28 configuration: the skill byte may also be 0 or 1 (doom-sim's
+    /// `parse_demo_episode1_v3`, skills 0 to 3; nightmare stays refused). For skills 2 and 3 the
+    /// result equals [`Self::parse`]'s.
+    pub fn parse_v3(bytes: &[u8]) -> Result<Self, DemoError> {
+        Self::parse_with(bytes, parse_demo_episode1_v3)
+    }
+
+    fn parse_with(bytes: &[u8], parse: DemoReader) -> Result<Self, DemoError> {
         let header = bytes.get(..DEMO_HEADER.len()).ok_or(DemoError::Truncated)?;
         let map = header[DEMO_MAP_INDEX];
         if !EPISODE1_DEMO_MAPS.contains(&map) {
@@ -53,7 +67,7 @@ impl SessionDemo {
                 value: map,
             });
         }
-        let (h, demo) = parse_demo_episode1_v2(bytes, map)?;
+        let (h, demo) = parse(bytes, map)?;
         Ok(Self {
             map: h.map,
             skill: h.skill,
@@ -65,6 +79,12 @@ impl SessionDemo {
     /// (`BT_SPECIAL`, a forward or side of -128, a turn with a low byte).
     pub fn bytes(&self) -> Result<Vec<u8>, DemoError> {
         write_demo_episode1_v2(self.map, self.skill, &self.commands)
+    }
+
+    /// [`Self::bytes`] for the wire 28 configuration (doom-sim's `write_demo_episode1_v3`, skills
+    /// 0 to 3); for skills 2 and 3 the bytes equal [`Self::bytes`]'s.
+    pub fn bytes_v3(&self) -> Result<Vec<u8>, DemoError> {
+        write_demo_episode1_v3(self.map, self.skill, &self.commands)
     }
 }
 

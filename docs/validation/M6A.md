@@ -3,7 +3,7 @@
 **Status (2026-11-25, America/Los_Angeles): M6a parts 1 and 2 are merged and closed out.** Part 2 is pull request #80 and its
 follow-up #84, both merged on 2026-11-25. The hitching finding of §9 is closed as not an engine defect, and the closeout's
 other notes (the README's evidence sum, the leak-detection check, the quirk index correction) are in
-[§14](#14-the-closeout-2026-11-25). Not built: the easy skills and E1M7 on skill 3, a later pull request under wire 28.
+[§14](#14-the-closeout-2026-11-25). Not built in M6a's merged parts: the easy skills and E1M7 on skill 3, which are wire 28 ([record](WIRE28.md)).
 The paragraphs below are earlier status lines, left as written.
 
 **Status (2026-11-23, America/Los_Angeles): M6a part 1 is merged** ([PR #65](https://github.com/Copgunn/DOOM/pull/65), 2026-11-23), and
@@ -771,11 +771,16 @@ After pull requests #80 and #84 merged (master `e292d45f`): documents and record
 ### 14.2 The README's evidence figures, summed from the records
 
 An index written on 2026-11-25. It holds no new observation: every figure is from the section linked, and nothing was
-run again for it. **What is counted:** tics of real Episode 1 maps that a record reports as compared with the genuine
+run again for it. **Note, 2026-11-26:** the wire 28 rows (the five sessions of 2026-11-25, the three hand-test recordings of 2026-11-26, E1M7 on skill 3 and the easy-skill replays) come from
+[the wire 28 record](WIRE28.md); the sums below were re-derived from its per-run logs on that day, and no run was repeated for them.
+**There are two figures and no blended headline.** **What is counted:** tics of real Episode 1 maps that a record reports as compared with the genuine
 linuxdoom-1.10 engine and equal, local only, each distinct tic once. A recording counts once however often it was
 compared: at screenblocks 10 and 11, in retail and in registered mode, at a later milestone, or through the session and
 again through the app. A tic is whatever the record counts as compared: in the M6a sessions that includes the
 intermission and finale tics, which are compared by rows, frames and sound and have no whole-state capture.
+**Figure 1 counts distinct recordings.** **Figure 2 counts the same recordings played on other skills**, and a skill replay counts there because on another skill
+different things spawn and the game plays out differently: the same commands give different simulation states, each compared with the genuine engine. A
+retail or registered replay does not count, because it is the same demo and the same game in the other mode. Each skill is counted once.
 
 | Set | Record | Recordings | Tics counted | Left out as a duplicate, and why |
 | --- | --- | ---: | ---: | --- |
@@ -790,21 +795,38 @@ intermission and finale tics, which are compared by rows, frames and sound and h
 | Hand test 3 | [§5.7](#57-the-owners-third-hand-test-2026-11-23) | 2 | 20,510 | |
 | The two E1M8 sessions of 2026-11-24 that wire 26 refused | [§7](#7-part-2-on-wire-27-the-owners-e1m8-sessions-through-the-whole-session-2026-11-24-evening): 3,894 + 3,064 | 2 | 6,958 | the same two recordings under wires 26 and 27 in the [wire 27 record](WIRE27.md#4-real-maps-local-only-passfail-and-tic-counts) |
 | The five sessions of the part 2 hand test | [§9](#9-the-owners-hand-test-of-9e3734ae-and-his-five-sessions-against-the-genuine-engine-2026-11-24): 8,227 + 5,470 + 173 + 4,842 + 2,985 | 5 | 21,697 | the 4,843rd tic of the registered session, where both engines stop |
-| **Played by hand, subtotal** | | **72** | **238,855** | |
+| The five sessions of 2026-11-25 (wire 28) | [WIRE28 §5.2](WIRE28.md#52-the-owners-five-sessions-of-2026-11-25): 767 + 623 + 6,503 + 5,467 + 3,940 | 5 | 17,300 | the same five under wire 27 (10 runs, 34,600 tics, 17,300 per screen size) and at the second size; two of them (3,722 and 3,171 level tics) were listed below as not counted at all, before their comparison was recorded |
+| The owner's wire 28 hand test of 2026-11-26 (three recordings; UTC stamps 082510, 083445, 083716) | [WIRE28 §5.4](WIRE28.md#54-e1m8-on-the-easy-skills): 18,263 + 3,929 + 3,643 | 3 | 25,835 | nothing: the E1M7 skill 3 recording is a new recording, not one of the constructions of figure 2 |
+| **Played by hand, subtotal** | | **80** | **281,990** | |
 | Four files of the owner's sessions folder not recorded as played by hand | [M5D](M5D.md#hand-played-checks) | 4 | 7,875 | |
 | Our 2,400 idle tics added to each of the two E1M8 recordings | [§7](#7-part-2-on-wire-27-the-owners-e1m8-sessions-through-the-whole-session-2026-11-24-evening): 6,294 - 3,894 and 5,464 - 3,064 | 0 (two constructions) | 4,800 | the recorded part, counted above; the wire 27 record's 700 idle tics, which are the start of these |
-| **Total** | | **147** | **501,003** | |
+| **Total, figure 1: distinct recordings** | | **155** | **544,138** | |
 
-- **The README's three figures:** "more than 70 hand-played sessions" is the 72; "over 238,000 tics" is the 238,855;
-  "more than 500,000 distinct real-map tics" is the 501,003.
-- **How thin the last one is.** It clears 500,000 by 1,003 tics. Without the four files that are not recorded as
-  played by hand it is 493,128. In the other direction: the chains' left-out part is an upper bound (it includes the
+Sums re-derived on 2026-11-26: 249,473 + 281,990 + 7,875 + 4,800 = 544,138, that is 501,003 + 17,300 + 25,835; 72 + 5 + 3 = 80 sessions and 238,855 + 17,300 + 25,835 = 281,990 tics; 71 + 80 + 4 = 155 recordings.
+**Without the 4,800 appended idle tics it is 539,338: figure 1 clears 500,000 without them** (by 39,338; with them by 44,138).
+
+**Figure 2: the same recordings on other skills** (local only, each compared with the genuine engine at both screen sizes, equal, no refusal):
+
+| Set | Record | Demos | Reported | Left out as a repeat | Tics counted | Of which our idle tics |
+| --- | --- | ---: | ---: | --- | ---: | ---: |
+| E1M7 on skill 3 | [WIRE28 §5.1](WIRE28.md#51-e1m7-on-skill-3): 5,000 + 367 + 1,221 + 2,100 + 7,736 + 35 | 6 | 16,459 | the 35-idle-tic construction from the load repeats the first 35 tics of M7IDLE on skill 3 (all idle commands from the same load) | 16,424 | 0 |
+| The 61 recordings and 2 constructions, on skill 0 | [WIRE28 §5.3](WIRE28.md#53-real-maps-on-skills-0-and-1): 10,029 + 12,544 + 15,388 + 12,717 + 47,146 + 16,724 + 16,424 + 52,095 + 29,884 | 63 | 212,951 | 5,813 (M8WALK, repeated inside M8WALK_FIN) and 5,505 (M8WALK3, inside M8WALK3_FIN) | 201,633 | 4,800 |
+| The same 63, on skill 1 | the same section, the same counts | 63 | 212,951 | the same 5,813 and 5,505 | 201,633 | 4,800 |
+| **Figure 2 total** | | | | | **419,690** | **9,600** |
+
+16,424 + 201,633 + 201,633 = 419,690. **Compared in all, as a sum of the two figures and not a headline:** 544,138 + 419,690 = 963,828 tics.
+
+- **The README's figures:** "80 hand-played sessions" is the 80; "over 280,000 tics" is the 281,990;
+  "more than 540,000 distinct real-map tics" is figure 1's 544,138; "more than 400,000" tics of the same recordings on other skills is figure 2's
+  419,690; "more than 960,000 in all" is their sum, 963,828.
+- **How thin figure 1 is.** It clears 500,000 by 44,138 tics. Without the four files that are not recorded as
+  played by hand it is 536,263, and without those and the 4,800 idle tics 531,463. In the other direction: the chains' left-out part is an upper bound (it includes the
   first intermission, which no scripted run has), and a count that took the two game modes as different comparisons
   would add the registered sets.
 - **Not counted at all:** the three idle sessions of [M5b's first play check](M5B.md#step-8-the-first-play-check)
   (1,050 tics, the agent's, two of them the start of a scripted run); M5c's check of two committed demos that are among
-  the 61; M5d's kill-test files (scripted); the owner's two E1M8 runs of 2026-11-25 in the §9 addendum (no comparison of
-  them with the genuine engine is recorded); and every tic on a synthetic map. The synthetic comparisons are the CI
+  the 61; M5d's kill-test files (scripted); and every tic on a synthetic map. (The owner's two E1M8 runs of 2026-11-25 in the §9 addendum, listed here until 2026-11-26 because no comparison was recorded, are two of the five
+  sessions now counted above.) The synthetic comparisons are the CI
   evidence, but the same items are compared again at each milestone and no record sums them once, so no total is claimed.
 - **The quirk figure** ("more than 400") is the register's 502 rows less the rows that repeat a quirk under a second
   status: 434 distinct ids when a row id's status letter is dropped (counted from the pages on 2026-11-25).
