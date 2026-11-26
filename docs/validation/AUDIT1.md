@@ -168,4 +168,4 @@ Windows and macOS locally; fuzz builds and sanitizer campaigns for the new tests
 - Timing is one laptop, one run set, wall-clock medians plus one instruction-count run.
 
 **Size.** Hand-written lines added by this audit against the 3,000 ceiling:
-<!-- AUDIT1:LINES -->
+**2,278 of 3,000**, counted as before (`git diff --numstat 30812c4e HEAD -- . ':!tests/reference'`, added lines; generated goldens under `tests/reference` are not counted), as of the commit that wrote this line; the labelled-run result in section 9 replaces one line with one.
