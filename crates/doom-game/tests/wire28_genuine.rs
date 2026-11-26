@@ -33,7 +33,7 @@ use doom_sim::{ActorId, PlayerBodyState, PlayerSlot, Snapshot, TicCommand};
 use doom_sound::logic::{SoundOrigin, SoundRecord};
 use doom_test_evidence::sha256;
 use m6a::{Item, Rows, int};
-use m6a2_run::{GoldenFrame, GoldenMelt, read_frames, read_melts, read_sound};
+use m6a2_run::{GoldenFrame, GoldenMelt, read_frames, read_melts};
 use rows::{Carry, GoldenWriter, drain, stream_rows_with};
 use std::collections::BTreeMap;
 
@@ -53,6 +53,27 @@ fn read(path: &str) -> String {
     std::fs::read_to_string(p)
         .expect(path)
         .replace("\r\n", "\n")
+}
+
+/// The genuine sound stream at `path` (as `m6a::read_sound` reads `m6a_sound`; a copy of the
+/// private reader of `m6a2_run`, which stays as it is).
+fn read_sound(path: &str) -> m6a::GenuineSound {
+    let mut g = m6a::GenuineSound::default();
+    for l in read(path).lines() {
+        if l.starts_with('#') || l.starts_with("Z,") || l.starts_with("W,") {
+            continue;
+        }
+        let f: Vec<&str> = l.split(',').collect();
+        let tic: i64 = f[1].parse().expect("tic");
+        match f[0] {
+            "LV" => {
+                g.loads.insert(tic, f[3].parse().expect("map"));
+            }
+            "E" => g.error = Some((tic, f[2..].join(","))),
+            _ => g.by_tic.entry(tic).or_default().push(l.to_owned()),
+        }
+    }
+    g
 }
 
 /// Compares `got` with the genuine row's columns of the same names.
