@@ -18,7 +18,11 @@ never edited) with these differences and nothing else:
   and grows by one per paused tic (G_Ticker runs while P_Ticker returns at once, p_tick.c:135-136; gametic++ in the
   loop, d_main.c:384). The DSIM42 projector requires H.gametic - H.leveltime to be constant over the level; it is
   given each dump with gametic rewritten to the first dump's lead plus leveltime (in memory, the dump file is not
-  changed), so its start group keeps the load's gametic.
+  changed), so its start group keeps the load's gametic. The chain reads a capture's `events.sounds` rows at the
+  dump's leveltime - 1 (level_snapshot_m5c.sound_fields), which is its session tic only until a pause; each dump's
+  sound stream is therefore read ahead by the paused tics so far (lead - the load's lead), so the rows are those of
+  the session tic the capture follows. (Corrected 2026-11-27, M6b phase 2 step 6: the first version read them at the
+  leveltime, which moved every sound record after a pause by the paused count.)
 
 Two projection rules new with the respawn, each given to the DSIM39 projector in memory and put back in its output:
 a respawned monster carries its corpse's spawnpoint (`Projector.respawned`), and a `target` or `player->attacker`
@@ -30,7 +34,7 @@ set to the real skill. Nightmare's THING bit is 4, hard's (p_mobj.c:745-748), so
 The caller gives the skill G_InitNew plays: a header byte above 4 is played as 4 (g_game.c:1379-1380).
 
 `compare44(f45, f44)` asserts that the projections of one dump differ exactly as listed (the version word is not a
-field; it differs in the framing). Library only: `Projector`, `VERSION`, `compare44`, `PARAMETERS`, `LEAD`.
+field; it differs in the framing). Library only: `Projector`, `VERSION`, `compare44`, `PARAMETERS`, `LEAD`, `Ahead`.
 """
 import struct, sys
 from pathlib import Path
@@ -51,6 +55,15 @@ EPISODE1V7 = L.Profile('episode1v7', VERSION, POLICY, CONTEXT, W28.EPISODE1V6.ma
 assert len(CONTEXT) == len(W28.CONTEXT)
 
 
+class Ahead:
+    """A sound stream read `ahead` session tics later: rows(t) are the stream's rows(t + ahead)."""
+    def __init__(self, base, ahead):
+        self.base, self.ahead, self.last_tic = base, ahead, base.last_tic - ahead
+
+    def rows(self, tic):
+        return self.base.rows(tic + self.ahead)
+
+
 class Projector(W27.Projector):
     """The DSIM43 projector with the DSIM45 profile, skills 0 to 4, the two parameters and the gametic lead."""
     def __init__(self, mapdata, skill, map_number, sounds, start, respawn, fast):
@@ -61,6 +74,7 @@ class Projector(W27.Projector):
         self.profile = EPISODE1V7
         self.parameters = bytes([respawn, fast])
         self.first_lead = None
+        self.unpaused_sounds = sounds
         self.last = {}          # what each reference last named (stale)
 
     def step(self, dump, following=None):
@@ -70,6 +84,7 @@ class Projector(W27.Projector):
         if lead < self.first_lead:
             raise L.ProjectionError('DumpDeficiency', dump.tic, f'gametic lead {lead} below the load\'s {self.first_lead}')
         h['gametic'] = self.first_lead + h['leveltime']
+        self.sounds = Ahead(self.unpaused_sounds, lead - self.first_lead)
         respawned = self.respawned(dump)
         kept = {sv: {k: row[k] for k in SPAWNPOINT} for sv, row in respawned}
         for _sv, row in respawned: row.update(dict.fromkeys(SPAWNPOINT, 0))

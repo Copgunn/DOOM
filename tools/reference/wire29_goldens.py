@@ -106,8 +106,9 @@ def project(name, r, skill, respawn, fast):
         d, following = following, L.Dump(str(r['dumps'] / names[j + 1])) if j + 1 < len(names) else None
         fields, _ = proj.step(d, following)
         if old is not None:
-            # the same in-memory gametic rewrite as the DSIM45 projector's (level_snapshot_wire29.py)
+            # the same in-memory gametic rewrite and sound reading as the DSIM45 projector's (level_snapshot_wire29.py)
             twin, nxt = (L.Dump(str(r['dumps'] / n)) if n else None for n in (names[j], (names + [None])[j + 1]))
+            old.sounds = E.Ahead(sounds, twin.h['gametic'] - twin.h['leveltime'] - proj.first_lead)
             twin.h['gametic'] = proj.first_lead + twin.h['leveltime']
             E.compare44(fields, old.step(twin, nxt)[0])
         mapg = mapg or sha(S6.framed([x for x in fields if x[0].startswith('map.')]))
