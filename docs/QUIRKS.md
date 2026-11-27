@@ -43,9 +43,9 @@ original updates its row in the register (this index and the pages under
 
 ## Totals
 
-Updated on 2026-11-26 (America/Los_Angeles; certificate audit 1 added one row, M6b phase 1 ten and M6b phase 2 three, below).
+Updated on 2026-11-27 (America/Los_Angeles; certificate audit 1 added one row, M6b phase 1 ten and M6b phase 2 four, below).
 
-- **Rows: 520**, of which 511 are on the 54 C-file pages and 9 are on the [64-bit build only](quirks/64-bit-only.md) page.
+- **Rows: 521**, of which 512 are on the 54 C-file pages and 9 are on the [64-bit build only](quirks/64-bit-only.md) page.
 - How the number came about: the sweep wrote 890 raw entries; the merge made 443 rows; the first assembly (commit 2c2ee84) joined 23 pairs into 420 rows; the revision after the independent review and the owner's rulings joined 10 more (listed below), split 10 of the 11 mixed-status rows into 23 rows by status (one row per status; the 11th, Q-p_setup-536, became a row of the 64-bit page), moved 3 rows to the 64-bit page and added 6 rows there: 420 - 10 + 13 + 6 = 429. The later 2026-11-22 splits and additions raised it to 474, the M6a pull request to 486, M6a part 2 to 489 and then, by splitting seven rows by status, to 496, and wire 27 to 500 (below).
 - Added on 2026-11-22 (America/Los_Angeles) at the owner's ruling: one row, Q-g_game-779 (the stale `attacker` pointer across a level exit; status not reproduced (declared)), one more row on the C-file pages (included in the counts here).
 - Added on 2026-11-22 (America/Los_Angeles) by the M6a pull request (#65, the "U8" quirk list of the playable level chain): 11 new rows on the C-file pages (Q-g_game-611, Q-g_game-779-2, Q-g_game-1033, Q-g_game-1039, Q-wi_stuff-749, Q-wi_stuff-1338, Q-wi_stuff-1413, Q-p_pspr-145, Q-s_sound-209, Q-p_user-227 and Q-f_finale-207, which opens the f_finale.c page) and one row split by status (Q-g_game-472, below): 12 more rows, 474 + 12 = 486. Four existing rows changed status because the session now runs what they describe: Q-wi_stuff-588, Q-wi_stuff-1482 and Q-g_game-660 (from not yet ported to reproduced) and, by the split, Q-g_game-472 (reproduced in the session, still refused in the single-level configurations). The carried status-bar face of the session (U8's extra item 13) is already covered by Q-st_stuff-384a and Q-st_stuff-384b, whose statuses were not re-examined here. The twelve U8 quirks, each with its status, are listed in [COMPATIBILITY](COMPATIBILITY.md#episode-1-as-one-session-m6a).
@@ -61,24 +61,25 @@ Updated on 2026-11-26 (America/Los_Angeles; certificate audit 1 added one row, M
 - Added on 2026-11-26 (America/Los_Angeles) by certificate audit 1 (PR #87): 1 new row on a C-file page, counted above: Q-p_maputl-868 (the `int` sums of `P_PathTraverse`'s intercept steps; not determined): 506 + 1 = 507. Updated, no row added: Q-p_maputl-846c (the block-walk overshoot, now compared with the genuine engine; its status changes from not determined to reproduced, so "reproduced" is 292 and "not determined" stays 1) and Q-p_inter-838 (the cap checked per damage path on wires 23 to 28).
 - Added on 2026-11-26 (America/Los_Angeles) by M6b phase 1 (draft PR #88; an investigation and the genuine-engine items, nothing built in Rust): 10 new rows on C-file pages, all counted above and all `not yet ported`: Q-p_mobj-370, Q-p_mobj-398, Q-p_mobj-400 (a separate row from Q-p_mobj-794a and 794b because its status differs), Q-p_mobj-459 and Q-p_mobj-467 (the corpse respawn), Q-g_game-494 (a level load clears the pause without resuming the sound code), Q-g_game-704 (any byte with bit 7 and low bits 01 pauses), Q-g_game-1421-2 (the table edit across games), Q-wi_stuff-1480 (the pause command is a fire press in the intermission) and Q-p_user-227-2 (a special byte read raw by a dead player; read, not run): 507 + 10 = 517. Updated, no row added and no status word changed: Q-p_mobj-789 (item RESP4 shows 4 kills of 2), Q-wi_stuff-1338 (the percentage half is witnessed in the genuine engine; the "sucks" half is not) and Q-st_stuff-992 (item PAUSE; it also covers g_game.c:729-734, so no separate row). Status counts: not yet ported 49 + 10 = 59, 498 + 10 = 508. The per-file table's total cell said 493 where its lines summed to 498 (not corrected before); it now sums to 508.
 - Added on 2026-11-26 (America/Los_Angeles) by M6b phase 2 step 4 (wire 29, the corpse respawn; draft PR #89): 2 new rows on C-file pages, Q-p_inter-680 (the corpse at rest; reproduced) and Q-p_mobj-408 (the pointers left naming a respawned corpse, read after the free; refused, items STALE and STALE2), and Q-p_mobj-479 split by status into Q-p_mobj-479a (refused) and Q-p_mobj-479b (reproduced for a map monster at wire 29): 517 + 3 = 520. Status changed from not yet ported to reproduced: Q-p_mobj-370, Q-p_mobj-398, Q-p_mobj-400, Q-p_mobj-459 and Q-p_mobj-467. Updated, no status changed: Q-p_user-200 (wire 29's pending read and freed-read refusal). Status counts: reproduced 292 + 5 + 2 = 299, refused 98 + 1 = 99, not yet ported 59 - 5 = 54, 508 + 3 = 511.
+- Updated on 2026-11-27 (America/Los_Angeles) by M6b phase 2 step 6 (wire 29, the pause; draft PR #89): Q-st_stuff-992 split by status into Q-st_stuff-992a (the app's pause, not reproduced (declared)) and Q-st_stuff-992b (reproduced in the wire 29 session): 520 + 1 = 521. Status changed from not yet ported to reproduced: Q-g_game-704, Q-p_user-227-2 (now run in the genuine engine, item DEADSPEC) and Q-wi_stuff-1480. Updated, no status changed: Q-g_game-494, Q-g_game-672 (item TURBOP) and Q-wi_stuff-1338 (compared in the wire 29 session). Status counts: reproduced 299 + 4 = 303, not yet ported 54 - 3 = 51, 511 + 1 = 512.
 - Corrected on 2026-11-25 (America/Los_Angeles) by the M6a part 2 closeout, with no row added or removed: the status table below said 287 reproduced and 50 not yet ported where the rows give 288 and 49. The row is Q-i_video-641a: commit `77a0b6b9` (2026-11-24) changed its status from not yet ported to reproduced (the fresh-segment case) and left the table as it was, and the follow-up's Q-f_finale-274b then raised the stale 49 to 50. The rows were right and the index wrong. The total under the per-file table said 491 where its lines sum to 493 (the follow-up's two f_finale.c rows had not been added to it). The nine rows that still called pull request #80 unmerged with the hand test pending now say it merged on 2026-11-25 after the hand test of 2026-11-24; no status changed.
 - The separate lists: [recorded in only one place and in no note](quirks/only-one-place.md) (12 whole or partial rows and a list of readings); [not traced to a C line](quirks/not-traced.md) (none left); [dropped, and why](quirks/dropped.md) (54 entries); [where the documents disagree](quirks/disagreements.md) (75 entries, 7 marked policy claim); [the 64-bit build only](quirks/64-bit-only.md) (9 rows).
 
 The 2026-11-22 follow-up split 24 more rows into 48 and classified 48 rows from the Rust code and existing tests. A separate refusal row records the historical endpoint policy for a stalled trace. A further audit split 19 remaining mixed-status rows into 38, distinguished the R4 flagged-column contract from a refusal, and settled the two 64-bit harness-exposure unknowns by reading the builders. The status counts below describe the current register.
 
-### Status of the 511 rows on the C-file pages
+### Status of the 512 rows on the C-file pages
 
 Each row carries one status. The 64-bit page records whether the reference harness is affected.
 
 | Status | Rows |
 | --- | ---: |
-| reproduced | 299 |
+| reproduced | 303 |
 | refused | 99 |
-| not yet ported | 54 |
+| not yet ported | 51 |
 | not reproduced (declared …) | 57 |
 | comment only | 1 |
 | not determined (the row says what is observed) | 1 |
-| Total | 511 |
+| Total | 512 |
 
 ## Rows by C file
 
@@ -134,14 +135,14 @@ One page per C file (a header counts as its own file); each page carries its own
 | [sndserv/wadread.c](quirks/sndserv-wadread.c.md) | 2 |
 | [sounds.h](quirks/sounds.h.md) | 1 |
 | [st_lib.c](quirks/st_lib.c.md) | 4 |
-| [st_stuff.c](quirks/st_stuff.c.md) | 17 |
+| [st_stuff.c](quirks/st_stuff.c.md) | 18 |
 | [st_stuff.h](quirks/st_stuff.h.md) | 1 |
 | [tables.c](quirks/tables.c.md) | 4 |
 | [v_video.c](quirks/v_video.c.md) | 5 |
 | [w_wad.c](quirks/w_wad.c.md) | 2 |
 | [wi_stuff.c](quirks/wi_stuff.c.md) | 6 |
 
-| **Total** | **511** |
+| **Total** | **512** |
 
 No page: p_local.h (its two rows were joined into rows of p_map.c and p_maputl.c; see the lists below).
 
