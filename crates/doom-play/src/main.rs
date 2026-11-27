@@ -34,7 +34,9 @@ mod wire28_tests;
 mod write_stats;
 
 use audio::{Output, Trial, Volume};
-use doom_game::app::{App, AudioSink, GameData, Host, SessionConfig, Timestamp, UNRECORDED_LABEL};
+use doom_game::app::{
+    App, AudioSink, GameData, GameParameters, Host, SessionConfig, Timestamp, UNRECORDED_LABEL,
+};
 use doom_game::input::Preset;
 use doom_game::session::{ModeSetting, ModeSource, SessionMode};
 use doom_render::GameMode;
@@ -64,9 +66,13 @@ usage: doom-play --iwad PATH [options]
                        given on the exit line and written into the demo's file name
   --skill N            0: I'm Too Young To Die; 1: Hey, Not Too Rough;
                        2 or hmp: Hurt Me Plenty (default); 3 or uv: Ultra-Violence.
+                       4 or nightmare: Nightmare! (monsters fast and respawning).
                        N is the skill value stored in the demo header and the file
                        name. Vanilla's own -skill option counts from 1, so 2 and 3 are
-                       its -skill 3 and -skill 4. Nightmare (4) is not built yet
+                       its -skill 3 and -skill 4
+  --respawn            the original's -respawn: dead monsters come back on any skill
+  --fast               the original's -fast: fast monsters on any skill. Both are
+                       written into the demo header, as the original records them
   --sessions DIR       where session demos are written (default doom-sessions/)
   --bindings NAME      vanilla (default) or modern (WASD, E use, always run)
   --gamma N            gamma table 0-4 (default 0, as the original)
@@ -126,14 +132,17 @@ the mixer, the picture or the demo. They do nothing without an audio device (or 
                        backend may not grant it.
   On exit, the lines starting \"audio\" echo a setting that is not at its default.
 
-Keys: Esc or Pause pauses (then Esc or Pause resumes, R restarts, Q quits); on a refusal
+Keys: Pause is the original's pause: the game stops, the PAUSE picture shows, sounds already
+playing play out, and Pause again goes on; both presses are recorded in the demo. Esc
+pauses the window instead (then Esc resumes, R restarts, Q quits; Pause does nothing
+there), outside the demo, and works during the original's pause too; on a refusal
 screen R restarts and Q or Esc quits. During a screen melt every key and mouse button is
 kept and acts when the melt ends (a pause then too); closing the window always quits. R starts a new game at the start map, as a new
 session with its own demo. End mutes and unmutes the sound (the player's own key, never
 seen by the game); pausing also silences it. When the window library reports that the window
 was minimised or lost focus, the game pauses and every held key is released. Under WSLg the
 window now and then reports a focus loss in its first moments, so the game can open already
-paused (the PAUSED box shows): Esc or Pause resumes. Every session
+paused (the PAUSED box shows): Esc resumes. Every session
 (unless --unrecorded-full-turning) is recorded as one version-110 demo, every tic of every
 level and intermission, named E1M<map>-skill<n>-<retail|registered>-<yyyymmdd-hhmmss>.lmp
 (the start map, the game mode, the time in UTC) in the sessions directory; an
@@ -193,8 +202,8 @@ its art screen began.
 
 Limits: an OpenGL 2.1 (or OpenGL ES 2) driver is required. There is no music, menu,
 automap or saving. Built: every change of screen melts; after E1M8 come the finale text and
-then the art screen, which stays until you quit; skills 0 to 3, and E1M7 on skill 3 plays.
-Not built yet: nightmare (skill 4), which is refused at launch. A possible stop: when a
+then the art screen, which stays until you quit; skills 0 to 4 with --respawn and --fast,
+and E1M7 on skill 3 plays. A possible stop: when a
 monster or a corpse is shoved through a one-sided wall (by a strong enough blow while it
 stands close to the wall), the original lets it through; the session refuses that tic and
 stops with a TIC REFUSED screen naming the rule; the demo is kept. Cheat codes
@@ -210,6 +219,8 @@ struct Options {
     wads: Vec<PathBuf>,
     map: u8,
     skill: u8,
+    /// `--respawn` and `--fast` (M6b ruling N1).
+    parameters: GameParameters,
     /// `--game-mode`: forced, or the declared probe (ruling U4).
     game_mode: ModeSetting,
     sessions: PathBuf,
@@ -251,6 +262,7 @@ fn parse(args: impl IntoIterator<Item = String>) -> Result<Option<Options>, Stri
         wads: Vec::new(),
         map: 1,
         skill: 2,
+        parameters: GameParameters::default(),
         game_mode: ModeSetting::Probe,
         sessions: PathBuf::from("doom-sessions"),
         preset: Preset::Vanilla,
@@ -286,12 +298,12 @@ fn parse(args: impl IntoIterator<Item = String>) -> Result<Option<Options>, Stri
                 o.skill = match value()?.as_str() {
                     "hmp" => 2,
                     "uv" => 3,
-                    "4" | "nightmare" => {
-                        return Err("--skill: nightmare (4) is not built yet".into());
-                    }
-                    v => number(&flag, v, |s| (0..=3).contains(s))?,
+                    "nightmare" => 4,
+                    v => number(&flag, v, |s| (0..=4).contains(s))?,
                 }
             }
+            "--respawn" => o.parameters.respawn = true,
+            "--fast" => o.parameters.fast = true,
             "--game-mode" => {
                 o.game_mode = match value()?.as_str() {
                     "retail" => ModeSetting::Force(SessionMode::Retail),
@@ -501,10 +513,10 @@ fn run(o: Options) -> Result<(), String> {
         files.push(std::fs::read(path).map_err(|e| format!("{}: {e}", path.display()))?);
     }
     let refs: Vec<&[u8]> = files.iter().map(Vec::as_slice).collect();
-    // the M6a session (sound across levels; rulings U2, U4, U6) in its wire 28 configuration for
-    // every skill (decision D3 of 2026-11-25: the finale and the melt on wire 28, skills 0 to 3;
-    // the wire 27 configuration, like the frozen one before it, is no longer offered)
-    let data = GameData::load_wire28_session(&refs, o.game_mode, o.map, o.skill)
+    // the M6a session (sound across levels; rulings U2, U4, U6) in its wire 29 configuration for
+    // every skill (M6b rulings N1, N4, N7: skills 0 to 4, --respawn, --fast, the original's
+    // pause; the wire 28 configuration, like the ones before it, is no longer offered)
+    let data = GameData::load_wire29_session(&refs, o.game_mode, o.map, o.skill, o.parameters)
         .map_err(|e| e.to_string())?;
     drop(files);
     if let Some(line) = data.session_mode().map(|m| mode_line(m, &o.iwad)) {
@@ -669,9 +681,9 @@ mod tests {
             "--iwad a --map 0",
             "--iwad a --map E1M10",
             // 2026-11-25: wire 28 admits skill 1, so "--iwad a --skill 1" left this list of
-            // refused arguments (accepted now: wire28_tests.rs).
-            "--iwad a --skill 4",
-            "--iwad a --skill nightmare",
+            // refused arguments (accepted now: wire28_tests.rs). 2026-11-27: wire 29 admits
+            // skill 4, so "--iwad a --skill 4" and "--iwad a --skill nightmare" left it too
+            // (accepted now: wire29_tests.rs).
             "--iwad a --gamma 5",
             "--iwad a --screenblocks 9",
             "--iwad a --aspect wide",

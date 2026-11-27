@@ -41,7 +41,10 @@
 //! [`GameData::load_session`] keeps the frozen app exactly, its "not built yet" stop at E1M8's
 //! exit included, for the frozen tests and tools. [`GameData::load_wire28_session`] runs the same
 //! app in the session's wire 28 configuration (decision D3 of 2026-11-25: the finale and the melt
-//! over wire 28, skills 0 to 3); doom-play plays only that one.
+//! over wire 28, skills 0 to 3). [`GameData::load_wire29_session`] runs it in the wire 29
+//! configuration (M6b rulings N1, N4 and N7): skills 0 to 4 with the `-respawn` and `-fast`
+//! parameters, and the Pause key sends the original's pause command ([`App::key`]); doom-play
+//! plays only that one.
 
 mod audio;
 mod finale_melt;
@@ -51,6 +54,8 @@ mod recorder;
 mod screens;
 
 pub use audio::{AudioSink, RecordingSink, SinkCall};
+/// `respawnparm` and `fastparm`, as [`GameData::load_wire29_session`] takes them.
+pub use doom_sim::GameParameters;
 #[doc(hidden)]
 pub use finale_melt::AppFault;
 pub use finale_melt::{FinaleMeltSessionTicReport, MAX_HELD_IN_MELT, MeltStepShown};
@@ -60,8 +65,8 @@ pub use frames::{
 };
 pub use gamma::GAMMA;
 pub use recorder::{
-    DEMO_HEADER_BYTES, DemoCommands, RecordError, Recorder, TIC_CAP, Timestamp, session_name,
-    wire24_admits,
+    DEMO_HEADER_BYTES, DemoCommands, PAUSE_COMMAND, RecordError, Recorder, TIC_CAP, Timestamp,
+    session_name, wire24_admits, wire29_admits,
 };
 pub use screens::{
     APP_PALETTE, CLEAR, Screen, glyph, label_band, labelled_pause_overlay, pause_overlay,
@@ -432,6 +437,8 @@ pub struct GameData {
     /// The session's configuration ([`Self::load_session`]: the frozen one;
     /// [`Self::load_finale_and_melt_session`]: the finale and the melt).
     config: Configuration,
+    /// `respawnparm` and `fastparm` ([`Self::load_wire29_session`]; the default otherwise).
+    parameters: GameParameters,
 }
 
 impl GameData {
@@ -492,6 +499,23 @@ impl GameData {
         )
     }
 
+    /// [`Self::load_wire28_session`] in the session's wire 29 configuration (M6b rulings N1, N4
+    /// and N7): every session a [`crate::session::Session::new_finale_and_melt_wire29`] with
+    /// skills 0 to 4 and `parameters` (`-respawn`, `-fast`), its demo written by the wire 29
+    /// writer with both parameter bytes ([`Recorder::new_v4`]); the Pause key sends the original's
+    /// pause command ([`App::key`]). A restart is a new process's new game (ruling N4): a fresh
+    /// session, the fast table a function of the skill and `parameters`. What doom-play plays.
+    pub fn load_wire29_session(
+        wads: &[&[u8]],
+        setting: ModeSetting,
+        map: u8,
+        skill: u8,
+        parameters: GameParameters,
+    ) -> Result<Self, LoadError> {
+        let config = Configuration::FinaleAndMeltWire29;
+        Self::load_session_with(wads, setting, map, skill, config, parameters)
+    }
+
     fn load_session_in(
         wads: &[&[u8]],
         setting: ModeSetting,
@@ -499,13 +523,26 @@ impl GameData {
         skill: u8,
         config: Configuration,
     ) -> Result<Self, LoadError> {
+        let none = GameParameters::default();
+        Self::load_session_with(wads, setting, map, skill, config, none)
+    }
+
+    fn load_session_with(
+        wads: &[&[u8]],
+        setting: ModeSetting,
+        map: u8,
+        skill: u8,
+        config: Configuration,
+        parameters: GameParameters,
+    ) -> Result<Self, LoadError> {
         let data = Arc::new(SessionData::load(wads, setting).map_err(LoadError::Session)?);
         let settings = SessionSettings {
             map,
             skill,
             screenblocks: 10,
         };
-        let first = new_session(config, data.clone(), settings).map_err(LoadError::SessionStart)?;
+        let first = new_session(config, data.clone(), settings, parameters)
+            .map_err(LoadError::SessionStart)?;
         let level = data
             .map(map)
             .map_err(|e| LoadError::SessionStart(StartError::Map(e)))?
@@ -520,6 +557,7 @@ impl GameData {
             skill,
             session: Some(data),
             config,
+            parameters,
         })
     }
 
@@ -538,11 +576,23 @@ impl GameData {
     /// demo writer in the wire 28 configuration ([`Recorder::new_v3`]), by the earlier one
     /// otherwise.
     fn recorder(&self, cap: usize) -> Recorder {
-        if self.session.is_some() && self.config == Configuration::FinaleAndMeltWire28 {
+        if self.original_pause() {
+            Recorder::new_v4(self.map, self.skill, self.parameters, cap)
+        } else if self.session.is_some() && self.config == Configuration::FinaleAndMeltWire28 {
             Recorder::new_v3(self.map, self.skill, cap)
         } else {
             Recorder::new(self.map, self.skill, cap)
         }
+    }
+
+    /// Whether the Pause key sends the original's pause command (the wire 29 configuration).
+    fn original_pause(&self) -> bool {
+        self.session.is_some() && self.config == Configuration::FinaleAndMeltWire29
+    }
+
+    /// `respawnparm` and `fastparm` of every session ([`Self::load_wire29_session`]).
+    pub fn parameters(&self) -> GameParameters {
+        self.parameters
     }
 
     /// The declared game mode, for data loaded with [`Self::load_session`].
@@ -655,6 +705,7 @@ impl GameData {
             skill,
             session: None,
             config: Configuration::RefusesFinaleAndMelt,
+            parameters: GameParameters::default(),
         })
     }
 
@@ -751,7 +802,7 @@ impl fmt::Display for Witness {
 fn start_message(e: &StartError) -> String {
     match e {
         StartError::Domain => {
-            "the session plays E1M1 to E1M9 at skill 2 or 3, screenblocks 10 or 11".into()
+            "the session plays E1M1 to E1M9 at skill 0 to 4, screenblocks 10 or 11".into()
         }
         StartError::NotYet(n) => not_yet_message(*n),
         StartError::Map(e) => format!("the start map could not be loaded: {e:?}"),
@@ -804,8 +855,8 @@ fn session_message(w: &SessionWitness) -> String {
              session stops here instead of playing on differently from the original."
                 .into()
         }
-        SessionWitness::Special => "a pause or save command (BT_SPECIAL): the original pause \
-                                    comes with M6b, saving later"
+        SessionWitness::Special => "a save command (BT_SPECIAL with BTS_SAVEGAME), or a special \
+                                    command before wire 29: saving is not built yet"
             .into(),
         SessionWitness::Display(doom_render::SessionError::Finale(e)) => format!(
             "the finale art screen cannot be drawn ({e}). The original stops here too. In \
@@ -942,6 +993,9 @@ pub struct App {
     session: Option<Box<Session>>,
     /// The finale-and-melt configuration's state (unused by the frozen app).
     melt: finale_melt::AppMelt,
+    /// `sendpause` (g_game.c:563): the Pause key went down in the wire 29 configuration; the next
+    /// command built carries the pause command ([`App::key`]).
+    sendpause: bool,
 }
 
 /// The one plain line that says a run held a session labelled layout-dependent by the detector of
@@ -984,14 +1038,14 @@ fn new_session(
     config: Configuration,
     data: Arc<SessionData>,
     settings: SessionSettings,
+    parameters: GameParameters,
 ) -> Result<Session, StartError> {
     match config {
         Configuration::RefusesFinaleAndMelt => Session::new(data, settings),
         Configuration::FinaleAndMelt => Session::new_finale_and_melt(data, settings),
         Configuration::FinaleAndMeltWire28 => Session::new_finale_and_melt_wire28(data, settings),
-        // The app does not launch wire 29 yet (M6b step 8); its parameters are not offered.
         Configuration::FinaleAndMeltWire29 => {
-            Session::new_finale_and_melt_wire29(data, settings, doom_sim::GameParameters::default())
+            Session::new_finale_and_melt_wire29(data, settings, parameters)
         }
     }
 }
@@ -1023,6 +1077,7 @@ impl App {
             layout_earlier: 0,
             session: None,
             melt: finale_melt::AppMelt::default(),
+            sendpause: false,
             data,
             cfg,
         };
@@ -1057,6 +1112,7 @@ impl App {
         self.name = String::new();
         self.claimed = false;
         self.melt = self.melt.fresh();
+        self.sendpause = false;
         self.started = host.timestamp();
         // the file is created at once (an empty demo), so an unwritable directory shows at
         // the first pause, not at the session's end
@@ -1068,7 +1124,7 @@ impl App {
             };
             self.save(host);
             // a new game: a fresh session, both random indices 0 (U6: S11's restart)
-            match new_session(self.data.config, data, settings) {
+            match new_session(self.data.config, data, settings, self.data.parameters) {
                 Ok(s) => self.session = Some(Box::new(s)),
                 Err(e) => {
                     self.session = None;
@@ -1155,9 +1211,14 @@ impl App {
         } else {
             String::new()
         };
+        let p = self.data.parameters;
+        let parameters = [(p.respawn, " -respawn"), (p.fast, " -fast")]
+            .iter()
+            .filter_map(|(on, name)| on.then_some(*name))
+            .collect::<String>();
         Some(format!(
-            "session: game mode {} ({source}), started at E1M{} skill {}, ended {at} after {} \
-             tics{finale}{how}",
+            "session: game mode {} ({source}), started at E1M{} skill {}{parameters}, ended {at} \
+             after {} tics{finale}{how}",
             mode.mode.word(),
             self.data.map,
             self.data.skill,
@@ -1325,12 +1386,22 @@ impl App {
     /// Esc or Pause resumes, `r` restarts and `q` quits; on an end screen `r` restarts and
     /// `q` or Esc quits. In the finale-and-melt configuration a key that arrives during a melt
     /// is held and handled when the melt ends ([`App::melt_in_progress`]).
+    ///
+    /// In the wire 29 configuration ([`GameData::load_wire29_session`], M6b ruling N7) the Pause
+    /// key is the original's: its key-down while playing sets `sendpause` (`G_Responder`,
+    /// g_game.c:561-565), and the next command built has its buttons replaced by
+    /// [`PAUSE_COMMAND`], its movement kept (`G_BuildTiccmd`, g_game.c:426-430), and is recorded
+    /// in the demo; the session toggles its `paused` with it (g_game.c:698-708). Esc and a focus
+    /// loss keep the app's own pause, outside the demo; while the app is paused the Pause key does
+    /// nothing, and Esc pauses the app on top of the original's pause.
     pub fn key(&mut self, code: u8, down: bool, host: &mut dyn Host) {
         if self.hold_key(code, down) {
             return;
         }
-        let pause_key = code == keys::KEY_ESCAPE || code == keys::KEY_PAUSE;
+        let original = code == keys::KEY_PAUSE && self.data.original_pause();
+        let pause_key = code == keys::KEY_ESCAPE || code == keys::KEY_PAUSE && !original;
         match self.mode {
+            Mode::Playing if down && original => self.sendpause = true,
             Mode::Playing if down && pause_key => self.pause(),
             Mode::Playing => {
                 self.layer.key(code, down);
@@ -1450,6 +1521,11 @@ impl App {
         }
         self.events = events;
         let recorded: RecordedTic = match self.input.tic() {
+            // g_game.c:426-430: the buttons replaced, the movement fields as built
+            Ok(r) if std::mem::take(&mut self.sendpause) => RecordedTic::of(TicCommand {
+                buttons: PAUSE_COMMAND,
+                ..r.built()
+            }),
             Ok(r) => r,
             Err(e) => return self.end(refuse(Witness::Input(e)), host),
         };
@@ -1458,7 +1534,7 @@ impl App {
                 Ok(c) => c,
                 Err(e) => return self.end(refuse(Witness::Record(e)), host),
             }
-        } else if wire24_admits(&recorded.built()) {
+        } else if self.recorder.admits(&recorded.built()) {
             recorded.built()
         } else {
             let witness = Witness::Record(RecordError::NotAdmitted);

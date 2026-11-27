@@ -342,7 +342,7 @@ impl EventHandler for Stage {
     }
 
     /// Logged (`--input-log`), and a reason to ask for the cursor grab again on Windows if it is
-    /// held ([`GRAB_AGAIN`]): the app resumes on Esc or Pause, never by itself.
+    /// held ([`GRAB_AGAIN`]): the app resumes on Esc, never by itself.
     fn window_restored_event(&mut self) {
         let play = &mut self.play;
         play.host

@@ -4,7 +4,8 @@
 //! command for every player before the game-state switch, g_game.c:656-670; there is no per-level
 //! header or marker). The recording is the app's existing [`crate::app::Recorder`] unchanged:
 //! started with the session's start map and skill it writes exactly that file, and it never
-//! records `BT_SPECIAL` (its command domain is wire 24's). This module adds the reading side
+//! records `BT_SPECIAL` (its command domain is wire 24's), except under wire 29, where it records
+//! the pause command 0x81 (M6b ruling N5). This module adds the reading side
 //! ([`SessionDemo::parse`], which takes the header's map as the start and does not stop at a level
 //! boundary; the single-level `DemoCommands::parse` and its files are unchanged), the replay
 //! ([`replay`], the same session layer to the demo's end or a refusal, a replayed `BT_SPECIAL`
