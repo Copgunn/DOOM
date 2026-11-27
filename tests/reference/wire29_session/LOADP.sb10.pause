@@ -1,0 +1,26 @@
+#schema,DOOM-M6B-RUNNER-v1
+#columns,T,when,skill,respawnparm,fastparm,respawnmonsters,sarg_tics,bruisershot_speed,headshot_speed,troopshot_speed
+#columns,MP,tic,call,handle
+#columns,B,tic,gamestate,leveltime,gametic,prndindex,rndindex,drawn,frame_sha256
+#columns,Z,totals
+T,start,0,0,0,0,2 2 2 2 2 2 2 2 8 8 8 2 2,983040,655360,655360
+T,demo,2,0,0,0,2 2 2 2 2 2 2 2 8 8 8 2 2,983040,655360,655360
+MP,127,pause,1
+B,127,1,126,128,14,25,1,d80b72d714481cefdbd9c4fdf6a0d5161958a6ace383543150fa52e767e90592
+B,128,1,126,129,14,25,1,d80b72d714481cefdbd9c4fdf6a0d5161958a6ace383543150fa52e767e90592
+MP,129,resume,1
+MP,135,pause,1
+B,135,1,126,136,14,36,1,74406bda6d2aaf8f6fe5db043f35e15a1c1c4a1acafaf8bb9162614149d907bd
+B,136,1,126,137,14,36,1,74406bda6d2aaf8f6fe5db043f35e15a1c1c4a1acafaf8bb9162614149d907bd
+B,137,1,126,138,14,36,1,74406bda6d2aaf8f6fe5db043f35e15a1c1c4a1acafaf8bb9162614149d907bd
+B,138,1,126,139,14,36,1,74406bda6d2aaf8f6fe5db043f35e15a1c1c4a1acafaf8bb9162614149d907bd
+B,139,1,126,140,14,36,1,74406bda6d2aaf8f6fe5db043f35e15a1c1c4a1acafaf8bb9162614149d907bd
+B,140,1,126,141,14,36,1,74406bda6d2aaf8f6fe5db043f35e15a1c1c4a1acafaf8bb9162614149d907bd
+B,141,1,126,142,14,36,1,74406bda6d2aaf8f6fe5db043f35e15a1c1c4a1acafaf8bb9162614149d907bd
+MP,142,pause,1
+B,142,0,0,143,16,102,1,ee96e76b42f0bce0bb1850888aa9c1265bba52c4dc8aefe5fbda665ab5897ff5
+B,143,0,0,144,16,103,1,ee96e76b42f0bce0bb1850888aa9c1265bba52c4dc8aefe5fbda665ab5897ff5
+B,144,0,0,145,16,104,1,ee96e76b42f0bce0bb1850888aa9c1265bba52c4dc8aefe5fbda665ab5897ff5
+B,145,0,0,146,16,105,1,ee96e76b42f0bce0bb1850888aa9c1265bba52c4dc8aefe5fbda665ab5897ff5
+MP,146,resume,1
+Z,prior_games,0,paused_tics,13,pause_frames,13,song_calls,5,paused_at_end,0

@@ -1,7 +1,7 @@
 {
  "schema": "DOOM-WIRE29-MIXER-RESULTS-v1",
  "mixer_contract_sha256": "2c46cc5a1502786251b0db4c09da8373ca7bad8fde8f64229485329105a7ac0e",
- "source": "tests/reference/m6b_sound/*.sound (the genuine M6b runner, tools/reference/m6b_goldens.py), converted by tools/reference/m5c_starts.py; the genuine mixer of tools/reference/m5c_mixer_build.py",
+ "source": "tests/reference/m6b_sound/*.sound (the genuine M6b runner, tools/reference/m6b_goldens.py), and tests/reference/wire29_session/*.sound (tools/reference/wire29_pause.py), converted by tools/reference/m5c_starts.py; the genuine mixer of tools/reference/m5c_mixer_build.py",
  "switches": {
   "configuration": "integrated",
   "schedule": "ticbuffers",
@@ -19,15 +19,15 @@
  ],
  "asan_options": "detect_leaks=0 (leak detection disabled; not LeakSanitizer coverage)",
  "tools_sha256": {
-  "tools/reference/wire29_mixer.py": "bc2cd83acbc3d81b4a10c484d6be8d64ad2ae08b0b8e85467c6e76c11a92d112",
+  "tools/reference/wire29_mixer.py": "c34f99a199a59a04cf42debb96fcf0a89a2eaa01cc91595e1c371af4a635eafd",
   "tools/reference/m5c_starts.py": "757cfcda4392220aaa3e0da111c5162fe8a2e1aa3d74692ff7c759d6f8460235",
   "tools/reference/m5c_mixer_driver.c": "8712383a896c7ff4a9be330e1457c7e321262180f215568ea211ee78b2b15af3"
  },
- "items": 8,
- "starts": 236,
- "tics": 8237,
- "buffers": 5072,
- "goldens_sha256": "f4057745f06134026724df7630b323e69fce4bdc53afc39b6ec76c77cc7f657e",
+ "items": 11,
+ "starts": 276,
+ "tics": 9008,
+ "buffers": 5547,
+ "goldens_sha256": "c78b6334f1c424d862907ca1f61a4e27471763c2b179f88db5f1096e91350bae",
  "per_item": {
   "BLOCK4": {
    "sound_sha256": "dd28a61cd23661f1195bc644d45f66898b49fee99f7c2819e0bbbb301a9aceeb",
@@ -155,6 +155,54 @@
     "buffers": 1516,
     "stream_sha256": "bea0137468b0f053a48a08a7fabfc4a8b9bf238f997d6500884b7340f071f0e1",
     "rows_sha256": "2b5a618a13dd35f560a1301f12effa8a04063af6d9392affea847c8b9ca96358"
+   }
+  },
+  "DEADSPEC": {
+   "sound_sha256": "e1c215b6281ea98b34ccafaa1f9beef6ed1cb4299708e494089dd024a92748da",
+   "starts": 5,
+   "tics": 260,
+   "starts_sha256": "9f1e28fa616e47efcaef7eb0d8c901ec083339f4bd4852bbb819361a7cd73d61",
+   "buffers": 160,
+   "stream_sha256": "9008624e55e78790fe3005cbe6a93b06477cd193f8af81625ce0504da64ca1de",
+   "golden_sha256": "2a521116d499e6f51a0e0d61e716d7b1861748c9cddd5df3e59f142437006589",
+   "model": "identical",
+   "variants": "identical",
+   "pertic": {
+    "buffers": 260,
+    "stream_sha256": "02f198a675301051dd0ffd4e5d51db138450eed453e7d2a0f41e9232e2e753ab",
+    "rows_sha256": "df4e6a5189ad57b6f58c2fbe56de20826cd9e9e2f103b95cc490ed286d8a85bd"
+   }
+  },
+  "LOADP": {
+   "sound_sha256": "8f85b3770551ff1969a517ca6d2482077dcd2d73d2d14e1a13138660426d2104",
+   "starts": 26,
+   "tics": 170,
+   "starts_sha256": "4bf740083a177e342c30d3fe04425cc8d35ebc32dfc37aeba24fbdd9bfdeb80c",
+   "buffers": 105,
+   "stream_sha256": "abc9bbb3f8de9518f81e46106d5d414be50feb098c353d9fdd0ca3cd08c8fd43",
+   "golden_sha256": "df91e92dcbd151e5c6512c37a911878a1ba4d86e956e97d9c2706b9acc6e6045",
+   "model": "identical",
+   "variants": "identical",
+   "pertic": {
+    "buffers": 170,
+    "stream_sha256": "e058ff447d17a7df9b1c8506cdf0593a7e742ed2f88913a433cecbdb4cb2992d",
+    "rows_sha256": "b436942d737ae6f9fe98ae321a9c445c7d42836b244d4f82e29245c35a246e95"
+   }
+  },
+  "TURBOP": {
+   "sound_sha256": "d5eb9eec906f02e5be21ae374d74251d3dc1852b0850eecc7cf05d6fb921dd97",
+   "starts": 9,
+   "tics": 341,
+   "starts_sha256": "039f3beb4741644649d1d7b56588522b2c7388e2e18d507d50f80852d67a697c",
+   "buffers": 210,
+   "stream_sha256": "d5cda8d0bddd94dba9a496999ee355df85c728acf2b6293e496933fb1d9cde87",
+   "golden_sha256": "547be8367d842333b07146a8830810019bcf4315e8ed8864630b27f3e0d450fe",
+   "model": "identical",
+   "variants": "identical",
+   "pertic": {
+    "buffers": 341,
+    "stream_sha256": "50c5f5b35b04ee61f7fbc8be18174a5939d21ab09d90e339e78ffe3d98ac1b8d",
+    "rows_sha256": "a103f9aa6a81d5675209374cc7f685c62fe31cc6a21eeef7680f2e99f9711d56"
    }
   }
  }

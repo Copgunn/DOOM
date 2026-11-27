@@ -4,7 +4,8 @@ docs/M6B_REFERENCE_INVESTIGATION.md section 6.1, "Left out"). Never from Rust ou
 
 The M5c mixer harness, unchanged and imported read-only, run on the committed M6b sound streams, as
 tools/reference/m6a_mixer.py runs it on the M6a ones: for every tests/reference/m6b_sound/<ITEM>.sound (the genuine
-M6b runner's sound-logic stream, tools/reference/m6b_goldens.py, frozen):
+M6b runner's sound-logic stream, tools/reference/m6b_goldens.py, frozen) and every tests/reference/wire29_session/<ITEM>.sound
+(the same runner's, for the wire 29 items DEADSPEC, LOADP and TURBOP, tools/reference/wire29_pause.py):
 
   starts   tools/reference/m5c_starts.py converts the stream to a start list (the S rows with outcome started; their
            gametic is the session's, continuous across loads, the intermission, the finale and every paused tic);
@@ -38,7 +39,7 @@ import m5c_mixer_build as mb        # noqa: E402  (read-only)
 import m5c_mixer_reference as MR    # noqa: E402  (read-only: run_sessions, run_driver, diff_rows)
 import m5c_starts                   # noqa: E402  (read-only)
 
-SOUND = ROOT / 'tests/reference/m6b_sound'
+SOUNDS = [ROOT / 'tests/reference/m6b_sound', ROOT / 'tests/reference/wire29_session']
 OUT = ROOT / 'tests/reference/wire29_mixer'
 RESULTS = ROOT / 'tests/reference/wire29_mixer_results.json'
 SCHEMA = 'DOOM-WIRE29-MIXER-RESULTS-v1'
@@ -48,7 +49,8 @@ sha = lambda b: hashlib.sha256(b if isinstance(b, bytes) else b.encode()).hexdig
 
 def generate(bins, work, jobs):
     """(files {path: text}, results doc, failures)."""
-    conv = {f.stem: (f.read_bytes(), m5c_starts.convert(f.read_text(), f.name)) for f in sorted(SOUND.glob('*.sound'))}
+    conv = {f.stem: (f.read_bytes(), m5c_starts.convert(f.read_text(), f.name))
+            for d in SOUNDS for f in sorted(d.glob('*.sound'))}
     so = sys.stdout
     res, fails = MR.run_sessions({n: t for n, (_d, t) in conv.items()}, bins, MR.VARIANTS, work, jobs, work / 'lists')
     sys.stdout = so
@@ -66,7 +68,8 @@ def generate(bins, work, jobs):
                       pertic=dict(buffers=int(pz[1]), stream_sha256=pz[2], rows_sha256=sha(prow)))
     doc = dict(schema=SCHEMA, mixer_contract_sha256=sha(mb.CONTRACT.read_bytes()),
                source='tests/reference/m6b_sound/*.sound (the genuine M6b runner, tools/reference/m6b_goldens.py), '
-                      'converted by tools/reference/m5c_starts.py; the genuine mixer of tools/reference/m5c_mixer_build.py',
+                      'and tests/reference/wire29_session/*.sound (tools/reference/wire29_pause.py), converted by '
+                      'tools/reference/m5c_starts.py; the genuine mixer of tools/reference/m5c_mixer_build.py',
                switches=dict(configuration='integrated', schedule=MR.GOLDEN_SCHEDULE, frames_per_buffer=512,
                              frames_per_tic=315, rule=mb.SCHEDULES[MR.GOLDEN_SCHEDULE], also_recorded='pertic (digests only)',
                              pause='a paused tic is an ordinary tic of the schedule (d_main.c:392-405)'),

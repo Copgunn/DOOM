@@ -24,8 +24,11 @@ the byte edits its text file lists (session tics):
   TURBOP    tests/reference/m6b_scripts/PAUSE.lmp (skill 3): a forward move of 60 (above TURBOTHRESHOLD 0x32,
             g_game.c:672) on session tic 256 inside the long pause (gametic 256: gametic & 31 == 0 and
             (gametic >> 5) & 3 == 0 = consoleplayer) and on tic 160 (gametic 160: (160 >> 5) & 3 == 1, no message):
-            the message is set while paused and HU_Ticker, which runs while paused (g_game.c:733), shows it. Also run
-            rendered at screenblocks 10 for the HUD's state (the frame stream's P and X rows).
+            the message is set while paused and HU_Ticker, which runs while paused (g_game.c:733), shows it. Its
+            rendered run also gives the HUD's state (the frame stream's P and X rows).
+Each new item is also run rendered at screenblocks 10 (strict build; its dumps must equal the plain run's), for its
+frame stream (m6a_goldens.golden_frames) and its M6b stream (the paused frames' B rows and the MP rows of the pause's
+music calls), and its sound stream (m6a_goldens.golden_sound) is kept (M6b step 7).
 
 Output (written without --check; --check regenerates and compares, writing nothing):
   tests/reference/wire29_session/<ITEM>.session          the session stream of each M6b item without one
@@ -34,6 +37,8 @@ Output (written without --check; --check regenerates and compares, writing nothi
   tests/reference/wire29_session/<new>_state.txt          DOOM-WIRE29-PAUSE-v1: the I row (as wire29_stale's), a C row
       per capture of the first level (its state digest over DSIM45), O rows (observed facts) and, for TURBOP, H rows
       (tic, message_on of the frame stream's P row) and X rows (tic, the message shown)
+  tests/reference/wire29_session/<NEW>.sound, <NEW>.sb10.frames, <NEW>.sb10.pause   the sound stream, the frame stream
+      and the M6b stream of the rendered run (as tests/reference/m6b_sound, m6b_frames and m6b_pause)
 
     wire29_pause.py [--check] [--selftest] [--only ITEM[,ITEM]] [--work DIR] [--cc CC]
 """
@@ -58,17 +63,17 @@ DIR = 'tests/reference/wire29_session'
 SCHEMA = 'DOOM-WIRE29-PAUSE-v1'
 PAUSE, SPECIAL_USE = 0x81, 0x83
 NEW = {
-    'DEADSPEC': dict(base='tests/reference/m6a_scripts/REBLATE.lmp', wads=WAD.EPISODE,
+    'DEADSPEC': dict(base='tests/reference/m6a_scripts/REBLATE.lmp', wads=WAD.EPISODE, frames=10,
                      edits=[('buttons', 170, PAUSE), ('buttons', 180, PAUSE), ('buttons', 185, SPECIAL_USE), ('cut', 260)],
                      what='special bytes on a dead player\'s tics: 0x81 pauses and unpauses (no reborn), 0x83 asks for '
                           'the reborn'),
-    'LOADP': dict(base='tests/reference/m6a_scripts/CHAIN.lmp', wads=WAD.EPISODE, address_stop=True,
+    'LOADP': dict(base='tests/reference/m6a_scripts/CHAIN.lmp', wads=WAD.EPISODE, address_stop=True, frames=10,
                   edits=[('buttons', 127, PAUSE), ('buttons', 129, PAUSE), ('buttons', 135, PAUSE),
                          ('buttons', 142, PAUSE), ('buttons', 146, PAUSE), ('cut', 170)],
                   what='PAUSEWI\'s pauses in the intermission, then 0x81 on the load tic of E1M2 (G_DoLoadLevel '
                        'clears paused, the command sets it: the level\'s tic 0 does not run, while the carried '
                        'chainsaw\'s sfx_sawup starts at the load) and 0x81 four tics later (tic 0 runs)'),
-    'TURBOP': dict(base='tests/reference/m6b_scripts/PAUSE.lmp', wads=WAD.WADSET, sb=10,
+    'TURBOP': dict(base='tests/reference/m6b_scripts/PAUSE.lmp', wads=WAD.WADSET, sb=10, frames=10,
                    edits=[('forward', 160, 60), ('forward', 256, 60)],
                    what='the turbo message during a pause: forward 60 on gametic 256 (the message) and 160 (none)'),
 }
@@ -117,7 +122,7 @@ def run(binary, name, out, wads, sb=None, extra=()):
     rd = lambda n: (out / n).read_text() if (out / n).exists() else ''
     names = ['load.txt'] + sorted(n for n in os.listdir(out / 'dumps') if n.startswith('tic_'))
     return dict(code=p.returncode, stdout=p.stdout, stderr=p.stderr, marker=' end=marker ' in p.stdout, sound=rd('sound.txt'),
-                session=rd('session.txt'), frames=rd('frames.txt'), names=names, dumps=out / 'dumps',
+                session=rd('session.txt'), frames=rd('frames.txt'), m6b=rd('m6b.txt'), names=names, dumps=out / 'dumps',
                 digests=[sha((out / 'dumps' / n).read_bytes()) for n in names])
 
 
@@ -196,11 +201,11 @@ def new_item(name, bins, work, selftest):
         if not G.clean(r) or r['digests'] != s['digests'] or any(r[k] != s[k] for k in ('sound', 'session')):
             sys.exit(f'{name} {b}: exit {r["code"]}, or its dumps or streams differ from strict: {r["stderr"][-400:]}')
     caps, f = project(s, wads, data), facts(name, s)
-    extra = []
-    if it.get('sb'):
-        rr = run(bins['strict'], name, work / 'runs' / f'{name}_sb', wads, sb=it['sb'])
-        if not G.clean(rr) or rr['digests'] != s['digests']: sys.exit(f'{name}: the rendered run differs')
-        extra = hud_rows(rr['frames'])
+    sb = it['frames']
+    rr = run(bins['strict'], name, work / 'runs' / f'{name}_sb', wads, sb=sb)
+    if not G.clean(rr) or rr['digests'] != s['digests'] or rr['sound'] != s['sound']:
+        sys.exit(f'{name}: the rendered run differs')
+    extra = hud_rows(rr['frames']) if it.get('sb') else []
     print(f'{name}: {len(caps)} captures (DSIM45); ' + ', '.join(f'{k} {v}' for k, v in f.items()))
     if selftest:
         # An extra P_Random draw planted in the runner before the middle of the level must change the capture after it.
@@ -212,7 +217,10 @@ def new_item(name, bins, work, selftest):
         if k != at + 1: sys.exit(1)
     return {ROOT / DIR / f'{name}.lmp': data, ROOT / DIR / f'{name}.txt': text(name).encode(),
             ROOT / DIR / f'{name}.session': s['session'].encode(),
-            ROOT / DIR / f'{name.lower()}_state.txt': state_text(name, s, caps, f, extra).encode()}
+            ROOT / DIR / f'{name.lower()}_state.txt': state_text(name, s, caps, f, extra).encode(),
+            ROOT / DIR / f'{name}.sound': G.G6.golden_sound(s['sound']).encode(),
+            ROOT / DIR / f'{name}.sb{sb}.frames': G.G6.golden_frames(rr['frames']).encode(),
+            ROOT / DIR / f'{name}.sb{sb}.pause': rr['m6b'].encode()}
 
 
 def main():
