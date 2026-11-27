@@ -258,6 +258,8 @@ pub(crate) struct Session {
     pub(crate) melt: Option<Box<finale_melt::MeltRun>>,
     /// A planted fault (evidence self-tests only, [`finale_melt::MeltFault`]).
     pub(crate) fault: Option<finale_melt::MeltFault>,
+    /// The pause of a pause display (M6b wire 29, [`pause`]); None otherwise.
+    pub(crate) pause: Option<pause::Pause>,
 }
 
 impl Session {
@@ -274,6 +276,7 @@ impl Session {
             config,
             melt: None,
             fault: None,
+            pause: None,
         }
     }
 }
@@ -303,6 +306,13 @@ pub enum SessionError {
     /// would stop: a missing art lump such as `HELP2` in registered mode, M6a note §1.8 and U4;
     /// or memory the C does not own). The display and the last good frame are unchanged.
     Finale(crate::f_finale::DrawRefusal),
+    /// A pause call ([`Display::set_paused`]) on a display that is not a pause display
+    /// ([`pause`]).
+    NotPause,
+    /// The pause picture: `None`, `M_PAUSE` missing or not a patch (the genuine engine stops in
+    /// `W_CacheLumpName` on the first paused frame, d_main.c:310, w_wad.c:399-409); `Some`, its
+    /// draw refused (v_video.c:244-262). Nothing changes.
+    PausePicture(Option<crate::v_video::DrawError>),
 }
 
 /// A session state that cannot be restored. The display keeps its state.
@@ -480,6 +490,9 @@ impl Display {
         s.entered = s.tic;
         s.carried = None;
         s.wi = None;
+        if let Some(p) = s.pause.as_mut() {
+            p.level_paused = 0;
+        }
         Ok(())
     }
 
@@ -554,6 +567,9 @@ impl Display {
         s.entered = s.tic;
         s.carried = Some(carried);
         s.wi = wi;
+        if let Some(p) = s.pause.as_mut() {
+            p.level_paused = 0;
+        }
         self.wipe = true;
     }
 
@@ -598,6 +614,9 @@ impl Display {
         };
         let f = wi_stuff::draw(&self.res, g, view, out.pixels_mut())
             .map_err(SessionError::Intermission)?;
+        // The pause picture over the frame (d_main.c:303-311); the carried taint is cleared below.
+        self.draw_pause(out.pixels_mut(), &mut vec![0; PIXELS])
+            .map_err(|e| SessionError::PausePicture(Some(e)))?;
         let palette_set = (s.old_gamestate != Some(GameState::Intermission)).then_some(0);
         // wipe_StartScreen before the frame (d_main.c:226): the carried `screens[0]`.
         let start = self.melt_start();
@@ -699,22 +718,29 @@ impl Display {
             return Err(SessionRestoreError::WrongConfig);
         }
         state.check()?;
-        self.restore_session_checked(state, level)
+        self.restore_session_checked(state, level, None)
     }
 
     /// The common part of [`Self::restore_session`] and [`Self::restore_session_v4`], after the
     /// state's own checks: the display keeps its configuration and has no melt in progress
-    /// afterwards. On an error the display keeps its state.
+    /// afterwards. `paused`: a pause display's `DDSP` version 5 fields (None otherwise). On an
+    /// error the display keeps its state.
     pub(crate) fn restore_session_checked(
         &mut self,
         state: SessionDisplayState,
         level: Option<(Arc<Level>, &Simulation)>,
+        paused: Option<pause::PauseFields>,
     ) -> Result<(), SessionRestoreError> {
-        let config = self
+        let own = self
             .session
             .as_deref()
-            .ok_or(SessionRestoreError::NotSession)?
-            .config;
+            .ok_or(SessionRestoreError::NotSession)?;
+        let config = own.config;
+        let pause = own.pause.zip(paused).map(|(mut p, f)| {
+            (p.paused, p.level_paused) = (f.paused, f.level_paused);
+            p
+        });
+        let level_paused = paused.map_or(0, |f| f.level_paused);
         let d = SessionRestoreError::Display;
         let cfg = render_config(state.screenblocks).map_err(|_| {
             d(DisplayRestoreError::Config(
@@ -732,6 +758,7 @@ impl Display {
             config,
             melt: None,
             fault: None,
+            pause,
         };
         match (&state.scene, level) {
             (Scene::Level(render), Some((lvl, sim))) => {
@@ -746,7 +773,9 @@ impl Display {
                 r.restore((**render).clone())
                     .map_err(|e| d(DisplayRestoreError::Render(e)))?;
                 let inputs = status_inputs(sim).map_err(|e| d(DisplayRestoreError::Observe(e)))?;
-                if let Some(e) = level_consistency(&state.status, &state.hud, render.tic, &inputs) {
+                // `ST_Ticker` ran in the paused tics too (g_game.c:731).
+                let observed = render.tic.saturating_add(level_paused);
+                if let Some(e) = level_consistency(&state.status, &state.hud, observed, &inputs) {
                     return Err(d(DisplayRestoreError::Inconsistent(e)));
                 }
                 next.renderer = r;
@@ -886,6 +915,12 @@ impl SessionDisplayState {
     ///   and nothing writes it until the next `ST_Start` (in a level
     ///   [`Display::restore_session`] checks it against the simulation).
     pub fn check(&self) -> Result<(), SessionRestoreError> {
+        self.check_paused(0)
+    }
+
+    /// [`Self::check`] with `level_paused` paused tics of a level scene (`DDSP` version 5,
+    /// [`pause`]): its tic plus them equals the session tics since `entered`.
+    pub(crate) fn check_paused(&self, level_paused: u64) -> Result<(), SessionRestoreError> {
         let d = SessionRestoreError::Display;
         if let Some(v) = value_error(&self.status, &self.hud) {
             return Err(d(DisplayRestoreError::Value(v)));
@@ -917,7 +952,7 @@ impl SessionDisplayState {
             return bad("old gamestate");
         }
         match &self.scene {
-            Scene::Level(r) if r.tic != since => bad("level tic"),
+            s @ Scene::Level(_) if !pause::level_tic_ok(s, since, level_paused) => bad("level tic"),
             Scene::Level(_) => Ok(()),
             Scene::Intermission(c) | Scene::Finale(c) => {
                 if c.screen.len() != PIXELS || c.taint.len() != PIXELS {
@@ -1157,3 +1192,6 @@ mod reader_tests;
 
 #[path = "finale_melt.rs"]
 pub mod finale_melt;
+
+#[path = "pause.rs"]
+pub mod pause;

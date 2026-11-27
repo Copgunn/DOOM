@@ -119,6 +119,9 @@ pub enum DisplayObserveError {
     /// M6a session display in [`session::SessionConfig::FinaleAndMelt`] only: a melt is in
     /// progress, during which no tic runs (d_main.c:329-344; M6a note §1.16.1).
     MeltInProgress,
+    /// M6b wire 29: a level tic observed paused on a display that is not a pause display or
+    /// whose `paused` is not set ([`Display::set_paused`]).
+    Paused,
 }
 
 /// A refused frame. The display state is unchanged.
@@ -236,9 +239,6 @@ pub struct Display {
     wipe: bool,
     contract: RandomContract,
     inputs: Option<StatusInputs>,
-    /// The last observed tic was a paused one ([`Self::observe_paused`]): the level may be
-    /// drawn before its tic 0 has run.
-    paused: bool,
     bg: Vec<u8>,
     bg_defined: Vec<bool>,
     /// The M6a session part (None for every M5b and M5c display).
@@ -328,7 +328,6 @@ impl Display {
             wipe: true,
             contract: RandomContract::SoundFreeWipeFree,
             inputs: None,
-            paused: false,
             bg: vec![0; SCREENWIDTH * BG_ROWS],
             bg_defined: vec![false; SCREENWIDTH * BG_ROWS],
             session: None,
@@ -373,7 +372,9 @@ impl Display {
         self.bg.fill(0);
         self.bg_defined.fill(false);
         if let Some(s) = &mut self.session {
+            let pause = s.pause.map(session::pause::Pause::fresh);
             **s = session::Session::fresh(s.config);
+            s.pause = pause;
         }
         Ok(())
     }
@@ -468,28 +469,30 @@ impl Display {
     /// of sound, `AM_Ticker` (nothing modelled) and `HU_Ticker` with the turbo message, if any,
     /// run as in every level tic (g_game.c:729-734); the renderer's state, which follows the
     /// simulation's tics, does not move, and the level may then be drawn before its tic 0 has
-    /// run. On an error nothing changes. The M_PAUSE picture of a paused frame (d_main.c:303-311)
-    /// is not drawn here (M6b step 7).
+    /// run. A pause display only, set paused ([`Self::set_paused`]; the frame draws `M_PAUSE`,
+    /// [`session::pause`]); otherwise [`DisplayObserveError::Paused`]. On an error nothing
+    /// changes.
     pub fn observe_paused(
         &mut self,
         sim: &Simulation,
         fed: &TicCommand,
         draws: u16,
     ) -> Result<Option<Message>, DisplayObserveError> {
-        self.observe_tic(sim, fed, draws, |_, _| {}, true, true)
+        self.observe_tic(sim, fed, draws, |_, _| {}, true, [true, true])
     }
 
-    /// [`Self::observe_paused`] without its `ST_Ticker`, for the planted fault of the session's
-    /// genuine comparison only (the altered genuine engine `pause_st`, which stops `ST_Ticker`
-    /// while paused).
+    /// [`Self::observe_paused`] with `ST_Ticker` or `HU_Ticker` left out (`tickers`: whether each
+    /// runs), for the planted faults of the session's genuine comparison only (the altered genuine
+    /// engines `pause_st` and `pause_hu`, which stop them while paused).
     #[doc(hidden)]
-    pub fn observe_paused_without_status(
+    pub fn observe_paused_with(
         &mut self,
         sim: &Simulation,
         fed: &TicCommand,
         draws: u16,
+        tickers: [bool; 2],
     ) -> Result<Option<Message>, DisplayObserveError> {
-        self.observe_tic(sim, fed, draws, |_, _| {}, true, false)
+        self.observe_tic(sim, fed, draws, |_, _| {}, true, tickers)
     }
 
     fn observe_inner(
@@ -499,7 +502,7 @@ impl Display {
         draws: u16,
         adjust: impl FnOnce(&mut StatusInputs, &mut Option<Message>),
     ) -> Result<Option<Message>, DisplayObserveError> {
-        self.observe_tic(sim, fed, draws, adjust, false, true)
+        self.observe_tic(sim, fed, draws, adjust, false, [true, true])
     }
 
     fn observe_tic(
@@ -509,10 +512,13 @@ impl Display {
         draws: u16,
         adjust: impl FnOnce(&mut StatusInputs, &mut Option<Message>),
         paused: bool,
-        status_tick: bool,
+        [status_tick, hud_tick]: [bool; 2],
     ) -> Result<Option<Message>, DisplayObserveError> {
         if self.session.as_ref().is_some_and(|s| s.melt.is_some()) {
             return Err(DisplayObserveError::MeltInProgress);
+        }
+        if paused && !self.pause_part().is_some_and(|p| p.paused) {
+            return Err(DisplayObserveError::Paused);
         }
         if self
             .session
@@ -552,21 +558,25 @@ impl Display {
                 .map_err(|_| DisplayObserveError::AttackerRemoved)?;
         }
         let mut hud = self.hud.clone();
-        if !hud.tick(message) && message.is_some() {
-            return Err(DisplayObserveError::MessageNotTaken);
+        if hud_tick {
+            if !hud.tick(message) && message.is_some() {
+                return Err(DisplayObserveError::MessageNotTaken);
+            }
+            hud.stored = stored;
         }
-        hud.stored = stored;
         if !paused {
             self.renderer
                 .observe(sim)
                 .map_err(DisplayObserveError::Render)?;
         }
-        self.paused = paused;
         self.status = status;
         self.hud = hud;
         self.inputs = Some(inputs);
         if let Some(s) = &mut self.session {
             s.tic = s.tic.saturating_add(1);
+            if let Some(p) = s.pause.as_mut().filter(|_| paused) {
+                p.level_paused = p.level_paused.saturating_add(1);
+            }
         }
         Ok(message)
     }
@@ -601,7 +611,9 @@ impl Display {
         {
             return Err(DisplayRefusal::WrongGameState);
         }
-        let Some(inputs) = self.inputs.filter(|_| sim.tic() != 0 || self.paused) else {
+        // A paused load tic is observed before the level's tic 0 runs (wire 29).
+        let observed = sim.tic() != 0 || self.pause_part().is_some_and(|p| p.level_paused > 0);
+        let Some(inputs) = self.inputs.filter(|_| observed) else {
             return Err(DisplayRefusal::BeforeFirstTic);
         };
         // wipe_StartScreen before anything of the frame is drawn (d_main.c:226; f_wipe.c:237-245):
@@ -614,6 +626,7 @@ impl Display {
         hud.erase();
         let (mut bg, mut bg_defined) = (self.bg.clone(), self.bg_defined.clone());
         let mut st = None;
+        let pause = self.pause_draw();
         let (res, gfx, font) = (&*self.res, &self.gfx, &self.font);
         let view = self.renderer.render_with(
             sim,
@@ -645,7 +658,9 @@ impl Display {
                     bg: &mut b,
                     bg_defined: &mut d,
                 };
-                Ok(hud.draw(&mut c, font)?)
+                hud.draw(&mut c, font)?;
+                // The pause picture after everything else (d_main.c:303-311).
+                Ok(session::pause::draw_pause_at(res, fg, taint, pause)?)
             },
         )?;
         let st = st.expect("drawn");
