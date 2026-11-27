@@ -571,7 +571,7 @@ impl Simulation {
                 continue;
             }
             let actor = self.actor(id).unwrap();
-            sight::actor_bounds_within(actor, self.sight_margin())?;
+            self.actor_bounds_admitted(actor)?;
             let life = actor.life.ok_or(MonsterError::Definition)?;
             if life.tics < -1 {
                 return Err(ActorError::InvalidState.into());

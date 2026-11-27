@@ -783,7 +783,7 @@ impl Simulation {
                 {
                     shot_owner = Some(id);
                 }
-            } else if !self.position_admitted(a.position(), 994) {
+            } else if !self.position_admitted(a.position(), 994) && !self.escaped_missile(a) {
                 return Err(MonsterError::Arithmetic.into());
             }
             if !crate::player_map_scale::vertical_witness(self.player_policy(), a) {

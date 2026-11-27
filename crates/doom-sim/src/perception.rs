@@ -61,7 +61,7 @@ impl Simulation {
             return Err(PerceptionError::Reference.into());
         }
         let a = self.actor(id).ok_or(PerceptionError::Reference)?;
-        crate::sight::actor_bounds_within(a, self.sight_margin())?;
+        self.actor_bounds_admitted(a)?;
         Ok(a)
     }
     /// Original read-only REJECT/BSP sight, independent of roster/RNG/presentation.

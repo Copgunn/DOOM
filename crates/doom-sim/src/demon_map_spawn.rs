@@ -172,7 +172,7 @@ impl Simulation {
                 if !level_body {
                     suffix = true;
                 }
-                if !self.position_admitted(a.position(), 994) {
+                if !self.position_admitted(a.position(), 994) && !self.escaped_missile(a) {
                     return Err(MonsterError::Arithmetic.into());
                 }
                 if life.actor_type == self.demon_body_type()
