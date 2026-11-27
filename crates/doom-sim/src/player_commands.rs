@@ -106,7 +106,19 @@ impl Simulation {
         {
             return Err(PlayerBodyError::Slot.into());
         }
-        let command = commands[slot];
+        let raw = commands[slot];
+        // Wire 29 (ruling N5 (a)): a byte with `BT_SPECIAL` but the save command is
+        // admitted. A live player's buttons are zeroed before anything reads them
+        // (p_user.c:280-281) and a dead player's are read by `P_DeathThink` alone
+        // (p_user.c:227, 258-262), so the domain below judges it without buttons.
+        let command = if p.policy.has_nightmare() && raw.buttons & crate::BT_SPECIAL != 0 {
+            if crate::save_command(raw.buttons) {
+                return Err(SimError::UnsupportedButtons);
+            }
+            TicCommand { buttons: 0, ..raw }
+        } else {
+            raw
+        };
         if command.buttons
             & !(if p.policy.has_movers() {
                 BT_ATTACK | BT_USE | BT_CHANGE | BT_WEAPONMASK

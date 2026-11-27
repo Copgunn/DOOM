@@ -16,7 +16,9 @@
 //! docs/M6B_REFERENCE_INVESTIGATION.md §1.6).
 use crate::identity::{OriginalActorType, OriginalState};
 use crate::lifecycle::{ActorAccess, LifeHost};
-use crate::{ActorId, ActorTypeId, SimError, Simulation, Skill, SpawnHeight, StaticWorld};
+use crate::{
+    ActorId, ActorTypeId, SimError, Simulation, Skill, SpawnHeight, StaticWorld, TicCommand,
+};
 use doom_types::Fixed;
 use std::ops::RangeInclusive;
 
@@ -74,6 +76,11 @@ pub(crate) enum Fault {
     Ambush,
     /// `count`: a respawned monster counted in `totalkills` (p_mobj.c:399).
     Count,
+    /// `pause_btn`: a live player's special byte not zeroed (p_user.c:280).
+    PauseBtn,
+    /// `pause_run`: `P_Ticker` runs while paused (p_tick.c:135):
+    /// [`Simulation::paused_tic`] runs the level's tic.
+    PauseRun,
 }
 #[cfg(test)]
 thread_local! {
@@ -289,6 +296,71 @@ impl Simulation {
     pub(crate) fn nightmare(&self) -> bool {
         self.original_player.as_ref().is_some_and(|p| p.nightmare)
     }
+
+    /// Wire 29 (rulings N5 (a), N6 (a)): a session tic in which the level is
+    /// paused. `G_Ticker` reads the command into `players[0].cmd` and makes the
+    /// turbo test with this tic's `gametic` (g_game.c:660-679); `P_Ticker`
+    /// returns at once (p_tick.c:135-136), so nothing of the level moves: not its
+    /// tic count, `leveltime` or `P_Random`. The session owns `paused`; this call
+    /// keeps the command (as a capture's `player.0.*`), may set the turbo message,
+    /// empties the last tic's events and sound records (pending ones wait for the
+    /// next level tic), and moves `gametic` one ahead of the tic count
+    /// (`level.gametic_lead`). Any command byte but the save command is accepted:
+    /// only the turbo test reads it. Refused, with nothing changed, under every
+    /// other wire, after an exit or a reborn request (the session runs those
+    /// first), with a command for another slot or the save command, and when the
+    /// lead would pass `i32::MAX` (the DSIM45 bound).
+    pub fn paused_tic(&mut self, commands: [TicCommand; 4]) -> Result<(), SimError> {
+        if planted(Fault::PauseRun) {
+            return self.advance(commands);
+        }
+        let lead = self.gametic_lead.ok_or(crate::PlayerBodyError::Profile)?;
+        if self.level_exit {
+            return Err(SimError::LevelExited);
+        }
+        if self.reborn_requested() {
+            return Err(SimError::PlayerReborn);
+        }
+        if commands[1..].iter().any(|c| *c != TicCommand::default()) {
+            return Err(crate::PlayerBodyError::Slot.into());
+        }
+        if save_command(commands[0].buttons) {
+            return Err(SimError::UnsupportedButtons);
+        }
+        let next = lead
+            .checked_add(1)
+            .filter(|v| *v <= i32::MAX as u64)
+            .ok_or(SimError::TicOverflow)?;
+        if crate::player_commands::turbo_message(self.gametic(), commands[0]) {
+            let pickups = self
+                .original_player
+                .as_mut()
+                .and_then(|p| p.pickups.as_mut())
+                .ok_or(crate::PlayerBodyError::Profile)?;
+            pickups.message = crate::PickupMessage::Turbo;
+        }
+        self.gametic_lead = Some(next);
+        self.commands = commands;
+        self.events.clear();
+        self.sounds.clear();
+        Ok(())
+    }
+}
+
+/// `BT_SPECIAL` (d_event.h:78): a special event, whose low two bits
+/// `BT_SPECIALMASK` name it (`BTS_PAUSE` 1, `BTS_SAVEGAME` 2; d_event.h:82-92).
+pub const BT_SPECIAL: u8 = 0x80;
+
+/// Whether `G_Ticker` toggles `paused` for a command with `buttons`
+/// (g_game.c:698-708): `BT_SPECIAL` with the low two bits 1, whatever the others.
+pub fn toggles_pause(buttons: u8) -> bool {
+    buttons & BT_SPECIAL != 0 && buttons & 3 == 1
+}
+
+/// Whether `buttons` is the save command (`BTS_SAVEGAME`, g_game.c:710-716),
+/// refused at every wire until saving exists (ruling N5 (a)).
+pub fn save_command(buttons: u8) -> bool {
+    buttons & BT_SPECIAL != 0 && buttons & 3 == 2
 }
 
 /// A state's duration in the table in force: `tics`, its defined value, halved

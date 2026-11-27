@@ -53,7 +53,7 @@ pub use player_monsters::{
     PLAYER_REAL_MAP_CONTEXT_SCHEMA, PLAYER_SPECIALS_CONTEXT_SCHEMA,
 };
 mod nightmare;
-pub use nightmare::GameParameters;
+pub use nightmare::{BT_SPECIAL, GameParameters, save_command, toggles_pause};
 mod carried_start;
 pub use carried_start::{
     CarriedField, CarriedStart, LevelExit, LevelFinish, LevelStart, LevelStartError,

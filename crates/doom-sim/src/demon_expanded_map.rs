@@ -884,6 +884,17 @@ impl Simulation {
                         commands[usize::from(PlayerSlot::One.ordinal())],
                     )
                     .map_err(|error| self.policy_error(error))?;
+                    // Wire 29, p_user.c:280-281 ("a special event has no other
+                    // buttons"): a live player's special byte is zeroed after the
+                    // move, before the weapon change, the use block and the psprites
+                    // read it, and the zeroed command is the one kept (ruling N5 (a)).
+                    let c = &mut commands[usize::from(PlayerSlot::One.ordinal())];
+                    if c.buttons & crate::BT_SPECIAL != 0
+                        && self.player_policy().has_nightmare()
+                        && !crate::nightmare::planted(crate::nightmare::Fault::PauseBtn)
+                    {
+                        c.buttons = 0;
+                    }
                 }
                 let live = host
                     .player
