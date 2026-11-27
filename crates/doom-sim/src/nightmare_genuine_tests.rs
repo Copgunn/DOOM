@@ -122,7 +122,7 @@ fn digest(s: &Snapshot) -> String {
 
 /// The demo's header byte 3 (the map) and its commands as `G_ReadDemoTiccmd`
 /// reads them, every button byte kept (the wire-29 demo reader is a later step).
-fn demo(name: &str) -> (u8, Vec<TicCommand>) {
+pub(crate) fn demo(name: &str) -> (u8, Vec<TicCommand>) {
     let lmp = std::fs::read(reference(&format!("m6b_scripts/{name}.lmp"))).expect("demo");
     let body = &lmp[13..lmp.len() - 1];
     assert_eq!((body.len() % 4, lmp.last()), (0, Some(&demo::DEMO_MARKER)));
@@ -245,10 +245,14 @@ fn run(item: &Item) -> Play {
 
 /// The planted faults of the port ([`Fault`]) and the `V` rows of the altered
 /// genuine engine each makes the port behave like.
-const FAULTS: [(Fault, &str); 3] = [
+const FAULTS: [(Fault, &str); 7] = [
     (Fault::Bit, "bit"),
     (Fault::NoDouble, "nodouble"),
     (Fault::React, "react"),
+    (Fault::FastStates, "fast_states"),
+    (Fault::FastSpeeds, "fast_speeds"),
+    (Fault::ChaseDir, "chase_dir"),
+    (Fault::ChaseCount, "chase_count"),
 ];
 
 /// The port with `fault` planted: its digests of captures 0 to `last`, without the
@@ -294,7 +298,7 @@ fn planted_faults_are_caught_at_the_variants_captures() {
             rows += 1;
         }
     }
-    assert_eq!(rows, 4);
+    assert_eq!(rows, 12);
 }
 
 /// Every item equals the genuine engine at every capture up to its end at this

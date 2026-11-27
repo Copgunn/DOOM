@@ -354,6 +354,41 @@ fn spawn_witnesses_expect_the_skills_reaction_time() {
     }
 }
 
+/// `fastparm` alone changes neither `P_GiveAmmo` (p_inter.c:95-101 names the
+/// skills) nor the spawn reaction time (p_mobj.c:503-504): AMMO4's commands on
+/// skill 3 with and without it (a map without a monster or a missile, where the
+/// fast table has nothing to act on) give captures that differ only in
+/// `actors.parameters`, at every tic of the corridor's pickups.
+#[test]
+fn fastparm_alone_changes_no_ammunition_or_reaction_time() {
+    let (map, commands) = crate::nightmare_genuine_tests::demo("AMMO4");
+    let fast = GameParameters {
+        respawn: false,
+        fast: true,
+    };
+    let mut a = level_at(map, Skill::Hard, NONE, 0);
+    let mut b = level_at(map, Skill::Hard, fast, 0);
+    let none = TicCommand::default();
+    for c in &commands {
+        let (fa, fb) = (fields(&a.snapshot()), fields(&b.snapshot()));
+        assert_eq!(
+            with(&fb, "actors.parameters", Some(&[0, 0])),
+            fa,
+            "tic {}",
+            a.tic()
+        );
+        let (ra, rb) = (
+            a.advance([*c, none, none, none]),
+            b.advance([*c, none, none, none]),
+        );
+        assert_eq!(ra, rb);
+        if ra.is_err() {
+            break;
+        }
+    }
+    assert!(a.tic() > 300, "the corridor's pickups were played");
+}
+
 /// Skill 4 is admitted under wire 29 alone; wire 28 refuses it at the load as
 /// before. Wire 29 takes the parameters at any skill and keeps them in the
 /// capture; `with_original_registry` refuses wire 29 as it refuses wires 26 to

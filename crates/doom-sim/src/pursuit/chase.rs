@@ -49,7 +49,9 @@ fn chase_body<A: ActorAccess>(h: &mut LifeHost<'_, A>, id: ActorId, work: &mut u
     if h.access.get(id).unwrap().life.unwrap().flags & 128 != 0 {
         h.access.get_mut(id).unwrap().life.as_mut().unwrap().flags &= !128;
         // p_enemy.c:719: `gameskill != sk_nightmare && !fastparm` (wire 29).
-        if h.options.skill != Skill::Nightmare && !crate::nightmare::fastparm(h.world) {
+        if (h.options.skill != Skill::Nightmare && !crate::nightmare::fastparm(h.world))
+            || crate::nightmare::planted(crate::nightmare::Fault::ChaseDir)
+        {
             new_direction(h, id);
         }
         return;

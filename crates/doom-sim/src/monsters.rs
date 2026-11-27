@@ -313,8 +313,8 @@ pub(crate) fn select<A: ActorAccess>(
     // p_enemy.c:738-742: no missile while `movecount` is left, below Nightmare
     // and without `fastparm` (wire 29).
     if states[4].0 != 0
-        && (h.options.skill == Skill::Nightmare
-            || crate::nightmare::fastparm(h.world)
+        && (((h.options.skill == Skill::Nightmare || crate::nightmare::fastparm(h.world))
+            && !crate::nightmare::planted(crate::nightmare::Fault::ChaseCount))
             || life.movecount == 0)
         && missile(h, id)
     {

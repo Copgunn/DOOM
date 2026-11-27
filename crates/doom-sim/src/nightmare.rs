@@ -54,6 +54,16 @@ pub(crate) enum Fault {
     /// `react`: the type's reaction time on Nightmare too (p_mobj.c:503), which
     /// the spawn witnesses then expect.
     React,
+    /// `fast_states`: the thirteen durations not halved (g_game.c:1424).
+    FastStates,
+    /// `fast_speeds`: the Baron's and the imp's missiles at 15 and 10 units
+    /// (g_game.c:1425, 1427).
+    FastSpeeds,
+    /// `chase_dir`: `P_NewChaseDir` after an attack on every skill (p_enemy.c:719).
+    ChaseDir,
+    /// `chase_count`: the `movecount` test before a missile on every skill
+    /// (p_enemy.c:738-739).
+    ChaseCount,
 }
 #[cfg(test)]
 thread_local! {
@@ -106,7 +116,10 @@ pub(crate) fn missile_speed(world: &StaticWorld, skill: Skill, ty: ActorTypeId, 
     let fast_type = [T::MT_BRUISERSHOT, T::MT_HEADSHOT, T::MT_TROOPSHOT]
         .iter()
         .any(|t| t.ordinal() == ty.0);
-    if fast_type && fast(world, skill) {
+    if fast_type
+        && fast(world, skill)
+        && !(planted(Fault::FastSpeeds) && ty.0 != T::MT_HEADSHOT.ordinal())
+    {
         20 << 16
     } else {
         speed
@@ -141,7 +154,7 @@ impl Simulation {
 /// A state's duration in the table in force: `tics`, its defined value, halved
 /// for the thirteen when `fast` (g_game.c:1423-1424, `tics >>= 1`).
 pub(crate) fn table_tics(state: u16, tics: i32, fast: bool) -> i32 {
-    if fast && FAST_STATES.contains(&state) {
+    if fast && FAST_STATES.contains(&state) && !planted(Fault::FastStates) {
         tics >> 1
     } else {
         tics
