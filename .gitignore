@@ -53,3 +53,5 @@ __pycache__/
 !/tests/reference/wire29_stale/*.lmp
 # The wire 29 pause items' demo lumps (tools/reference/wire29_pause.py; synthetic ticcmds, no commercial data).
 !/tests/reference/wire29_session/*.lmp
+# The wire 29 border PWAD (our own FLOOR7_2 and brdr_* lumps; tools/reference/wire29_border.py, no commercial data).
+!/tests/reference/wire29_wads/*.wad

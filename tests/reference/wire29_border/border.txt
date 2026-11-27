@@ -1,0 +1,8 @@
+#schema,DOOM-WIRE29-BORDER-v1
+#generator,tools/reference/wire29_border.py: the genuine M6b runner (strict build) with our own border lumps (tests/reference/wire29_wads/border.wad); never from Rust output
+#patch,M_PAUSE,width,62,height,18,leftoffset,0,topoffset,0
+#columns,O,item,screenblocks,first_paused_tic,picture_x,picture_y,frame_sha256
+O,PAUSE,10,72,126,4,0f1f0ac74bcfb74bd108e43426e2f4d78a74cd019b8326225f810584ed9cbbb4
+O,PAUSE,9,72,126,16,651fd0c58d28fb53ad266e787341bdc99f7ba0e52162c7737cdb418c97fbbf7c
+O,PAUSE,5,72,126,48,5c1c7f0be5c5e1877cc01bdb4026fba86a96d3baac48d9d2114cfd0b19e1e4ff
+O,PAUSE,3,72,126,64,9881d475b9c365342852271ba9fd1b19de3a1ce47feb25542d91eb05b5bd861e
