@@ -81,6 +81,9 @@ pub(crate) enum Fault {
     /// `pause_run`: `P_Ticker` runs while paused (p_tick.c:135):
     /// [`Simulation::paused_tic`] runs the level's tic.
     PauseRun,
+    /// `clamp`: a skill byte above 4 not played as 4 (g_game.c:1379-1380), in
+    /// the demo reader `crate::demo::parse_demo_episode1_v4`.
+    Clamp,
 }
 #[cfg(test)]
 thread_local! {

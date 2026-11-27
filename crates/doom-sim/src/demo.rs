@@ -12,7 +12,8 @@
 //! its high byte (`(unsigned char)byte << 8`), `buttons` as an unsigned byte.
 //! The stream ends at `DEMOMARKER` 0x80 (1488), tested on the byte where the next
 //! `forwardmove` would be (1493) before any field is read.
-use crate::TicCommand;
+use crate::nightmare::{Fault, planted};
+use crate::{GameParameters, TicCommand};
 use std::{error::Error, fmt, ops::RangeInclusive};
 
 /// g_game.c:1488 `DEMOMARKER`.
@@ -39,6 +40,29 @@ pub const EPISODE1_V2_DEMO_SKILLS: RangeInclusive<u8> = 2..=3;
 /// (wire 28, ruling U12 (iii)): 0 (`sk_baby`) to 3 (`sk_hard`); nightmare (4)
 /// stays refused.
 pub const EPISODE1_V3_DEMO_SKILLS: RangeInclusive<u8> = 0..=3;
+/// The skills [`write_demo_episode1_v4`] writes (wire 29, M6b ruling N1): 0 to 4
+/// (`sk_nightmare`). [`parse_demo_episode1_v4`] reads any skill byte and plays
+/// one above 4 as 4, as `G_InitNew` does (g_game.c:1379-1380).
+pub const EPISODE1_V4_DEMO_SKILLS: RangeInclusive<u8> = 0..=4;
+/// The offsets of the `respawnparm` and `fastparm` header bytes
+/// (g_game.c:1560-1561, 1600-1601).
+pub const DEMO_PARAMETER_INDICES: [usize; 2] = [5, 6];
+
+/// The varying part of a wire-29 Episode 1 demo header (M6b ruling N1): every
+/// other byte equals [`DEMO_HEADER`]'s.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct DemoHeaderV4 {
+    /// The map number of `E1M<map>`, in [`EPISODE1_DEMO_MAPS`].
+    pub map: u8,
+    /// The skill played: the header's byte, above 4 played as 4 (g_game.c:1379-1380).
+    pub skill: u8,
+    /// `respawnparm` and `fastparm`: each set by any nonzero byte. Every reader of
+    /// either tests it for truth (g_game.c:1416, 1421; p_enemy.c:719, 739), and the
+    /// original's own recordings may hold a value other than 1: the variables are
+    /// `M_CheckParm`'s argument number (d_main.c:809-810, m_argv.c:41-52), written
+    /// as a byte by `G_BeginRecording` (g_game.c:1560-1561).
+    pub parameters: GameParameters,
+}
 
 /// The varying part of an Episode 1 demo header (decision H10): every other
 /// byte equals [`DEMO_HEADER`]'s.
@@ -110,7 +134,8 @@ pub enum DemoError {
         map: u8,
     },
     /// [`write_demo`]: tic `tic`'s buttons carry bit 0x40 or `BT_SPECIAL` 0x80,
-    /// outside the admitted command domain.
+    /// outside the admitted command domain ([`write_demo_episode1_v4`]: bit 0x40
+    /// without `BT_SPECIAL`, or the save command, [`v4_writes_buttons`]).
     Buttons {
         /// The tic's index.
         tic: usize,
@@ -224,6 +249,50 @@ fn parse_skilled(
     ))
 }
 
+/// Read a version-110 demo for wire 29 (M6b rulings N1 and N5): the header must
+/// equal [`DEMO_HEADER`] except the map byte (in [`EPISODE1_DEMO_MAPS`] and equal
+/// to `map`), the skill byte (any value, played as at most 4, g_game.c:1379-1380)
+/// and the two parameter bytes (any value, nonzero sets, [`DemoHeaderV4`]); then
+/// player 1's ticcmds as [`parse_demo`] reads them, every button byte kept
+/// (g_game.c:1491-1503), `BT_SPECIAL` included: the session and the simulation
+/// judge the commands. The older readers are unchanged.
+pub fn parse_demo_episode1_v4(bytes: &[u8], map: u8) -> Result<(DemoHeaderV4, Demo), DemoError> {
+    if !EPISODE1_DEMO_MAPS.contains(&map) {
+        return Err(DemoError::MapArgument { map });
+    }
+    let header = bytes.get(..DEMO_HEADER.len()).ok_or(DemoError::Truncated)?;
+    if let Some((index, &value)) = header.iter().enumerate().find(|(i, b)| match *i {
+        DEMO_MAP_INDEX => !EPISODE1_DEMO_MAPS.contains(b),
+        DEMO_SKILL_INDEX | 5 | 6 => false,
+        _ => **b != DEMO_HEADER[*i],
+    }) {
+        return Err(DemoError::Header { index, value });
+    }
+    if header[DEMO_MAP_INDEX] != map {
+        return Err(DemoError::Map {
+            expected: map,
+            found: header[DEMO_MAP_INDEX],
+        });
+    }
+    let byte = header[DEMO_SKILL_INDEX];
+    let skill = if planted(Fault::Clamp) {
+        byte
+    } else {
+        byte.min(4)
+    };
+    let [respawn, fast] = DEMO_PARAMETER_INDICES.map(|i| header[i] != 0);
+    let demo = parse_commands(&bytes[DEMO_HEADER.len()..])?;
+    let parameters = GameParameters { respawn, fast };
+    Ok((
+        DemoHeaderV4 {
+            map,
+            skill,
+            parameters,
+        },
+        demo,
+    ))
+}
+
 /// Player 1's ticcmds up to the marker, as `G_ReadDemoTiccmd` reads them
 /// (g_game.c:1491–1503); nothing may follow the marker.
 fn parse_commands(mut rest: &[u8]) -> Result<Demo, DemoError> {
@@ -316,10 +385,61 @@ fn write_skilled(
     write_with(header, commands, true)
 }
 
+/// Whether [`write_demo_episode1_v4`] writes a command whose buttons are `buttons`
+/// (M6b ruling N5): every byte without bit 0x40 or with `BT_SPECIAL` 0x80, except
+/// the save command (`BT_SPECIAL` with low bits `BTS_SAVEGAME`, 2; g_game.c:712-719),
+/// which stays refused until saving exists. Bit 0x40 without `BT_SPECIAL` stays
+/// refused as audit 1 left it.
+pub fn v4_writes_buttons(buttons: u8) -> bool {
+    if buttons & 0x80 == 0 {
+        buttons & 0x40 == 0
+    } else {
+        !crate::save_command(buttons)
+    }
+}
+
+/// Write `commands` as a version-110 wire-29 demo (M6b rulings N1 and N5): as
+/// [`write_demo_episode1_v3`] with `skill` in [`EPISODE1_V4_DEMO_SKILLS`], the
+/// `respawnparm` and `fastparm` bytes 1 when set and 0 otherwise, and the buttons
+/// of [`v4_writes_buttons`]. For skills 0 to 3 without parameters and without
+/// `BT_SPECIAL` the bytes equal [`write_demo_episode1_v3`]'s.
+pub fn write_demo_episode1_v4(
+    map: u8,
+    skill: u8,
+    parameters: GameParameters,
+    commands: &[TicCommand],
+) -> Result<Vec<u8>, DemoError> {
+    if !EPISODE1_DEMO_MAPS.contains(&map) {
+        return Err(DemoError::MapArgument { map });
+    }
+    if !EPISODE1_V4_DEMO_SKILLS.contains(&skill) {
+        return Err(DemoError::Header {
+            index: DEMO_SKILL_INDEX,
+            value: skill,
+        });
+    }
+    let mut header = DEMO_HEADER;
+    header[DEMO_MAP_INDEX] = map;
+    header[DEMO_SKILL_INDEX] = skill;
+    let [r, f] = DEMO_PARAMETER_INDICES;
+    header[r] = u8::from(parameters.respawn);
+    header[f] = u8::from(parameters.fast);
+    write_with_buttons(header, commands, true, v4_writes_buttons)
+}
+
 fn write_with(
     header: [u8; 13],
     commands: &[TicCommand],
     refuse_side_marker: bool,
+) -> Result<Vec<u8>, DemoError> {
+    write_with_buttons(header, commands, refuse_side_marker, |b| b & 0xc0 == 0)
+}
+
+fn write_with_buttons(
+    header: [u8; 13],
+    commands: &[TicCommand],
+    refuse_side_marker: bool,
+    writes: fn(u8) -> bool,
 ) -> Result<Vec<u8>, DemoError> {
     let mut out = Vec::with_capacity(header.len() + 4 * commands.len() + 1);
     out.extend_from_slice(&header);
@@ -330,7 +450,7 @@ fn write_with(
         if refuse_side_marker && c.side == i8::MIN {
             return Err(DemoError::MarkerSide { tic });
         }
-        if c.buttons & 0xc0 != 0 {
+        if !writes(c.buttons) {
             return Err(DemoError::Buttons { tic });
         }
         if c.angle_turn & 0xff != 0 {
