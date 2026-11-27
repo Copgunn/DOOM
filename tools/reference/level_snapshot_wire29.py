@@ -88,6 +88,12 @@ class Projector(W27.Projector):
         respawned = self.respawned(dump)
         kept = {sv: {k: row[k] for k in SPAWNPOINT} for sv, row in respawned}
         for _sv, row in respawned: row.update(dict.fromkeys(SPAWNPOINT, 0))
+        # A paused tic runs no thinker pass (p_tick.c:135-136): a mobj P_RemoveMobj marked before it stays listed,
+        # pending, until the first unpaused tic's P_RunThinkers frees it (p_tick.c:107-112), so its RR row is
+        # checked against the RM row of the dump after the last paused one.
+        if self.prev is not None and dump.tic == self.prev.tic:
+            for e in self.entries: e.pending = False
+        if following is not None and following.tic == dump.tic: following = None
         p0 = dump.players[0]
         attacker = p0['attacker']
         if attacker == -2: p0['attacker'] = -1
