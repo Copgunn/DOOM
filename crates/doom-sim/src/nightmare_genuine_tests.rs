@@ -174,14 +174,12 @@ enum End {
     Load(SimError),
 }
 
-const UNBUILT_STATES: SimError = SimError::Wire29Pending(Wire29Pending::FastStates);
-const UNBUILT_MISSILE: SimError = SimError::Wire29Pending(Wire29Pending::FastMissile);
-const UNBUILT_CHASE: SimError = SimError::Wire29Pending(Wire29Pending::FastChase);
 const UNBUILT_RESPAWN: SimError = SimError::Wire29Pending(Wire29Pending::Respawn);
 const SPECIAL: SimError = SimError::UnsupportedButtons;
 
-/// Each item's end at this step (M6b phase 2 step 2: Nightmare's ammunition,
-/// spawn bit and reaction time built). GIB4's zombieman stands in a closed door
+/// Each item's end at this step (M6b phase 2 step 3: Nightmare's ammunition,
+/// spawn bit and reaction time, the fast table and `A_Chase`'s `fastparm` half
+/// built; the corpse respawn is step 4). GIB4's zombieman stands in a closed door
 /// sector, taller than it (`MapScale(Fit)`, at every wire). The pause command's
 /// byte is refused (`UnsupportedButtons`) until step 6.
 const EXPECTED: [(&str, End); 19] = [
@@ -189,13 +187,13 @@ const EXPECTED: [(&str, End); 19] = [
     ("BITS4", End::Level),
     ("BITS3", End::Level),
     ("CLAMP5", End::Level),
-    ("REACT4", End::Refused(29, UNBUILT_MISSILE)),
+    ("REACT4", End::Level),
     ("REACT3", End::Level),
-    ("REACT3F", End::Refused(5, UNBUILT_CHASE)),
-    ("FAST4", End::Refused(1, UNBUILT_STATES)),
+    ("REACT3F", End::Level),
+    ("FAST4", End::Level),
     ("FAST3", End::Level),
-    ("FAST3F", End::Refused(1, UNBUILT_STATES)),
-    ("RESP4", End::Refused(5, UNBUILT_STATES)),
+    ("FAST3F", End::Level),
+    ("RESP4", End::Refused(158, UNBUILT_RESPAWN)),
     ("RESP3", End::Level),
     ("RESP3R", End::Refused(192, UNBUILT_RESPAWN)),
     ("BLOCK4", End::Refused(65, UNBUILT_RESPAWN)),

@@ -47,14 +47,9 @@ fn chase_body<A: ActorAccess>(h: &mut LifeHost<'_, A>, id: ActorId, work: &mut u
         return;
     }
     if h.access.get(id).unwrap().life.unwrap().flags & 128 != 0 {
-        // Wire 29: `fastparm`'s half of p_enemy.c:719 is not built yet
-        // (temporary, M6b step 1).
-        if crate::nightmare::chase_fastparm(h.world, h.options.skill) {
-            h.refuse(crate::Wire29Pending::FastChase);
-            return;
-        }
         h.access.get_mut(id).unwrap().life.as_mut().unwrap().flags &= !128;
-        if h.options.skill != Skill::Nightmare {
+        // p_enemy.c:719: `gameskill != sk_nightmare && !fastparm` (wire 29).
+        if h.options.skill != Skill::Nightmare && !crate::nightmare::fastparm(h.world) {
             new_direction(h, id);
         }
         return;

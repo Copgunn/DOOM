@@ -1601,16 +1601,11 @@ impl<A: ActorAccess> LifeHost<'_, A> {
                 self.mark(id);
                 return;
             }
-            // Wire 29: the fast table is not built yet (temporary, M6b step 1).
-            if crate::nightmare::FAST_STATES.contains(&state.0)
-                && crate::nightmare::fast(self.world, self.options.skill)
-            {
-                self.refuse(crate::Wire29Pending::FastStates);
-                return;
-            }
             let definition = self.registry.state(state).expect("validated state");
+            // Wire 29: the duration in the fast table of the options (ruling N4 (a)).
+            let fast = crate::nightmare::fast(self.world, self.options.skill);
             let (tics, sprite, frame, action, next) = (
-                definition.tics,
+                crate::nightmare::table_tics(state.0, definition.tics, fast),
                 definition.sprite,
                 definition.frame,
                 definition.action,
