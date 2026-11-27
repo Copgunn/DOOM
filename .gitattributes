@@ -34,3 +34,6 @@
 /tests/reference/m6a2_*/* -text
 # The victory-tic stops record is compared byte for byte (tools/reference/m6a2_victory_stops.py --check).
 /tests/reference/m6a2_victory_stops/* -text
+# The M6b phase 1 WADs, scripts, demo lumps and genuine goldens are compared byte for byte (tools/reference/m6b_wad.py
+# and m6b_goldens.py --check).
+/tests/reference/m6b_*/** -text

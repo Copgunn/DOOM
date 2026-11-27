@@ -3887,7 +3887,7 @@ None is fixed. "Reproduced" means the session does what the C does and the genui
 | 3 | The background animation is never drawn, its 20 draws happen (wi_stuff.c:588, 523) | reproduced (draws compared, nothing drawn) |
 | 4 | The "you are here" pointer is hidden on a session's first ShowNextLoc frame (wi_stuff.c:749, 768, 814) | reproduced |
 | 5 | E1M9 marked after leaving it, unmarked by a death; it returns to E1M4 (g_game.c:1039-1042, 1089-1096) | reproduced |
-| 6 | Percentages above 100; "sucks" above 61:59 (wi_stuff.c:1338-1385) | reproduced by construction, not witnessed: no golden (nightmare is M6b; "sucks" needs a golden format, open) |
+| 6 | Percentages above 100; "sucks" above 61:59 (wi_stuff.c:1338-1385) | reproduced by construction. A genuine-engine golden for the percentage half exists since M6b phase 1 (draft pull request #88, [note §1.7](M6B_REFERENCE_INVESTIGATION.md#17-kills-past-100--at-the-intermission): items `RESP4` and `RESP3R` count to 200 and 150); no Rust comparison yet. "Sucks" needs a golden format, open |
 | 7 | Keys and powers dropped, the rest carried; a landing squat carries over; a player dead at the exit starts with a pistol (g_game.c:779-792, 477-480) | reproduced |
 | 8 | A carried chainsaw makes its raise sound at load (p_pspr.c:145-146) | reproduced |
 | 9 | Level sounds play on into the intermission (s_sound.c:209-211) | reproduced |

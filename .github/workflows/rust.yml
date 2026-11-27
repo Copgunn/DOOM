@@ -686,6 +686,12 @@ jobs:
       - name: Certificate audit 1 (the independent reader's differential of the genuine P_InterceptVector text against intercept_vector.rs, counts check and two planted faults)
         if: env.DOCS_ONLY != 'true'
         run: python3 tools/reference/wire27_read.py --work "$RUNNER_TEMP/wire27_read" --check --selftest
+      - name: M6b phase 1, Nightmare and the pause in the genuine engine (synthetic maps, the M6b runner contract, 19 items, planted-fault variants, table runs after an earlier game; strict, overflow and address builds; address with leak detection DISABLED, detect_leaks=0), and self-test
+        if: env.DOCS_ONLY != 'true'
+        run: |
+          python3 tools/reference/m6b_wad.py --check
+          python3 tools/reference/m6b_build.py --check
+          python3 tools/reference/m6b_goldens.py --work "$RUNNER_TEMP/m6b" --check --selftest
       - name: Documentation-only fast path
         if: env.DOCS_ONLY == 'true'
         run: echo "documentation-only change, so the genuine M6a runs were skipped"

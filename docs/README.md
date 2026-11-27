@@ -198,6 +198,9 @@ original evidence and former guide contents with exact-byte copies and digests.
   reborn, demos across levels and the wipes; what the Rust code does today; the genuine-engine prototype run across
   levels; the Rust design; decisions U1–U15 with recommendations and the owner's rulings; and the plan), with
   [observations, parts 1 and 2](validation/M6A.md) and [support](COMPATIBILITY.md#episode-1-as-one-session-m6a).
+- [M6b Nightmare skill and the original's pause investigation](M6B_REFERENCE_INVESTIGATION.md) (draft pull request #88,
+  2026-11-26: phase 1, the C facts of every Nightmare site and of the pause, the genuine-engine items that ran them,
+  what the Rust code would need, and decisions N1–N11 that await the owner; nothing is built in Rust yet).
 - Wire 27, the wrapping `P_InterceptVector`: [observations](validation/WIRE27.md),
   [support](COMPATIBILITY.md#wire-27-the-wrapping-p_interceptvector) and
   [DSIM43](STATE_FORMAT.md#dsim-v43--wire-27-the-wrapping-p_interceptvector).
