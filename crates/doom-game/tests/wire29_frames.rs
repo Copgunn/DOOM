@@ -15,7 +15,9 @@
 //!
 //! Runs: PAUSE, PAUSEWI and PAUSEFIN at screenblocks 10 and 11, PAUSE0 at 10 (the pause items);
 //! RESP4 and RESP3R at 10 (kills past 100 % on the intermission screen); BLOCK4 and GIB4 sound and
-//! mixer only (no frame golden). DEADSPEC, LOADP and TURBOP have no committed frame or sound stream.
+//! mixer only (no frame golden); DEADSPEC, LOADP (a paused load tic: the level drawn with the
+//! picture before its tic 0, under a melt) and TURBOP at 10, their streams from the same runner
+//! (`tools/reference/wire29_pause.py`, `tests/reference/wire29_session/`).
 //!
 //! Planted: `pause_hu` (the session's `PlantedFault::PauseHu`) is caught at the frame whose line its
 //! `V` row's digest names, the port's line there hashing to the variant's; the self-test of
@@ -43,7 +45,7 @@ const SHARED: [&str; 5] = [
     "tests/reference/m6b_wads/m6b_gfx.wad",
 ];
 /// (item, screen size, frames compared).
-const RUNS: [(&str, u8, bool); 11] = [
+const RUNS: [(&str, u8, bool); 14] = [
     ("PAUSE", 10, true),
     ("PAUSE", 11, true),
     ("PAUSE0", 10, true),
@@ -55,6 +57,9 @@ const RUNS: [(&str, u8, bool); 11] = [
     ("RESP3R", 10, true),
     ("BLOCK4", 10, false),
     ("GIB4", 10, false),
+    ("DEADSPEC", 10, true),
+    ("LOADP", 10, true),
+    ("TURBOP", 10, true),
 ];
 
 fn read(path: &str) -> String {
@@ -65,12 +70,12 @@ fn read(path: &str) -> String {
 
 /// The item as `m6a::data` takes it, its parameters and its commands (the demo's header and body).
 fn item(name: &str) -> (m6a::Item, GameParameters, Vec<TicCommand>) {
-    let episode = matches!(name, "PAUSEWI" | "PAUSEFIN" | "LOADP");
+    let episode = matches!(name, "PAUSEWI" | "PAUSEFIN" | "LOADP" | "DEADSPEC");
     let first = [
         "tests/reference/m6b_wads/m6b.wad",
         "tests/reference/m6a_wads/episode.wad",
     ];
-    let dir = ["m6b_scripts", "wire29_session"][usize::from(name == "LOADP")];
+    let dir = ["m6b_scripts", "wire29_session"][usize::from(new_item(name))];
     let lmp_path = format!("tests/reference/{dir}/{name}.lmp");
     let lmp = std::fs::read(m6a::root(&lmp_path)).expect("demo");
     let commands: Vec<TicCommand> = lmp[13..lmp.len() - 1]
@@ -102,10 +107,15 @@ fn item(name: &str) -> (m6a::Item, GameParameters, Vec<TicCommand>) {
     (item, parameters, commands)
 }
 
-/// The genuine sound stream's rows by tic (`m6b_sound/<item>.sound`).
-fn genuine_sound(name: &str) -> BTreeMap<i64, Vec<String>> {
+/// The wire 29 items, whose goldens are under `wire29_session/` (`tools/reference/wire29_pause.py`).
+fn new_item(name: &str) -> bool {
+    matches!(name, "DEADSPEC" | "LOADP" | "TURBOP")
+}
+
+/// The genuine sound stream's rows by tic (`m6b_sound/<item>.sound` or `wire29_session/`).
+fn genuine_sound(path: &str) -> BTreeMap<i64, Vec<String>> {
     let mut by_tic: BTreeMap<i64, Vec<String>> = BTreeMap::new();
-    for l in read(&format!("m6b_sound/{name}.sound")).lines() {
+    for l in read(path).lines() {
         if l.starts_with('#') || l.starts_with("Z,") || l.starts_with("W,") || l.starts_with("LV,")
         {
             continue;
@@ -183,11 +193,23 @@ fn read_frames(path: &str) -> BTreeMap<i64, Frame29> {
 
 fn golden(name: &str, sb: u8, frames: bool) -> Golden {
     let exists = |p: &str| m6a::root(&format!("tests/reference/{p}")).exists();
-    let pause = format!("m6b_pause/{name}.sb{sb}.txt");
-    let sound = format!("m6b_sound/{name}.sound");
+    let (pause, sound, frame_path) = if new_item(name) {
+        let d = "wire29_session";
+        (
+            format!("{d}/{name}.sb{sb}.pause"),
+            format!("{d}/{name}.sound"),
+            format!("{d}/{name}.sb{sb}.frames"),
+        )
+    } else {
+        (
+            format!("m6b_pause/{name}.sb{sb}.txt"),
+            format!("m6b_sound/{name}.sound"),
+            format!("m6b_frames/{name}.sb{sb}.frames"),
+        )
+    };
     let mixer = format!("wire29_mixer/goldens/{name}.golden");
     Golden {
-        frames: frames.then(|| read_frames(&format!("m6b_frames/{name}.sb{sb}.frames"))),
+        frames: frames.then(|| read_frames(&frame_path)),
         pause: exists(&pause).then(|| {
             let text = read(&pause);
             let mut mp: BTreeMap<i64, Vec<String>> = BTreeMap::new();
@@ -199,7 +221,7 @@ fn golden(name: &str, sb: u8, frames: bool) -> Golden {
             }
             (Rows::parse(&text), mp)
         }),
-        sound: exists(&sound).then(|| genuine_sound(name)),
+        sound: exists(&sound).then(|| genuine_sound(&sound)),
         mixer: exists(&mixer).then(|| {
             read(&mixer)
                 .lines()
@@ -314,6 +336,7 @@ fn drive(name: &str, sb: u8, frames: bool, fault: Option<PlantedFault>) -> Outco
     let mut writer = GoldenWriter::new(s.sound().sound().mixer().sound_set());
     let mut listener = s.level().sound_listener().map(|l| l.actor);
     let mut picture = Frame::new();
+    let mut owed = 0;
     for (t, &cmd) in cmds.iter().enumerate() {
         let tic = t as i64;
         let r = match s.tic_finale_and_melt(cmd) {
@@ -470,8 +493,18 @@ fn drive(name: &str, sb: u8, frames: bool, fault: Option<PlantedFault>) -> Outco
             );
         }
         if let Some(sound) = &g.sound {
-            let records: Vec<SoundRecord> = if level {
-                s.level().sound_records().to_vec()
+            // A paused load tic gives the sound the load's records (its tic 0 has not run); the
+            // level's tic 0, run later, publishes them again at the head of its own, which the
+            // session does not give twice (module documentation of doom-game's session).
+            let lv = s.level();
+            let records: Vec<SoundRecord> = if new_level && lv.tic() == 0 {
+                owed = lv.load_sound_records().len();
+                lv.load_sound_records().to_vec()
+            } else if level && lv.tic() == 1 && owed > 0 {
+                std::mem::take(&mut owed);
+                lv.sound_records()[lv.load_sound_records().len()..].to_vec()
+            } else if level {
+                lv.sound_records().to_vec()
             } else {
                 r.wi_starts
                     .iter()
@@ -588,7 +621,7 @@ fn wire_29_frames_sound_and_mixer_equal_the_genuine_engine() {
     let mut totals = Outcome::default();
     for (name, sb, frames) in RUNS {
         let o = drive(name, sb, frames, None);
-        assert_eq!(o.first, None, "{name} sb{sb}");
+        assert_eq!(o.first, None, "{name} sb{sb} {:?}", o.f_line);
         assert_eq!(o.tics, item(name).2.len(), "{name} sb{sb}: every tic");
         eprintln!(
             "{name} sb{sb}: {} tics, {} level and {} other frames, {} paused frames, {} music calls, {} sound rows, {} mixer rows ({} buffers)",
