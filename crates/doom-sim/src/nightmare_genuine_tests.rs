@@ -126,22 +126,18 @@ fn digest(s: &Snapshot) -> String {
     sha256(&body)
 }
 
-/// The demo's header byte 3 (the map) and its commands as `G_ReadDemoTiccmd`
-/// reads them, every button byte kept (the wire-29 demo reader is a later step).
+/// The demo's map and its commands, read by the wire-29 demo reader (every
+/// button byte kept, g_game.c:1491-1503).
 pub(crate) fn demo(name: &str) -> (u8, Vec<TicCommand>) {
     demo_at(&format!("m6b_scripts/{name}.lmp"))
 }
 fn demo_at(path: &str) -> (u8, Vec<TicCommand>) {
+    let (h, d) = demo_v4(path);
+    (h.map, d.commands)
+}
+fn demo_v4(path: &str) -> (demo::DemoHeaderV4, demo::Demo) {
     let lmp = std::fs::read(reference(path)).expect("demo");
-    let body = &lmp[13..lmp.len() - 1];
-    assert_eq!((body.len() % 4, lmp.last()), (0, Some(&demo::DEMO_MARKER)));
-    let commands = body.chunks_exact(4).map(|c| TicCommand {
-        forward: c[0] as i8,
-        side: c[1] as i8,
-        angle_turn: (u16::from(c[2]) << 8) as i16,
-        buttons: c[3],
-    });
-    (lmp[3], commands.collect())
+    demo::parse_demo_episode1_v4(&lmp, lmp[demo::DEMO_MAP_INDEX]).expect("a wire-29 demo")
 }
 
 pub(crate) fn level(
@@ -272,9 +268,57 @@ fn play(s: &mut Simulation, commands: &[TicCommand], expected: &[String]) -> Pla
 }
 
 fn run(item: &Item) -> Play {
-    let (map, commands) = demo(&item.name);
-    let mut s = level(&item.name, map, item.skill, item.parameters).expect("the map loads");
-    play(&mut s, &commands, &item.captures)
+    let (h, d) = demo_v4(&format!("m6b_scripts/{}.lmp", item.name));
+    let header = (SKILLS.get(usize::from(h.skill)).copied(), h.parameters);
+    assert_eq!(header, (Some(item.skill), item.parameters), "{}", item.name);
+    let mut s = level(&item.name, h.map, item.skill, item.parameters).expect("the map loads");
+    play(&mut s, &d.commands, &item.captures)
+}
+
+const SKILLS: [Skill; 5] = [
+    Skill::Baby,
+    Skill::Easy,
+    Skill::Medium,
+    Skill::Hard,
+    Skill::Nightmare,
+];
+
+/// The demo reader's clamp (g_game.c:1379-1380) against CLAMP5, whose skill byte
+/// is 5: read as 4, its play equals the genuine engine at every capture (the
+/// golden's I row plays it at 4, and its dump set is BITS4's, m6b_genuine.txt).
+/// With the planted fault `clamp` (the variant of `m6b_goldens.py`, `V` row
+/// capture 0) the reader gives 5, which no wire admits: the port starts no level,
+/// so it differs at capture 0, where the variant first differs.
+#[test]
+fn the_demo_readers_clamp_is_caught_at_the_clamp_variants_capture() {
+    let (items, variants) = golden();
+    let item = items.iter().find(|i| i.name == "CLAMP5").expect("CLAMP5");
+    let bits4 = items.iter().find(|i| i.name == "BITS4").expect("BITS4");
+    assert_eq!(item.captures, bits4.captures, "CLAMP5 plays as BITS4");
+    let p = run(item);
+    assert_eq!((p.difference, p.refusal.is_none()), (None, true));
+    assert_eq!(p.digests.len(), item.captures.len());
+    let v = variants
+        .iter()
+        .find(|v| v.0 == "clamp")
+        .expect("the clamp row");
+    assert_eq!(
+        (v.1.as_str(), v.2),
+        ("CLAMP5", None),
+        "refused by the encoder"
+    );
+    let raw = std::fs::read_to_string(reference("m6b_genuine.txt")).expect("golden");
+    assert!(
+        raw.lines()
+            .any(|l| l.starts_with("V,clamp,CLAMP5,capture,0,"))
+    );
+    let skill =
+        crate::nightmare::with_fault(Fault::Clamp, || demo_v4("m6b_scripts/CLAMP5.lmp").0.skill);
+    assert_eq!(
+        (skill, SKILLS.get(usize::from(skill))),
+        (5, None),
+        "no level starts"
+    );
 }
 
 /// One item of `tools/reference/wire29_stale.py` at its I row's skill and

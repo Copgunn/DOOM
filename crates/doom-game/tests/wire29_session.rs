@@ -26,6 +26,7 @@
 //! `V` row digest `-`). `pause_hu` differs in frames only (step 7).
 mod m6a;
 
+use doom_game::session::demo::SessionDemo;
 use doom_game::session::finale_melt::{Configuration, FinaleMeltTicKind as Kind};
 use doom_game::session::state::DsesError;
 use doom_game::session::state_v3::SessionStateV3;
@@ -88,16 +89,8 @@ fn item(name: &str) -> (m6a::Item, GameParameters, Vec<TicCommand>) {
         "tests/reference/m6b_wads/m6b.wad"
     };
     let lmp = std::fs::read(m6a::root(&lmp_path(name))).expect("demo");
-    let body = &lmp[13..lmp.len() - 1];
-    let commands = body
-        .chunks_exact(4)
-        .map(|c| TicCommand {
-            forward: c[0] as i8,
-            side: c[1] as i8,
-            angle_turn: (u16::from(c[2]) << 8) as i16,
-            buttons: c[3],
-        })
-        .collect::<Vec<_>>();
+    let (demo, parameters) = SessionDemo::parse_v4(&lmp).expect("the wire 29 demo reader");
+    let commands = demo.commands;
     let item = m6a::Item {
         name: name.into(),
         mode: "registered".into(),
@@ -106,14 +99,10 @@ fn item(name: &str) -> (m6a::Item, GameParameters, Vec<TicCommand>) {
             .map(String::from)
             .collect(),
         lmp: lmp_path(name),
-        map: lmp[3],
-        skill: lmp[1].min(4),
+        map: demo.map,
+        skill: demo.skill,
         end: "marker".into(),
         session_tics: commands.len(),
-    };
-    let parameters = GameParameters {
-        respawn: lmp[5] == 1,
-        fast: lmp[6] == 1,
     };
     (item, parameters, commands)
 }

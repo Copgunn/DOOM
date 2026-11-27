@@ -26,6 +26,7 @@ mod m6a;
 #[path = "../../doom-sound/tests/common/rows.rs"]
 mod rows;
 
+use doom_game::session::demo::SessionDemo;
 use doom_game::session::finale_melt::FinaleMeltTicKind as Kind;
 use doom_game::session::{PlantedFault, Session, SessionSettings};
 use doom_render::{Frame, GameState, SCREENHEIGHT, SCREENWIDTH};
@@ -78,15 +79,8 @@ fn item(name: &str) -> (m6a::Item, GameParameters, Vec<TicCommand>) {
     let dir = ["m6b_scripts", "wire29_session"][usize::from(new_item(name))];
     let lmp_path = format!("tests/reference/{dir}/{name}.lmp");
     let lmp = std::fs::read(m6a::root(&lmp_path)).expect("demo");
-    let commands: Vec<TicCommand> = lmp[13..lmp.len() - 1]
-        .chunks_exact(4)
-        .map(|c| TicCommand {
-            forward: c[0] as i8,
-            side: c[1] as i8,
-            angle_turn: (u16::from(c[2]) << 8) as i16,
-            buttons: c[3],
-        })
-        .collect();
+    let (demo, parameters) = SessionDemo::parse_v4(&lmp).expect("the wire 29 demo reader");
+    let commands = demo.commands;
     let item = m6a::Item {
         name: name.into(),
         mode: "registered".into(),
@@ -95,14 +89,10 @@ fn item(name: &str) -> (m6a::Item, GameParameters, Vec<TicCommand>) {
             .map(String::from)
             .collect(),
         lmp: lmp_path,
-        map: lmp[3],
-        skill: lmp[1].min(4),
+        map: demo.map,
+        skill: demo.skill,
         end: "marker".into(),
         session_tics: commands.len(),
-    };
-    let parameters = GameParameters {
-        respawn: lmp[5] == 1,
-        fast: lmp[6] == 1,
     };
     (item, parameters, commands)
 }

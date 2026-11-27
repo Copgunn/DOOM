@@ -685,6 +685,151 @@ mod tests {
         assert!(write_demo(&[cmd(0, -128, 0, 0)]).is_ok());
     }
 
+    /// The wire-29 reader and writer (M6b rulings N1, N5): skills 0 to 4 and the
+    /// parameter bytes written and read back; a skill byte above 4 played as 4
+    /// (g_game.c:1379-1380); a nonzero parameter byte other than 1 read as set
+    /// (d_main.c:809-810); every `BT_SPECIAL` byte but the save command written;
+    /// the older readers and writers keep their refusals.
+    #[test]
+    fn episode1_v4_skills_parameters_and_special_bytes() {
+        let specials = [0x81, 0x85, 0xfd, 0x80, 0x83, 0xc1];
+        let commands: Vec<TicCommand> = specials.iter().map(|&b| cmd(25, -3, 0x0100, b)).collect();
+        for skill in EPISODE1_V4_DEMO_SKILLS {
+            for (respawn, fast) in [(false, false), (true, false), (false, true), (true, true)] {
+                let p = GameParameters { respawn, fast };
+                let bytes = write_demo_episode1_v4(7, skill, p, &commands).unwrap();
+                assert_eq!(
+                    bytes[1..=6],
+                    [skill, 1, 7, 0, u8::from(respawn), u8::from(fast)]
+                );
+                let (h, demo) = parse_demo_episode1_v4(&bytes, 7).unwrap();
+                assert_eq!(
+                    (h, demo.commands.as_slice()),
+                    (
+                        DemoHeaderV4 {
+                            map: 7,
+                            skill,
+                            parameters: p
+                        },
+                        &commands[..]
+                    )
+                );
+                let older = parse_demo_episode1_v3(&bytes, 7);
+                let refused_at = if skill == 4 {
+                    1
+                } else if respawn {
+                    5
+                } else if fast {
+                    6
+                } else {
+                    0
+                };
+                if refused_at > 0 {
+                    assert_eq!(
+                        older,
+                        Err(DemoError::Header {
+                            index: refused_at,
+                            value: bytes[refused_at]
+                        })
+                    );
+                } else {
+                    assert_eq!(
+                        older.unwrap().1.commands,
+                        commands,
+                        "the older reader keeps every byte"
+                    );
+                }
+            }
+        }
+        let plain =
+            write_demo_episode1_v4(2, 3, GameParameters::default(), &[cmd(1, 2, 0, 1)]).unwrap();
+        assert_eq!(
+            plain,
+            write_demo_episode1_v3(2, 3, &[cmd(1, 2, 0, 1)]).unwrap()
+        );
+        for (byte, played) in [(5, 4), (128, 4), (255, 4), (4, 4), (0, 0)] {
+            let mut b = plain.clone();
+            b[DEMO_SKILL_INDEX] = byte;
+            assert_eq!(
+                parse_demo_episode1_v4(&b, 2).unwrap().0.skill,
+                played,
+                "{byte}"
+            );
+        }
+        let mut b = plain.clone();
+        (b[5], b[6]) = (3, 255);
+        let set = GameParameters {
+            respawn: true,
+            fast: true,
+        };
+        assert_eq!(parse_demo_episode1_v4(&b, 2).unwrap().0.parameters, set);
+        for (index, value) in [
+            (0, 109),
+            (2, 2),
+            (4, 1),
+            (7, 1),
+            (8, 1),
+            (9, 0),
+            (10, 1),
+            (3, 10),
+        ] {
+            let mut b = plain.clone();
+            b[index] = value;
+            assert_eq!(
+                parse_demo_episode1_v4(&b, 2),
+                Err(DemoError::Header { index, value })
+            );
+        }
+        assert_eq!(
+            parse_demo_episode1_v4(&plain, 3),
+            Err(DemoError::Map {
+                expected: 3,
+                found: 2
+            })
+        );
+        assert_eq!(
+            parse_demo_episode1_v4(&plain[..12], 2),
+            Err(DemoError::Truncated)
+        );
+        let none = GameParameters::default();
+        assert_eq!(
+            write_demo_episode1_v4(2, 5, none, &[]),
+            Err(DemoError::Header { index: 1, value: 5 })
+        );
+        assert_eq!(
+            write_demo_episode1_v4(0, 4, none, &[]),
+            Err(DemoError::MapArgument { map: 0 })
+        );
+        for refused in [0x82, 0x86, 0xfe, 0x40, 0x41, 0x7f] {
+            assert!(!v4_writes_buttons(refused), "{refused:#x}");
+            assert_eq!(
+                write_demo_episode1_v4(2, 4, none, &[cmd(0, 0, 0, refused)]),
+                Err(DemoError::Buttons { tic: 0 })
+            );
+        }
+        assert_eq!(
+            write_demo_episode1_v4(2, 4, none, &[cmd(0, -128, 0, 0)]),
+            Err(DemoError::MarkerSide { tic: 0 })
+        );
+        for older in [
+            write_demo_episode1_v3(2, 3, &commands[..1]),
+            write_demo_episode1_v2(2, 3, &commands[..1]),
+        ] {
+            assert_eq!(
+                older,
+                Err(DemoError::Buttons { tic: 0 }),
+                "the older writers refuse 0x81"
+            );
+        }
+        // the reader keeps the save command; the session refuses it at its tic
+        let mut save = plain.clone();
+        save[16] = 0x82;
+        assert_eq!(
+            parse_demo_episode1_v4(&save, 2).unwrap().1.commands[0].buttons,
+            0x82
+        );
+    }
+
     #[test]
     fn episode1_v2_header_admits_skill_2_and_3_and_every_map() {
         let commands = vec![cmd(25, -3, 0x0100, 1), cmd(0, 0, 0, 0)];
