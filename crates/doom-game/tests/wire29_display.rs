@@ -165,9 +165,9 @@ fn a_paused_tic_observed_directly_a_new_game_and_the_lowered_picture() {
     let (fresh, _, _) = start("PAUSE");
     let mut d = fresh.display().clone();
     d.set_paused(true).expect("M_PAUSE is in the WAD");
-    assert_eq!(d.pause_fields().unwrap().paused, true);
+    assert!(d.pause_fields().unwrap().paused);
     d.begin_level(fresh.level()).expect("a new game at tic 0");
-    assert_eq!(d.pause_fields().unwrap().paused, false);
+    assert!(!d.pause_fields().unwrap().paused);
 }
 
 /// `SessionDisplayStateV5::check` (the rules above): `paused` after a level tic with no paused

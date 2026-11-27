@@ -90,7 +90,7 @@ fn write_fuzz_seeds() {
             Session::new_finale_and_melt_wire29(m6a::data(&item, None), settings, parameters)
                 .expect("starts");
         let mut unseen = Frame::new();
-        let mut save = |s: &Session, tag: String| {
+        let save = |s: &Session, tag: String| {
             let state = s.save_v4().expect("saveable");
             put(&dir, "wire29_dses4", &tag, &state.encode());
             put(&dir, "wire29_dsim45", &tag, &state.base.level);
