@@ -1,0 +1,2621 @@
+{
+ "schema": "DOOM-M6B-RESULTS-v1",
+ "revision": "a77dfb96cb91780ca334d0d4cfd86957558007e0",
+ "claim": "every value is the genuine engine's strict build; the overflow and address builds gave identical dumps and streams",
+ "builds": {
+  "strict": [
+   "-std=gnu89",
+   "-O0",
+   "-fwrapv",
+   "-fno-strict-aliasing",
+   "-ffp-contract=off",
+   "-fexcess-precision=standard",
+   "-fsigned-char",
+   "-DNORMALUNIX",
+   "-DLINUX"
+  ],
+  "overflow": [
+   "-std=gnu89",
+   "-O0",
+   "-fno-strict-aliasing",
+   "-ffp-contract=off",
+   "-fexcess-precision=standard",
+   "-fsigned-char",
+   "-DNORMALUNIX",
+   "-DLINUX",
+   "-fno-wrapv",
+   "-fsanitize=signed-integer-overflow,integer-divide-by-zero,float-cast-overflow",
+   "-fno-sanitize-recover=all"
+  ],
+  "address": [
+   "-std=gnu89",
+   "-O0",
+   "-fno-strict-aliasing",
+   "-ffp-contract=off",
+   "-fexcess-precision=standard",
+   "-fsigned-char",
+   "-DNORMALUNIX",
+   "-DLINUX",
+   "-fno-wrapv",
+   "-fsanitize=address,undefined",
+   "-fno-sanitize-recover=all",
+   "-fno-sanitize=alignment"
+  ]
+ },
+ "asan_options": "detect_leaks=0 (leak detection disabled in the address build; not LeakSanitizer coverage)",
+ "variants": {
+  "bit": {
+   "what": "p_mobj.c:746: Nightmare's spawn bit computed like the other skills' (8, the ambush flag)",
+   "replacements": {
+    "p_mobj.c": [
+     {
+      "original": "\tbit = 4;\n",
+      "replacement": "\tbit = 1<<(gameskill-1);\n"
+     }
+    ]
+   },
+   "items": [
+    "BITS4"
+   ]
+  },
+  "nodouble": {
+   "what": "p_inter.c:96: Nightmare no longer doubles P_GiveAmmo",
+   "replacements": {
+    "p_inter.c": [
+     {
+      "original": "\t|| gameskill == sk_nightmare)\n",
+      "replacement": "\t|| gameskill == sk_nightmare + 1)\n"
+     }
+    ]
+   },
+   "items": [
+    "AMMO4"
+   ]
+  },
+  "react": {
+   "what": "p_mobj.c:503: reactiontime set from the table on Nightmare too",
+   "replacements": {
+    "p_mobj.c": [
+     {
+      "original": "    if (gameskill != sk_nightmare)\n",
+      "replacement": "    if (gameskill != sk_nightmare + 1)\n"
+     }
+    ]
+   },
+   "items": [
+    "REACT4",
+    "RESP4"
+   ]
+  },
+  "chase_dir": {
+   "what": "p_enemy.c:719: P_NewChaseDir after an attack on every skill",
+   "replacements": {
+    "p_enemy.c": [
+     {
+      "original": "\tif (gameskill != sk_nightmare && !fastparm)\n",
+      "replacement": "\tif (1)\n"
+     }
+    ]
+   },
+   "items": [
+    "REACT4",
+    "REACT3F"
+   ]
+  },
+  "chase_count": {
+   "what": "p_enemy.c:738-739: the movecount test before a missile on every skill",
+   "replacements": {
+    "p_enemy.c": [
+     {
+      "original": "\tif (gameskill < sk_nightmare\n",
+      "replacement": "\tif (gameskill <= sk_nightmare\n"
+     },
+     {
+      "original": "\t    && !fastparm && actor->movecount)\n",
+      "replacement": "\t    && actor->movecount)\n"
+     }
+    ]
+   },
+   "items": [
+    "REACT4",
+    "REACT3F"
+   ]
+  },
+  "fast_states": {
+   "what": "g_game.c:1424: the thirteen state durations not halved",
+   "replacements": {
+    "g_game.c": [
+     {
+      "original": "\t    states[i].tics >>= 1; \n",
+      "replacement": "\t    ; \n"
+     }
+    ]
+   },
+   "items": [
+    "FAST4",
+    "FAST3F"
+   ]
+  },
+  "fast_speeds": {
+   "what": "g_game.c:1425, 1427: the Baron and imp missile speeds not raised",
+   "replacements": {
+    "g_game.c": [
+     {
+      "original": "\tmobjinfo[MT_BRUISERSHOT].speed = 20*FRACUNIT; \n",
+      "replacement": "\tmobjinfo[MT_BRUISERSHOT].speed = 15*FRACUNIT; \n"
+     },
+     {
+      "original": "\tmobjinfo[MT_TROOPSHOT].speed = 20*FRACUNIT; \n",
+      "replacement": "\tmobjinfo[MT_TROOPSHOT].speed = 10*FRACUNIT; \n"
+     }
+    ]
+   },
+   "items": [
+    "FAST4",
+    "FAST3F"
+   ]
+  },
+  "respawn_flag": {
+   "what": "g_game.c:1416: respawnmonsters never set",
+   "replacements": {
+    "g_game.c": [
+     {
+      "original": "    if (skill == sk_nightmare || respawnparm )\n",
+      "replacement": "    if (0)\n"
+     }
+    ]
+   },
+   "items": [
+    "RESP4",
+    "RESP3R"
+   ]
+  },
+  "timer": {
+   "what": "p_mobj.c:461: the corpse timer one second longer",
+   "replacements": {
+    "p_mobj.c": [
+     {
+      "original": "\tif (mobj->movecount < 12*35)\n",
+      "replacement": "\tif (mobj->movecount < 13*35)\n"
+     }
+    ]
+   },
+   "items": [
+    "RESP4",
+    "GIB4"
+   ]
+  },
+  "clock": {
+   "what": "p_mobj.c:464: the gate every 64 tics",
+   "replacements": {
+    "p_mobj.c": [
+     {
+      "original": "\tif ( leveltime&31 )\n",
+      "replacement": "\tif ( leveltime&63 )\n"
+     }
+    ]
+   },
+   "items": [
+    "RESP4",
+    "BLOCK4"
+   ]
+  },
+  "gate": {
+   "what": "p_mobj.c:467: the gate passes for 0 to 3 only",
+   "replacements": {
+    "p_mobj.c": [
+     {
+      "original": "\tif (P_Random () > 4)\n",
+      "replacement": "\tif (P_Random () > 3)\n"
+     }
+    ]
+   },
+   "items": [
+    "RESP4"
+   ]
+  },
+  "nocheck": {
+   "what": "p_mobj.c:370: no P_CheckPosition at the spawn point",
+   "replacements": {
+    "p_mobj.c": [
+     {
+      "original": "    if (!P_CheckPosition (mobj, x, y) ) \n",
+      "replacement": "    if (0) \n"
+     }
+    ]
+   },
+   "items": [
+    "BLOCK4"
+   ]
+  },
+  "fog_spot": {
+   "what": "p_mobj.c:375-376: the first fog at the spawn point instead of the corpse",
+   "replacements": {
+    "p_mobj.c": [
+     {
+      "original": "    mo = P_SpawnMobj (mobj->x,\n\t\t      mobj->y,\n",
+      "replacement": "    mo = P_SpawnMobj (x,\n\t\t      y,\n"
+     }
+    ]
+   },
+   "items": [
+    "RESP4"
+   ]
+  },
+  "react18": {
+   "what": "p_mobj.c:405: the respawned monster's reactiontime left as spawned",
+   "replacements": {
+    "p_mobj.c": [
+     {
+      "original": "    mo->reactiontime = 18;\n",
+      "replacement": "    ;\n"
+     }
+    ]
+   },
+   "items": [
+    "RESP4",
+    "RESP3R",
+    "GIB4"
+   ]
+  },
+  "ambush": {
+   "what": "p_mobj.c:403: the ambush flag not inherited",
+   "replacements": {
+    "p_mobj.c": [
+     {
+      "original": "\tmo->flags |= MF_AMBUSH;\n",
+      "replacement": "\t;\n"
+     }
+    ]
+   },
+   "items": [
+    "RESP4",
+    "GIB4"
+   ]
+  },
+  "count": {
+   "what": "p_mobj.c:399: a respawned monster counted in totalkills",
+   "replacements": {
+    "p_mobj.c": [
+     {
+      "original": "    mo->spawnpoint = mobj->spawnpoint;\t\n",
+      "replacement": "    mo->spawnpoint = mobj->spawnpoint; totalkills++;\t\n"
+     }
+    ]
+   },
+   "items": [
+    "RESP4",
+    "RESP3R"
+   ]
+  },
+  "pause_run": {
+   "what": "p_tick.c:135: P_Ticker runs while paused",
+   "replacements": {
+    "p_tick.c": [
+     {
+      "original": "    if (paused)\n",
+      "replacement": "    if (0)\n"
+     }
+    ]
+   },
+   "items": [
+    "PAUSE",
+    "PAUSE0"
+   ]
+  },
+  "pause_st": {
+   "what": "g_game.c:731: ST_Ticker (and its M_Random draw) stopped while paused",
+   "replacements": {
+    "g_game.c": [
+     {
+      "original": "\tST_Ticker (); \n",
+      "replacement": "\tif (!paused) ST_Ticker (); \n"
+     }
+    ]
+   },
+   "items": [
+    "PAUSE"
+   ]
+  },
+  "pause_hu": {
+   "what": "g_game.c:733: HU_Ticker (the message timer) stopped while paused",
+   "replacements": {
+    "g_game.c": [
+     {
+      "original": "\tHU_Ticker ();            \n",
+      "replacement": "\tif (!paused) HU_Ticker ();            \n"
+     }
+    ]
+   },
+   "items": [
+    "PAUSE"
+   ]
+  },
+  "pause_mask": {
+   "what": "g_game.c:704: only the byte 0x81 pauses",
+   "replacements": {
+    "g_game.c": [
+     {
+      "original": "\t\tswitch (players[i].cmd.buttons & BT_SPECIALMASK) \n",
+      "replacement": "\t\tswitch (players[i].cmd.buttons == (BT_SPECIAL|BTS_PAUSE) ? BTS_PAUSE : 0) \n"
+     }
+    ]
+   },
+   "items": [
+    "PAUSE"
+   ]
+  },
+  "pause_btn": {
+   "what": "p_user.c:280: a special byte read as buttons when the level runs",
+   "replacements": {
+    "p_user.c": [
+     {
+      "original": "    if (cmd->buttons & BT_SPECIAL)\n",
+      "replacement": "    if (0)\n"
+     }
+    ]
+   },
+   "items": [
+    "PAUSE"
+   ]
+  },
+  "pause_keep": {
+   "what": "g_game.c:494: a level load keeps paused",
+   "replacements": {
+    "g_game.c": [
+     {
+      "original": "    sendpause = sendsave = paused = false; \n",
+      "replacement": "    sendpause = sendsave = false; \n"
+     }
+    ]
+   },
+   "items": [
+    "PAUSEWI"
+   ]
+  },
+  "pause_wi": {
+   "what": "wi_stuff.c:1480: the intermission does not read a special byte as a fire press",
+   "replacements": {
+    "wi_stuff.c": [
+     {
+      "original": "\t    if (player->cmd.buttons & BT_ATTACK)\n",
+      "replacement": "\t    if ((player->cmd.buttons & BT_ATTACK) && !(player->cmd.buttons & BT_SPECIAL))\n"
+     }
+    ]
+   },
+   "items": [
+    "PAUSEWI"
+   ]
+  }
+ },
+ "variant_first_differences": [
+  {
+   "variant": "bit",
+   "item": "BITS4",
+   "stream": "capture",
+   "place": 0
+  },
+  {
+   "variant": "nodouble",
+   "item": "AMMO4",
+   "stream": "capture",
+   "place": 10
+  },
+  {
+   "variant": "react",
+   "item": "REACT4",
+   "stream": "capture",
+   "place": 0
+  },
+  {
+   "variant": "react",
+   "item": "RESP4",
+   "stream": "capture",
+   "place": 0
+  },
+  {
+   "variant": "chase_dir",
+   "item": "REACT4",
+   "stream": "capture",
+   "place": 32
+  },
+  {
+   "variant": "chase_dir",
+   "item": "REACT3F",
+   "stream": "capture",
+   "place": 60
+  },
+  {
+   "variant": "chase_count",
+   "item": "REACT4",
+   "stream": "capture",
+   "place": 6
+  },
+  {
+   "variant": "chase_count",
+   "item": "REACT3F",
+   "stream": "capture",
+   "place": 30
+  },
+  {
+   "variant": "fast_states",
+   "item": "FAST4",
+   "stream": "capture",
+   "place": 2
+  },
+  {
+   "variant": "fast_states",
+   "item": "FAST3F",
+   "stream": "capture",
+   "place": 2
+  },
+  {
+   "variant": "fast_speeds",
+   "item": "FAST4",
+   "stream": "capture",
+   "place": 25
+  },
+  {
+   "variant": "fast_speeds",
+   "item": "FAST3F",
+   "stream": "capture",
+   "place": 67
+  },
+  {
+   "variant": "respawn_flag",
+   "item": "RESP4",
+   "stream": "capture",
+   "place": 159
+  },
+  {
+   "variant": "respawn_flag",
+   "item": "RESP3R",
+   "stream": "capture",
+   "place": 193
+  },
+  {
+   "variant": "timer",
+   "item": "RESP4",
+   "stream": "capture",
+   "place": 577
+  },
+  {
+   "variant": "timer",
+   "item": "GIB4",
+   "stream": "capture",
+   "place": 545
+  },
+  {
+   "variant": "clock",
+   "item": "RESP4",
+   "stream": "capture",
+   "place": 609
+  },
+  {
+   "variant": "clock",
+   "item": "BLOCK4",
+   "stream": "capture",
+   "place": 545
+  },
+  {
+   "variant": "gate",
+   "item": "RESP4",
+   "stream": "capture",
+   "place": 737
+  },
+  {
+   "variant": "nocheck",
+   "item": "BLOCK4",
+   "stream": "capture",
+   "place": 513
+  },
+  {
+   "variant": "fog_spot",
+   "item": "RESP4",
+   "stream": "capture",
+   "place": 737
+  },
+  {
+   "variant": "react18",
+   "item": "RESP4",
+   "stream": "capture",
+   "place": 737
+  },
+  {
+   "variant": "react18",
+   "item": "RESP3R",
+   "stream": "capture",
+   "place": 833
+  },
+  {
+   "variant": "react18",
+   "item": "GIB4",
+   "stream": "capture",
+   "place": 1025
+  },
+  {
+   "variant": "ambush",
+   "item": "RESP4",
+   "stream": "capture",
+   "place": 897
+  },
+  {
+   "variant": "ambush",
+   "item": "GIB4",
+   "stream": "capture",
+   "place": 1025
+  },
+  {
+   "variant": "count",
+   "item": "RESP4",
+   "stream": "capture",
+   "place": 737
+  },
+  {
+   "variant": "count",
+   "item": "RESP3R",
+   "stream": "capture",
+   "place": 833
+  },
+  {
+   "variant": "pause_run",
+   "item": "PAUSE",
+   "stream": "capture",
+   "place": 73
+  },
+  {
+   "variant": "pause_run",
+   "item": "PAUSE0",
+   "stream": "capture",
+   "place": 1
+  },
+  {
+   "variant": "pause_st",
+   "item": "PAUSE",
+   "stream": "session",
+   "place": 154
+  },
+  {
+   "variant": "pause_hu",
+   "item": "PAUSE",
+   "stream": "frames",
+   "place": 642
+  },
+  {
+   "variant": "pause_mask",
+   "item": "PAUSE",
+   "stream": "capture",
+   "place": 137
+  },
+  {
+   "variant": "pause_btn",
+   "item": "PAUSE",
+   "stream": "capture",
+   "place": 114
+  },
+  {
+   "variant": "pause_keep",
+   "item": "PAUSEWI",
+   "stream": "capture",
+   "place": 127
+  },
+  {
+   "variant": "pause_wi",
+   "item": "PAUSEWI",
+   "stream": "capture",
+   "place": 127
+  }
+ ],
+ "address_declared_stops": {
+  "report": "st_stuff.c:1292:16: runtime error: index 5 out of bounds for type 'int [4]'",
+  "captures_before_the_stop": {
+   "PAUSEWI": 127
+  }
+ },
+ "tables": [
+  {
+   "name": "T_3_3",
+   "item": "FAST3",
+   "priors": [
+    "3,0,0"
+   ],
+   "what": "control: an earlier skill 3 game changes no game row",
+   "tables": [
+    [
+     "start",
+     "0",
+     "0",
+     "0",
+     "0",
+     "2 2 2 2 2 2 2 2 8 8 8 2 2",
+     "983040",
+     "655360",
+     "655360"
+    ],
+    [
+     "prior1",
+     "3",
+     "0",
+     "0",
+     "0",
+     "2 2 2 2 2 2 2 2 8 8 8 2 2",
+     "983040",
+     "655360",
+     "655360"
+    ],
+    [
+     "demo",
+     "3",
+     "0",
+     "0",
+     "0",
+     "2 2 2 2 2 2 2 2 8 8 8 2 2",
+     "983040",
+     "655360",
+     "655360"
+    ]
+   ],
+   "equals": "FAST3",
+   "game_sha256": "0babae526403c6ae17dc58ebfcb1e70dc085ac38805fc8b502bcb596b018d75b"
+  },
+  {
+   "name": "T_4_3",
+   "item": "FAST3",
+   "priors": [
+    "4,0,0"
+   ],
+   "what": "Nightmare, then skill 3: the tables are put back (g_game.c:1429-1436)",
+   "tables": [
+    [
+     "start",
+     "0",
+     "0",
+     "0",
+     "0",
+     "2 2 2 2 2 2 2 2 8 8 8 2 2",
+     "983040",
+     "655360",
+     "655360"
+    ],
+    [
+     "prior1",
+     "4",
+     "0",
+     "0",
+     "1",
+     "1 1 1 1 1 1 1 1 4 4 4 1 1",
+     "1310720",
+     "1310720",
+     "1310720"
+    ],
+    [
+     "demo",
+     "3",
+     "0",
+     "0",
+     "0",
+     "2 2 2 2 2 2 2 2 8 8 8 2 2",
+     "983040",
+     "655360",
+     "655360"
+    ]
+   ],
+   "equals": "FAST3",
+   "game_sha256": "0babae526403c6ae17dc58ebfcb1e70dc085ac38805fc8b502bcb596b018d75b"
+  },
+  {
+   "name": "T_4_4",
+   "item": "FAST4",
+   "priors": [
+    "4,0,0"
+   ],
+   "what": "Nightmare twice: halved once (g_game.c:1421 is keyed on the previous skill)",
+   "tables": [
+    [
+     "start",
+     "0",
+     "0",
+     "0",
+     "0",
+     "2 2 2 2 2 2 2 2 8 8 8 2 2",
+     "983040",
+     "655360",
+     "655360"
+    ],
+    [
+     "prior1",
+     "4",
+     "0",
+     "0",
+     "1",
+     "1 1 1 1 1 1 1 1 4 4 4 1 1",
+     "1310720",
+     "1310720",
+     "1310720"
+    ],
+    [
+     "demo",
+     "4",
+     "0",
+     "0",
+     "1",
+     "1 1 1 1 1 1 1 1 4 4 4 1 1",
+     "1310720",
+     "1310720",
+     "1310720"
+    ]
+   ],
+   "equals": "FAST4",
+   "game_sha256": "157adf8e772698f172c393032e85553543bbe49b63e50895919f2c152afc54a1"
+  },
+  {
+   "name": "T_4F_4",
+   "item": "FAST4",
+   "priors": [
+    "4,0,1"
+   ],
+   "what": "Nightmare with -fast, then Nightmare: halved once",
+   "tables": [
+    [
+     "start",
+     "0",
+     "0",
+     "0",
+     "0",
+     "2 2 2 2 2 2 2 2 8 8 8 2 2",
+     "983040",
+     "655360",
+     "655360"
+    ],
+    [
+     "prior1",
+     "4",
+     "0",
+     "1",
+     "1",
+     "1 1 1 1 1 1 1 1 4 4 4 1 1",
+     "1310720",
+     "1310720",
+     "1310720"
+    ],
+    [
+     "demo",
+     "4",
+     "0",
+     "0",
+     "1",
+     "1 1 1 1 1 1 1 1 4 4 4 1 1",
+     "1310720",
+     "1310720",
+     "1310720"
+    ]
+   ],
+   "equals": "FAST4",
+   "game_sha256": "157adf8e772698f172c393032e85553543bbe49b63e50895919f2c152afc54a1"
+  },
+  {
+   "name": "T_3F_3",
+   "item": "FAST3",
+   "priors": [
+    "3,0,1"
+   ],
+   "what": "skill 3 with -fast, then skill 3 without: the tables stay fast, fastparm is 0",
+   "tables": [
+    [
+     "start",
+     "0",
+     "0",
+     "0",
+     "0",
+     "2 2 2 2 2 2 2 2 8 8 8 2 2",
+     "983040",
+     "655360",
+     "655360"
+    ],
+    [
+     "prior1",
+     "3",
+     "0",
+     "1",
+     "0",
+     "1 1 1 1 1 1 1 1 4 4 4 1 1",
+     "1310720",
+     "1310720",
+     "1310720"
+    ],
+    [
+     "demo",
+     "3",
+     "0",
+     "0",
+     "0",
+     "1 1 1 1 1 1 1 1 4 4 4 1 1",
+     "1310720",
+     "1310720",
+     "1310720"
+    ]
+   ],
+   "equals": "none",
+   "game_sha256": "01834b3aa967672229dd5123f91c23c62a847a2d1f27a957fac0b36f3276ad71"
+  },
+  {
+   "name": "T_3F_3F",
+   "item": "FAST3F",
+   "priors": [
+    "3,0,1"
+   ],
+   "what": "skill 3 with -fast twice: halved twice (run and pain durations 0)",
+   "tables": [
+    [
+     "start",
+     "0",
+     "0",
+     "0",
+     "0",
+     "2 2 2 2 2 2 2 2 8 8 8 2 2",
+     "983040",
+     "655360",
+     "655360"
+    ],
+    [
+     "prior1",
+     "3",
+     "0",
+     "1",
+     "0",
+     "1 1 1 1 1 1 1 1 4 4 4 1 1",
+     "1310720",
+     "1310720",
+     "1310720"
+    ],
+    [
+     "demo",
+     "3",
+     "0",
+     "1",
+     "0",
+     "0 0 0 0 0 0 0 0 2 2 2 0 0",
+     "1310720",
+     "1310720",
+     "1310720"
+    ]
+   ],
+   "equals": "none",
+   "game_sha256": "91389ef69604f2103e8fdea1cab5d700c6d7b0e00a13080cfbdd6043e44cb93c"
+  },
+  {
+   "name": "T_4F4F_3",
+   "item": "FAST3",
+   "priors": [
+    "4,0,1",
+    "4,0,1"
+   ],
+   "what": "Nightmare with -fast twice, then skill 3: halved twice, doubled once",
+   "tables": [
+    [
+     "start",
+     "0",
+     "0",
+     "0",
+     "0",
+     "2 2 2 2 2 2 2 2 8 8 8 2 2",
+     "983040",
+     "655360",
+     "655360"
+    ],
+    [
+     "prior1",
+     "4",
+     "0",
+     "1",
+     "1",
+     "1 1 1 1 1 1 1 1 4 4 4 1 1",
+     "1310720",
+     "1310720",
+     "1310720"
+    ],
+    [
+     "prior2",
+     "4",
+     "0",
+     "1",
+     "1",
+     "0 0 0 0 0 0 0 0 2 2 2 0 0",
+     "1310720",
+     "1310720",
+     "1310720"
+    ],
+    [
+     "demo",
+     "3",
+     "0",
+     "0",
+     "0",
+     "0 0 0 0 0 0 0 0 4 4 4 0 0",
+     "983040",
+     "655360",
+     "655360"
+    ]
+   ],
+   "equals": "none",
+   "game_sha256": "65894d7148f0b3dc0f35fa444fdebe1ae5940f32b8462cc366a5304f516d0ecc"
+  }
+ ],
+ "tools_sha256": {
+  "m6b_goldens.py": "bab2ada43238621b957061870190d89b68a749d05f514853213b33c146b2622c",
+  "m6b_wad.py": "b57bff78c46053f120932ea4a2422747704a5a082110e04edf42a5198d8844b3",
+  "m6b_build.py": "b30fff7303d14c7bcff6b11a52b42d52f265b12858b29b74c46709fce26e6d50",
+  "m6b_session.c": "b0ab90889f8aec0dff1bea34007386b04132faf838a7116b7821ca1d66bc6adb"
+ },
+ "inputs_sha256": {
+  "tests/reference/m5b_gfx.wad": "50d0f0f881e2347a3527405b97a8f5abd949cff923a7078d03ec8c20a40ca032",
+  "tests/reference/m5c_sfx.wad": "c228e186aceb05529187755be20f24321b7a46d2ba59a2a18e39b587e31d9699",
+  "tests/reference/m6a_wads/episode.wad": "23c052fda9dfbf4b23cd5c2f6af75ea1d27c4a5b1a1096f6c313b766950ef94b",
+  "tests/reference/m6a_wads/m6a_gfx.wad": "ec4826c3881919eb09108018aa3efb357c9891c4ae4256dbc9502749cade1d37",
+  "tests/reference/m6a_wads/m6a_music.wad": "7e5bcf6fa1837e6af4d996ae16d914669921ccc9ed5b6e924ea5a8dc826a47ea",
+  "tests/reference/m6b_scripts/AMMO4.lmp": "1a9ea6e7f746ca7fde9d06680a7e7b4ee0152ad7d0d4aa2c68d7fe5b1246cf25",
+  "tests/reference/m6b_scripts/BITS3.lmp": "fe3610ac381120906ecae806bc649121da64808f8fe8a1fec68493aa1748cf4b",
+  "tests/reference/m6b_scripts/BITS4.lmp": "f74c20fa19a975f7245075a0ac1f0b52cfee2eafd2bb41119ffb6af71196aab0",
+  "tests/reference/m6b_scripts/BLOCK4.lmp": "ca6b0377a2ac911132cf2237baaa05dbcbaca22f5a9273291467a3873e68a43f",
+  "tests/reference/m6b_scripts/FAST3.lmp": "26beb89ce3507d77aa53724ce2da140193414a8e75c56c428196999d0db505f8",
+  "tests/reference/m6b_scripts/FAST3F.lmp": "35cd597f4e492fc105175a7e49a4362b0d4a3370d0e513f7c82d8a7adcc0c193",
+  "tests/reference/m6b_scripts/FAST4.lmp": "2b8c7d233bad2ed2b69c4fa436f4eb07e2ac4024a8277c72dae400956b01bce3",
+  "tests/reference/m6b_scripts/GIB4.lmp": "ca5d5a2fe57cb2161a0f1adbba286bb2a983f4542289511b07ee6be236d26531",
+  "tests/reference/m6b_scripts/PAUSE.lmp": "b0ae0c2a51e182e81ff9b0fc683df579e19f711b9d21146c5766088c76c604e4",
+  "tests/reference/m6b_scripts/PAUSE0.lmp": "1cc686cfd080ef8fe919cc204b9ce4b8ce75bbc8a4a39b82283e80e4259a3aee",
+  "tests/reference/m6b_scripts/PAUSEFIN.lmp": "7f2ef07e6b938fe417df269740a225a672c0dc1b7409ae80bff914db685cff83",
+  "tests/reference/m6b_scripts/PAUSEWI.lmp": "5fda84139258bf5ae7ab8fd98bee6f03705ccbfc19a424bd626180e21759cf92",
+  "tests/reference/m6b_scripts/REACT3.lmp": "c372f7358566e665088df11a679ded837302ffbb5440f18df97b32f53e95b173",
+  "tests/reference/m6b_scripts/REACT3F.lmp": "f1d020fec45e823be12dc65d063c7147d74cce19655e4542728c56be5eb65ffe",
+  "tests/reference/m6b_scripts/REACT4.lmp": "6e04e777a53b3a5e4a0652f3c5abd94d2fd14316ba920dae17f480d806007111",
+  "tests/reference/m6b_scripts/RESP3.lmp": "2eabcbc4a04b14a467fb1dd202f32739c2a5703841fff4878b3972e1da9178ad",
+  "tests/reference/m6b_scripts/RESP3R.lmp": "a3549b5fc9ed306b77ce3366987f59fc04e73bc1886b9c406d68c94dee7c24ae",
+  "tests/reference/m6b_scripts/RESP4.lmp": "bf4790f7be2efae0ae25c2b09513f602e3761fd50d86324a48c9c53f5bf6aeb2",
+  "tests/reference/m6b_wads/m6b.wad": "6612c16344bba148bcc3d43c3d5bbf679e07fe2c7f9db7a35b316224f87db6dc",
+  "tests/reference/m6b_wads/m6b_gfx.wad": "89429227e9e022646ab241cf472d3236cbc5cd67a1bc20a2993d87f0f4a5bb79"
+ },
+ "waits_on_decisions": "state digests over the wire 29 schema (DSIM45) are not generated: decisions N2 to N4",
+ "generated_with": {
+  "compiler": "cc (Ubuntu 15.2.0-16ubuntu1) 15.2.0"
+ },
+ "items": {
+  "AMMO4": {
+   "what": "Nightmare: every P_GiveAmmo path of Episode 1 doubled before the cap (p_inter.c:95-101)",
+   "tics": 310,
+   "captures": 311,
+   "rendered_at": [],
+   "observed": {
+    "totalkills": 0,
+    "killcount": 0,
+    "spawned": [],
+    "reactiontime_at_load": [],
+    "missile_speeds": {},
+    "first_missile_tic": {},
+    "demon_state_tics_seen": [],
+    "respawns": [],
+    "gates": [],
+    "gate_tics_unresolved": 0,
+    "paused_intervals": [],
+    "song_calls": [],
+    "paused_at_end": false,
+    "tables": [
+     [
+      "start",
+      "0",
+      "0",
+      "0",
+      "0",
+      "2 2 2 2 2 2 2 2 8 8 8 2 2",
+      "983040",
+      "655360",
+      "655360"
+     ],
+     [
+      "demo",
+      "4",
+      "0",
+      "0",
+      "1",
+      "1 1 1 1 1 1 1 1 4 4 4 1 1",
+      "1310720",
+      "1310720",
+      "1310720"
+     ]
+    ]
+   }
+  },
+  "BITS4": {
+   "what": "Nightmare spawns the things of the hard bit, 4 (p_mobj.c:745-746)",
+   "tics": 20,
+   "captures": 21,
+   "rendered_at": [],
+   "observed": {
+    "totalkills": 1,
+    "killcount": 0,
+    "spawned": [
+     "POSSESSED@256,0"
+    ],
+    "reactiontime_at_load": [
+     0
+    ],
+    "missile_speeds": {},
+    "first_missile_tic": {},
+    "demon_state_tics_seen": [],
+    "respawns": [],
+    "gates": [],
+    "gate_tics_unresolved": 0,
+    "paused_intervals": [],
+    "song_calls": [],
+    "paused_at_end": false,
+    "tables": [
+     [
+      "start",
+      "0",
+      "0",
+      "0",
+      "0",
+      "2 2 2 2 2 2 2 2 8 8 8 2 2",
+      "983040",
+      "655360",
+      "655360"
+     ],
+     [
+      "demo",
+      "4",
+      "0",
+      "0",
+      "1",
+      "1 1 1 1 1 1 1 1 4 4 4 1 1",
+      "1310720",
+      "1310720",
+      "1310720"
+     ]
+    ]
+   }
+  },
+  "BITS3": {
+   "what": "skill 3: the same set",
+   "tics": 20,
+   "captures": 21,
+   "rendered_at": [],
+   "observed": {
+    "totalkills": 1,
+    "killcount": 0,
+    "spawned": [
+     "POSSESSED@256,0"
+    ],
+    "reactiontime_at_load": [
+     8
+    ],
+    "missile_speeds": {},
+    "first_missile_tic": {},
+    "demon_state_tics_seen": [],
+    "respawns": [],
+    "gates": [],
+    "gate_tics_unresolved": 0,
+    "paused_intervals": [],
+    "song_calls": [],
+    "paused_at_end": false,
+    "tables": [
+     [
+      "start",
+      "0",
+      "0",
+      "0",
+      "0",
+      "2 2 2 2 2 2 2 2 8 8 8 2 2",
+      "983040",
+      "655360",
+      "655360"
+     ],
+     [
+      "demo",
+      "3",
+      "0",
+      "0",
+      "0",
+      "2 2 2 2 2 2 2 2 8 8 8 2 2",
+      "983040",
+      "655360",
+      "655360"
+     ]
+    ]
+   }
+  },
+  "REACT4": {
+   "what": "Nightmare: reactiontime 0 at spawn; A_Chase without the new direction after an attack and without the movecount test before a missile",
+   "tics": 240,
+   "captures": 241,
+   "rendered_at": [],
+   "observed": {
+    "totalkills": 2,
+    "killcount": 0,
+    "spawned": [
+     "POSSESSED@448,160",
+     "TROOP@448,0"
+    ],
+    "reactiontime_at_load": [
+     0
+    ],
+    "missile_speeds": {
+     "TROOPSHOT": [
+      0,
+      20
+     ]
+    },
+    "first_missile_tic": {
+     "TROOPSHOT": 29
+    },
+    "demon_state_tics_seen": [],
+    "respawns": [],
+    "gates": [],
+    "gate_tics_unresolved": 0,
+    "paused_intervals": [],
+    "song_calls": [],
+    "paused_at_end": false,
+    "tables": [
+     [
+      "start",
+      "0",
+      "0",
+      "0",
+      "0",
+      "2 2 2 2 2 2 2 2 8 8 8 2 2",
+      "983040",
+      "655360",
+      "655360"
+     ],
+     [
+      "demo",
+      "4",
+      "0",
+      "0",
+      "1",
+      "1 1 1 1 1 1 1 1 4 4 4 1 1",
+      "1310720",
+      "1310720",
+      "1310720"
+     ]
+    ]
+   }
+  },
+  "REACT3": {
+   "what": "skill 3: the same commands (reactiontime 8, both A_Chase rules)",
+   "tics": 240,
+   "captures": 241,
+   "rendered_at": [],
+   "observed": {
+    "totalkills": 2,
+    "killcount": 0,
+    "spawned": [
+     "POSSESSED@448,160",
+     "TROOP@448,0"
+    ],
+    "reactiontime_at_load": [
+     8
+    ],
+    "missile_speeds": {},
+    "first_missile_tic": {},
+    "demon_state_tics_seen": [],
+    "respawns": [],
+    "gates": [],
+    "gate_tics_unresolved": 0,
+    "paused_intervals": [],
+    "song_calls": [],
+    "paused_at_end": false,
+    "tables": [
+     [
+      "start",
+      "0",
+      "0",
+      "0",
+      "0",
+      "2 2 2 2 2 2 2 2 8 8 8 2 2",
+      "983040",
+      "655360",
+      "655360"
+     ],
+     [
+      "demo",
+      "3",
+      "0",
+      "0",
+      "0",
+      "2 2 2 2 2 2 2 2 8 8 8 2 2",
+      "983040",
+      "655360",
+      "655360"
+     ]
+    ]
+   }
+  },
+  "REACT3F": {
+   "what": "skill 3 with fastparm: reactiontime 8, A_Chase as on Nightmare",
+   "tics": 240,
+   "captures": 241,
+   "rendered_at": [],
+   "observed": {
+    "totalkills": 2,
+    "killcount": 0,
+    "spawned": [
+     "POSSESSED@448,160",
+     "TROOP@448,0"
+    ],
+    "reactiontime_at_load": [
+     8
+    ],
+    "missile_speeds": {
+     "TROOPSHOT": [
+      0,
+      20
+     ]
+    },
+    "first_missile_tic": {
+     "TROOPSHOT": 53
+    },
+    "demon_state_tics_seen": [],
+    "respawns": [],
+    "gates": [],
+    "gate_tics_unresolved": 0,
+    "paused_intervals": [],
+    "song_calls": [],
+    "paused_at_end": false,
+    "tables": [
+     [
+      "start",
+      "0",
+      "0",
+      "0",
+      "0",
+      "2 2 2 2 2 2 2 2 8 8 8 2 2",
+      "983040",
+      "655360",
+      "655360"
+     ],
+     [
+      "demo",
+      "3",
+      "0",
+      "1",
+      "0",
+      "1 1 1 1 1 1 1 1 4 4 4 1 1",
+      "1310720",
+      "1310720",
+      "1310720"
+     ]
+    ]
+   }
+  },
+  "FAST4": {
+   "what": "Nightmare: demon and spectre state durations halved, imp and Baron missiles at 20",
+   "tics": 240,
+   "captures": 241,
+   "rendered_at": [],
+   "observed": {
+    "totalkills": 4,
+    "killcount": 0,
+    "spawned": [
+     "BRUISER@832,320",
+     "SERGEANT@1152,-128",
+     "SHADOWS@1152,128",
+     "TROOP@448,320"
+    ],
+    "reactiontime_at_load": [
+     0
+    ],
+    "missile_speeds": {
+     "BRUISERSHOT": [
+      0,
+      20
+     ],
+     "TROOPSHOT": [
+      0,
+      20,
+      23
+     ]
+    },
+    "first_missile_tic": {
+     "BRUISERSHOT": 24,
+     "TROOPSHOT": 42
+    },
+    "demon_state_tics_seen": [
+     1,
+     2,
+     3,
+     4
+    ],
+    "respawns": [],
+    "gates": [],
+    "gate_tics_unresolved": 0,
+    "paused_intervals": [],
+    "song_calls": [],
+    "paused_at_end": false,
+    "tables": [
+     [
+      "start",
+      "0",
+      "0",
+      "0",
+      "0",
+      "2 2 2 2 2 2 2 2 8 8 8 2 2",
+      "983040",
+      "655360",
+      "655360"
+     ],
+     [
+      "demo",
+      "4",
+      "0",
+      "0",
+      "1",
+      "1 1 1 1 1 1 1 1 4 4 4 1 1",
+      "1310720",
+      "1310720",
+      "1310720"
+     ]
+    ]
+   }
+  },
+  "FAST3": {
+   "what": "skill 3: the same commands (durations 2, 8 and 2; missiles at 10 and 15)",
+   "tics": 240,
+   "captures": 241,
+   "rendered_at": [],
+   "observed": {
+    "totalkills": 4,
+    "killcount": 0,
+    "spawned": [
+     "BRUISER@832,320",
+     "SERGEANT@1152,-128",
+     "SHADOWS@1152,128",
+     "TROOP@448,320"
+    ],
+    "reactiontime_at_load": [
+     8
+    ],
+    "missile_speeds": {
+     "BRUISERSHOT": [
+      0,
+      15
+     ]
+    },
+    "first_missile_tic": {
+     "BRUISERSHOT": 105
+    },
+    "demon_state_tics_seen": [
+     1,
+     2
+    ],
+    "respawns": [],
+    "gates": [],
+    "gate_tics_unresolved": 0,
+    "paused_intervals": [],
+    "song_calls": [],
+    "paused_at_end": false,
+    "tables": [
+     [
+      "start",
+      "0",
+      "0",
+      "0",
+      "0",
+      "2 2 2 2 2 2 2 2 8 8 8 2 2",
+      "983040",
+      "655360",
+      "655360"
+     ],
+     [
+      "demo",
+      "3",
+      "0",
+      "0",
+      "0",
+      "2 2 2 2 2 2 2 2 8 8 8 2 2",
+      "983040",
+      "655360",
+      "655360"
+     ]
+    ]
+   }
+  },
+  "FAST3F": {
+   "what": "skill 3 with fastparm: the tables of Nightmare, reactiontime 8",
+   "tics": 240,
+   "captures": 241,
+   "rendered_at": [],
+   "observed": {
+    "totalkills": 4,
+    "killcount": 0,
+    "spawned": [
+     "BRUISER@832,320",
+     "SERGEANT@1152,-128",
+     "SHADOWS@1152,128",
+     "TROOP@448,320"
+    ],
+    "reactiontime_at_load": [
+     8
+    ],
+    "missile_speeds": {
+     "BRUISERSHOT": [
+      0,
+      20
+     ],
+     "TROOPSHOT": [
+      0,
+      20
+     ]
+    },
+    "first_missile_tic": {
+     "BRUISERSHOT": 102,
+     "TROOPSHOT": 66
+    },
+    "demon_state_tics_seen": [
+     1,
+     2,
+     3,
+     4
+    ],
+    "respawns": [],
+    "gates": [],
+    "gate_tics_unresolved": 0,
+    "paused_intervals": [],
+    "song_calls": [],
+    "paused_at_end": false,
+    "tables": [
+     [
+      "start",
+      "0",
+      "0",
+      "0",
+      "0",
+      "2 2 2 2 2 2 2 2 8 8 8 2 2",
+      "983040",
+      "655360",
+      "655360"
+     ],
+     [
+      "demo",
+      "3",
+      "0",
+      "1",
+      "0",
+      "1 1 1 1 1 1 1 1 4 4 4 1 1",
+      "1310720",
+      "1310720",
+      "1310720"
+     ]
+    ]
+   }
+  },
+  "RESP4": {
+   "what": "Nightmare: two demons shot from a ledge respawn; one is shot again (kills above the level total) and the exit switch is used: the intermission counts past 100 %",
+   "tics": 1516,
+   "captures": 1317,
+   "rendered_at": [],
+   "observed": {
+    "totalkills": 2,
+    "killcount": 4,
+    "spawned": [
+     "SERGEANT@640,256",
+     "SERGEANT@832,256"
+    ],
+    "reactiontime_at_load": [
+     0
+    ],
+    "missile_speeds": {},
+    "first_missile_tic": {},
+    "demon_state_tics_seen": [
+     1
+    ],
+    "respawns": [
+     {
+      "tic": 736,
+      "leveltime": 736,
+      "type": "SERGEANT",
+      "movecount": 582,
+      "corpse": [
+       3342503,
+       16314244
+      ],
+      "spot": [
+       640,
+       256
+      ],
+      "thinkers_before_it": [
+       "TFOG",
+       "TFOG"
+      ],
+      "thinkers_after_it": 0,
+      "monster_tics": 9,
+      "ambush": false,
+      "angle": 2147483648
+     },
+     {
+      "tic": 896,
+      "leveltime": 896,
+      "type": "SERGEANT",
+      "movecount": 595,
+      "corpse": [
+       4859688,
+       18652859
+      ],
+      "spot": [
+       832,
+       256
+      ],
+      "thinkers_before_it": [
+       "TFOG",
+       "TFOG"
+      ],
+      "thinkers_after_it": 0,
+      "monster_tics": 9,
+      "ambush": true,
+      "angle": 1073741824
+     }
+    ],
+    "gates": [
+     {
+      "tic": 736,
+      "leveltime": 736,
+      "type": "SERGEANT",
+      "gibs": false,
+      "corpse": [
+       3342503,
+       16314244
+      ],
+      "radius": 1966080,
+      "movecount": 582,
+      "spot": [
+       640,
+       256
+      ],
+      "value": 4,
+      "outcome": "respawn",
+      "order": [
+       "TFOG",
+       "TFOG",
+       "SERGEANT"
+      ],
+      "fogs": [
+       [
+        3342503,
+        16314244,
+        0,
+        5
+       ],
+       [
+        41943040,
+        16777216,
+        0,
+        5
+       ]
+      ],
+      "monster": {
+       "x": 41943040,
+       "y": 16777216,
+       "z": 0,
+       "angle": 2147483648,
+       "tics": 9,
+       "reactiontime": 18,
+       "ambush": false,
+       "ceiling_minus_floor": 8388608
+      }
+     }
+    ],
+    "gate_tics_unresolved": 5,
+    "paused_intervals": [],
+    "song_calls": [],
+    "paused_at_end": false,
+    "intermission": {
+     "maxkills": 2,
+     "skills": 1,
+     "cnt_kills_max": 200
+    },
+    "tables": [
+     [
+      "start",
+      "0",
+      "0",
+      "0",
+      "0",
+      "2 2 2 2 2 2 2 2 8 8 8 2 2",
+      "983040",
+      "655360",
+      "655360"
+     ],
+     [
+      "demo",
+      "4",
+      "0",
+      "0",
+      "1",
+      "1 1 1 1 1 1 1 1 4 4 4 1 1",
+      "1310720",
+      "1310720",
+      "1310720"
+     ]
+    ]
+   }
+  },
+  "RESP3": {
+   "what": "skill 3: the same commands; no corpse respawns",
+   "tics": 1516,
+   "captures": 1317,
+   "rendered_at": [],
+   "observed": {
+    "totalkills": 2,
+    "killcount": 2,
+    "spawned": [
+     "SERGEANT@640,256",
+     "SERGEANT@832,256"
+    ],
+    "reactiontime_at_load": [
+     8
+    ],
+    "missile_speeds": {},
+    "first_missile_tic": {},
+    "demon_state_tics_seen": [
+     1,
+     2
+    ],
+    "respawns": [],
+    "gates": [],
+    "gate_tics_unresolved": 0,
+    "paused_intervals": [],
+    "song_calls": [],
+    "paused_at_end": false,
+    "intermission": {
+     "maxkills": 2,
+     "skills": 1,
+     "cnt_kills_max": 100
+    },
+    "tables": [
+     [
+      "start",
+      "0",
+      "0",
+      "0",
+      "0",
+      "2 2 2 2 2 2 2 2 8 8 8 2 2",
+      "983040",
+      "655360",
+      "655360"
+     ],
+     [
+      "demo",
+      "3",
+      "0",
+      "0",
+      "0",
+      "2 2 2 2 2 2 2 2 8 8 8 2 2",
+      "983040",
+      "655360",
+      "655360"
+     ]
+    ]
+   }
+  },
+  "RESP3R": {
+   "what": "skill 3 with respawnparm: corpses respawn; reactiontime 8, nothing doubled",
+   "tics": 1516,
+   "captures": 1317,
+   "rendered_at": [],
+   "observed": {
+    "totalkills": 2,
+    "killcount": 3,
+    "spawned": [
+     "SERGEANT@640,256",
+     "SERGEANT@832,256"
+    ],
+    "reactiontime_at_load": [
+     8
+    ],
+    "missile_speeds": {},
+    "first_missile_tic": {},
+    "demon_state_tics_seen": [
+     1,
+     2
+    ],
+    "respawns": [
+     {
+      "tic": 832,
+      "leveltime": 832,
+      "type": "SERGEANT",
+      "movecount": 651,
+      "corpse": [
+       27952342,
+       17271938
+      ],
+      "spot": [
+       640,
+       256
+      ],
+      "thinkers_before_it": [
+       "TFOG",
+       "TFOG"
+      ],
+      "thinkers_after_it": 0,
+      "monster_tics": 9,
+      "ambush": false,
+      "angle": 2147483648
+     }
+    ],
+    "gates": [
+     {
+      "tic": 832,
+      "leveltime": 832,
+      "type": "SERGEANT",
+      "gibs": false,
+      "corpse": [
+       27952342,
+       17271938
+      ],
+      "radius": 1966080,
+      "movecount": 651,
+      "spot": [
+       640,
+       256
+      ],
+      "value": 4,
+      "outcome": "respawn",
+      "order": [
+       "TFOG",
+       "TFOG",
+       "SERGEANT"
+      ],
+      "fogs": [
+       [
+        27952342,
+        17271938,
+        0,
+        5
+       ],
+       [
+        41943040,
+        16777216,
+        0,
+        5
+       ]
+      ],
+      "monster": {
+       "x": 41943040,
+       "y": 16777216,
+       "z": 0,
+       "angle": 2147483648,
+       "tics": 9,
+       "reactiontime": 18,
+       "ambush": false,
+       "ceiling_minus_floor": 8388608
+      }
+     }
+    ],
+    "gate_tics_unresolved": 1,
+    "paused_intervals": [],
+    "song_calls": [],
+    "paused_at_end": false,
+    "intermission": {
+     "maxkills": 2,
+     "skills": 1,
+     "cnt_kills_max": 150
+    },
+    "tables": [
+     [
+      "start",
+      "0",
+      "0",
+      "0",
+      "0",
+      "2 2 2 2 2 2 2 2 8 8 8 2 2",
+      "983040",
+      "655360",
+      "655360"
+     ],
+     [
+      "demo",
+      "3",
+      "1",
+      "0",
+      "1",
+      "2 2 2 2 2 2 2 2 8 8 8 2 2",
+      "983040",
+      "655360",
+      "655360"
+     ]
+    ]
+   }
+  },
+  "BLOCK4": {
+   "what": "Nightmare: a spawn point blocked by a wall, by a solid thing, and by the player and then free",
+   "tics": 1644,
+   "captures": 1645,
+   "rendered_at": [],
+   "observed": {
+    "totalkills": 3,
+    "killcount": 3,
+    "spawned": [
+     "POSSESSED@1023,0",
+     "POSSESSED@448,0",
+     "POSSESSED@640,0"
+    ],
+    "reactiontime_at_load": [
+     0
+    ],
+    "missile_speeds": {},
+    "first_missile_tic": {},
+    "demon_state_tics_seen": [],
+    "respawns": [
+     {
+      "tic": 1568,
+      "leveltime": 1568,
+      "type": "POSSESSED",
+      "movecount": 1502,
+      "corpse": [
+       31069977,
+       509
+      ],
+      "spot": [
+       448,
+       0
+      ],
+      "thinkers_before_it": [
+       "TFOG",
+       "TFOG"
+      ],
+      "thinkers_after_it": 0,
+      "monster_tics": 9,
+      "ambush": true,
+      "angle": 0
+     }
+    ],
+    "gates": [
+     {
+      "tic": 512,
+      "leveltime": 512,
+      "type": "POSSESSED",
+      "gibs": false,
+      "corpse": [
+       41943040,
+       0
+      ],
+      "radius": 1310720,
+      "movecount": 448,
+      "spot": [
+       640,
+       0
+      ],
+      "value": 0,
+      "outcome": "blocked"
+     },
+     {
+      "tic": 1248,
+      "leveltime": 1248,
+      "type": "POSSESSED",
+      "gibs": false,
+      "corpse": [
+       31069977,
+       509
+      ],
+      "radius": 1310720,
+      "movecount": 1182,
+      "spot": [
+       448,
+       0
+      ],
+      "value": 4,
+      "outcome": "blocked"
+     },
+     {
+      "tic": 1408,
+      "leveltime": 1408,
+      "type": "POSSESSED",
+      "gibs": false,
+      "corpse": [
+       67043328,
+       0
+      ],
+      "radius": 1310720,
+      "movecount": 1265,
+      "spot": [
+       1023,
+       0
+      ],
+      "value": 0,
+      "outcome": "blocked"
+     },
+     {
+      "tic": 1568,
+      "leveltime": 1568,
+      "type": "POSSESSED",
+      "gibs": false,
+      "corpse": [
+       31069977,
+       509
+      ],
+      "radius": 1310720,
+      "movecount": 1502,
+      "spot": [
+       448,
+       0
+      ],
+      "value": 2,
+      "outcome": "respawn",
+      "order": [
+       "TFOG",
+       "TFOG",
+       "POSSESSED"
+      ],
+      "fogs": [
+       [
+        31069977,
+        509,
+        0,
+        5
+       ],
+       [
+        29360128,
+        0,
+        0,
+        5
+       ]
+      ],
+      "monster": {
+       "x": 29360128,
+       "y": 0,
+       "z": 0,
+       "angle": 0,
+       "tics": 9,
+       "reactiontime": 18,
+       "ambush": true,
+       "ceiling_minus_floor": 8388608
+      }
+     }
+    ],
+    "gate_tics_unresolved": 0,
+    "paused_intervals": [],
+    "song_calls": [],
+    "paused_at_end": false,
+    "tables": [
+     [
+      "start",
+      "0",
+      "0",
+      "0",
+      "0",
+      "2 2 2 2 2 2 2 2 8 8 8 2 2",
+      "983040",
+      "655360",
+      "655360"
+     ],
+     [
+      "demo",
+      "4",
+      "0",
+      "0",
+      "1",
+      "1 1 1 1 1 1 1 1 4 4 4 1 1",
+      "1310720",
+      "1310720",
+      "1310720"
+     ]
+    ]
+   }
+  },
+  "GIB4": {
+   "what": "Nightmare: a corpse crushed to gibs by a door respawns inside the closed door",
+   "tics": 1067,
+   "captures": 1068,
+   "rendered_at": [],
+   "observed": {
+    "totalkills": 1,
+    "killcount": 1,
+    "spawned": [
+     "POSSESSED@224,0"
+    ],
+    "reactiontime_at_load": [
+     0
+    ],
+    "missile_speeds": {},
+    "first_missile_tic": {},
+    "demon_state_tics_seen": [],
+    "respawns": [
+     {
+      "tic": 1024,
+      "leveltime": 1024,
+      "type": "POSSESSED",
+      "movecount": 906,
+      "corpse": [
+       16389913,
+       -2101
+      ],
+      "spot": [
+       224,
+       0
+      ],
+      "thinkers_before_it": [
+       "TFOG",
+       "TFOG"
+      ],
+      "thinkers_after_it": 0,
+      "monster_tics": 9,
+      "ambush": true,
+      "angle": 0
+     }
+    ],
+    "gates": [
+     {
+      "tic": 1024,
+      "leveltime": 1024,
+      "type": "POSSESSED",
+      "gibs": true,
+      "corpse": [
+       16389913,
+       -2101
+      ],
+      "radius": 0,
+      "movecount": 906,
+      "spot": [
+       224,
+       0
+      ],
+      "value": 0,
+      "outcome": "respawn",
+      "order": [
+       "TFOG",
+       "TFOG",
+       "POSSESSED"
+      ],
+      "fogs": [
+       [
+        16389913,
+        -2101,
+        0,
+        5
+       ],
+       [
+        14680064,
+        0,
+        0,
+        5
+       ]
+      ],
+      "monster": {
+       "x": 14680064,
+       "y": 0,
+       "z": 0,
+       "angle": 0,
+       "tics": 9,
+       "reactiontime": 18,
+       "ambush": true,
+       "ceiling_minus_floor": 0
+      }
+     }
+    ],
+    "gate_tics_unresolved": 0,
+    "paused_intervals": [],
+    "song_calls": [],
+    "paused_at_end": false,
+    "tables": [
+     [
+      "start",
+      "0",
+      "0",
+      "0",
+      "0",
+      "2 2 2 2 2 2 2 2 8 8 8 2 2",
+      "983040",
+      "655360",
+      "655360"
+     ],
+     [
+      "demo",
+      "4",
+      "0",
+      "0",
+      "1",
+      "1 1 1 1 1 1 1 1 4 4 4 1 1",
+      "1310720",
+      "1310720",
+      "1310720"
+     ]
+    ]
+   }
+  },
+  "PAUSE": {
+   "what": "the pause command in a level: what stops, what runs, odd special bytes, the demo ending paused",
+   "tics": 341,
+   "captures": 342,
+   "rendered_at": [
+    10,
+    11
+   ],
+   "observed": {
+    "totalkills": 2,
+    "killcount": 0,
+    "spawned": [
+     "SERGEANT@704,-192",
+     "TROOP@448,320"
+    ],
+    "reactiontime_at_load": [
+     8
+    ],
+    "missile_speeds": {
+     "TROOPSHOT": [
+      10
+     ]
+    },
+    "first_missile_tic": {
+     "TROOPSHOT": 289
+    },
+    "demon_state_tics_seen": [
+     1,
+     2
+    ],
+    "respawns": [],
+    "gates": [],
+    "gate_tics_unresolved": 0,
+    "paused_intervals": [
+     {
+      "first": 72,
+      "last": 112,
+      "gamestates": [
+       0
+      ],
+      "leveltime": [
+       72,
+       72
+      ],
+      "gametic": [
+       73,
+       113
+      ],
+      "prndindex": [
+       71,
+       71
+      ],
+      "rndindex": [
+       139,
+       179
+      ]
+     },
+     {
+      "first": 134,
+      "last": 134,
+      "gamestates": [
+       0
+      ],
+      "leveltime": [
+       93,
+       93
+      ],
+      "gametic": [
+       135,
+       135
+      ],
+      "prndindex": [
+       97,
+       97
+      ],
+      "rndindex": [
+       205,
+       205
+      ]
+     },
+     {
+      "first": 136,
+      "last": 286,
+      "gamestates": [
+       0
+      ],
+      "leveltime": [
+       94,
+       94
+      ],
+      "gametic": [
+       137,
+       287
+      ],
+      "prndindex": [
+       97,
+       97
+      ],
+      "rndindex": [
+       207,
+       101
+      ]
+     },
+     {
+      "first": 320,
+      "last": 340,
+      "gamestates": [
+       0
+      ],
+      "leveltime": [
+       127,
+       127
+      ],
+      "gametic": [
+       321,
+       341
+      ],
+      "prndindex": [
+       133,
+       133
+      ],
+      "rndindex": [
+       137,
+       157
+      ]
+     }
+    ],
+    "song_calls": [
+     [
+      "72",
+      "pause"
+     ],
+     [
+      "113",
+      "resume"
+     ],
+     [
+      "134",
+      "pause"
+     ],
+     [
+      "135",
+      "resume"
+     ],
+     [
+      "136",
+      "pause"
+     ],
+     [
+      "287",
+      "resume"
+     ],
+     [
+      "320",
+      "pause"
+     ]
+    ],
+    "paused_at_end": true,
+    "tables": [
+     [
+      "start",
+      "0",
+      "0",
+      "0",
+      "0",
+      "2 2 2 2 2 2 2 2 8 8 8 2 2",
+      "983040",
+      "655360",
+      "655360"
+     ],
+     [
+      "demo",
+      "3",
+      "0",
+      "0",
+      "0",
+      "2 2 2 2 2 2 2 2 8 8 8 2 2",
+      "983040",
+      "655360",
+      "655360"
+     ]
+    ]
+   }
+  },
+  "PAUSE0": {
+   "what": "the pause command as the first command of a demo",
+   "tics": 42,
+   "captures": 43,
+   "rendered_at": [
+    10
+   ],
+   "observed": {
+    "totalkills": 2,
+    "killcount": 0,
+    "spawned": [
+     "SERGEANT@704,-192",
+     "TROOP@448,320"
+    ],
+    "reactiontime_at_load": [
+     8
+    ],
+    "missile_speeds": {},
+    "first_missile_tic": {},
+    "demon_state_tics_seen": [
+     1,
+     2
+    ],
+    "respawns": [],
+    "gates": [],
+    "gate_tics_unresolved": 0,
+    "paused_intervals": [
+     {
+      "first": 0,
+      "last": 20,
+      "gamestates": [
+       0
+      ],
+      "leveltime": [
+       0,
+       0
+      ],
+      "gametic": [
+       1,
+       21
+      ],
+      "prndindex": [
+       6,
+       6
+      ],
+      "rndindex": [
+       65,
+       85
+      ]
+     }
+    ],
+    "song_calls": [
+     [
+      "0",
+      "pause"
+     ],
+     [
+      "21",
+      "resume"
+     ]
+    ],
+    "paused_at_end": false,
+    "tables": [
+     [
+      "start",
+      "0",
+      "0",
+      "0",
+      "0",
+      "2 2 2 2 2 2 2 2 8 8 8 2 2",
+      "983040",
+      "655360",
+      "655360"
+     ],
+     [
+      "demo",
+      "3",
+      "0",
+      "0",
+      "0",
+      "2 2 2 2 2 2 2 2 8 8 8 2 2",
+      "983040",
+      "655360",
+      "655360"
+     ]
+    ]
+   }
+  },
+  "PAUSEWI": {
+   "what": "the pause command in the intermission: a fire press as well (wi_stuff.c reads the raw byte), the tally goes on, the picture is drawn, and the next load clears paused without S_ResumeSound (g_game.c:494)",
+   "tics": 160,
+   "captures": 145,
+   "rendered_at": [
+    10,
+    11
+   ],
+   "observed": {
+    "totalkills": 0,
+    "killcount": 0,
+    "spawned": [],
+    "reactiontime_at_load": [],
+    "missile_speeds": {},
+    "first_missile_tic": {},
+    "demon_state_tics_seen": [],
+    "respawns": [],
+    "gates": [],
+    "gate_tics_unresolved": 0,
+    "paused_intervals": [
+     {
+      "first": 127,
+      "last": 128,
+      "gamestates": [
+       1
+      ],
+      "leveltime": [
+       126,
+       126
+      ],
+      "gametic": [
+       128,
+       129
+      ],
+      "prndindex": [
+       14,
+       14
+      ],
+      "rndindex": [
+       25,
+       25
+      ]
+     },
+     {
+      "first": 135,
+      "last": 141,
+      "gamestates": [
+       1
+      ],
+      "leveltime": [
+       126,
+       126
+      ],
+      "gametic": [
+       136,
+       142
+      ],
+      "prndindex": [
+       14,
+       14
+      ],
+      "rndindex": [
+       36,
+       36
+      ]
+     }
+    ],
+    "song_calls": [
+     [
+      "127",
+      "pause"
+     ],
+     [
+      "129",
+      "resume"
+     ],
+     [
+      "135",
+      "pause"
+     ]
+    ],
+    "paused_at_end": false,
+    "intermission": {
+     "maxkills": 1,
+     "skills": 1,
+     "cnt_kills_max": 0
+    },
+    "tables": [
+     [
+      "start",
+      "0",
+      "0",
+      "0",
+      "0",
+      "2 2 2 2 2 2 2 2 8 8 8 2 2",
+      "983040",
+      "655360",
+      "655360"
+     ],
+     [
+      "demo",
+      "2",
+      "0",
+      "0",
+      "0",
+      "2 2 2 2 2 2 2 2 8 8 8 2 2",
+      "983040",
+      "655360",
+      "655360"
+     ]
+    ]
+   }
+  },
+  "PAUSEFIN": {
+   "what": "the pause command in the finale: F_Ticker goes on, the picture is drawn over the text and the art screen, the demo ends paused",
+   "tics": 1951,
+   "captures": 322,
+   "rendered_at": [
+    10,
+    11
+   ],
+   "observed": {
+    "totalkills": 1,
+    "killcount": 1,
+    "spawned": [
+     "BRUISER@576,0"
+    ],
+    "reactiontime_at_load": [
+     8
+    ],
+    "missile_speeds": {},
+    "first_missile_tic": {},
+    "demon_state_tics_seen": [],
+    "respawns": [],
+    "gates": [],
+    "gate_tics_unresolved": 0,
+    "paused_intervals": [
+     {
+      "first": 400,
+      "last": 459,
+      "gamestates": [
+       2
+      ],
+      "leveltime": [
+       321,
+       321
+      ],
+      "gametic": [
+       401,
+       460
+      ],
+      "prndindex": [
+       12,
+       12
+      ],
+      "rndindex": [
+       209,
+       209
+      ]
+     },
+     {
+      "first": 1900,
+      "last": 1950,
+      "gamestates": [
+       2
+      ],
+      "leveltime": [
+       321,
+       321
+      ],
+      "gametic": [
+       1901,
+       1951
+      ],
+      "prndindex": [
+       12,
+       12
+      ],
+      "rndindex": [
+       17,
+       17
+      ]
+     }
+    ],
+    "song_calls": [
+     [
+      "400",
+      "pause"
+     ],
+     [
+      "460",
+      "resume"
+     ],
+     [
+      "1900",
+      "pause"
+     ]
+    ],
+    "paused_at_end": true,
+    "tables": [
+     [
+      "start",
+      "0",
+      "0",
+      "0",
+      "0",
+      "2 2 2 2 2 2 2 2 8 8 8 2 2",
+      "983040",
+      "655360",
+      "655360"
+     ],
+     [
+      "demo",
+      "2",
+      "0",
+      "0",
+      "0",
+      "2 2 2 2 2 2 2 2 8 8 8 2 2",
+      "983040",
+      "655360",
+      "655360"
+     ]
+    ]
+   }
+  }
+ }
+}
