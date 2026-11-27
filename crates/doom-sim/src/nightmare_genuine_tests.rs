@@ -250,17 +250,13 @@ fn run(item: &Item) -> Play {
     play(&mut s, &commands, &item.captures)
 }
 
-/// STALE (`tools/reference/wire29_stale.py`, golden
-/// `tests/reference/wire29_stale/stale_state.txt`): a dead player whose
-/// `attacker` is an imp's corpse that respawns. The genuine engine reads the
-/// corpse through `player->attacker` in `P_DeathThink` on every tic: while it
-/// is pending (still in the thinker list) and then, from the observed
-/// `first_freed_read`, from a freed zone block. The port equals the genuine
-/// engine at every capture before that read and refuses its tic with
-/// `FreedRead`, the state kept.
-#[test]
-fn a_freed_attacker_is_refused_where_the_genuine_engine_first_reads_it() {
-    let text = std::fs::read_to_string(reference("wire29_stale/stale_state.txt")).expect("golden");
+/// One item of `tools/reference/wire29_stale.py` (skill 3 with the respawn byte):
+/// its golden's captures, the genuine engine's first read of a freed corpse
+/// (`first_freed_read`, a leveltime, which is the session tic: the level starts at
+/// tic 0) and the port's play of its demo.
+fn stale_item(name: &str, wad: &str) -> (usize, Play) {
+    let golden = format!("wire29_stale/{}_state.txt", name.to_lowercase());
+    let text = std::fs::read_to_string(reference(&golden)).expect("golden");
     let rows: Vec<Vec<&str>> = text
         .lines()
         .filter(|l| !l.starts_with('#'))
@@ -271,26 +267,58 @@ fn a_freed_attacker_is_refused_where_the_genuine_engine_first_reads_it() {
         .filter(|f| f[0] == "C")
         .map(|f| f[3].to_owned())
         .collect();
-    let fact = |name: &str| -> usize {
-        let row = rows.iter().find(|f| f[0] == "O" && f[1] == name);
-        row.expect(name)[2].parse().expect(name)
+    let fact = |fact: &str| -> usize {
+        let row = rows.iter().find(|f| f[0] == "O" && f[1] == fact);
+        row.expect(fact)[2].parse().expect(fact)
     };
     let (first, reads) = (fact("first_freed_read"), fact("freed_reads"));
     assert!(
         reads > 0 && first < captures.len(),
         "the genuine engine reads freed memory"
     );
-    let (map, commands) = demo_at("wire29_stale/STALE.lmp");
+    let (map, commands) = demo_at(&format!("wire29_stale/{name}.lmp"));
     let respawn = GameParameters {
         respawn: true,
         fast: false,
     };
-    let mut s = level_from("wire29_stale/stale.wad", map, Skill::Hard, respawn).expect("loads");
-    let p = play(&mut s, &commands, &captures);
+    let wad = format!("wire29_stale/{wad}");
+    let mut s = level_from(&wad, map, Skill::Hard, respawn).expect("loads");
+    (first, play(&mut s, &commands, &captures))
+}
+
+/// STALE (golden `tests/reference/wire29_stale/stale_state.txt`): a dead player
+/// whose `attacker` is an imp's corpse that respawns. The genuine engine reads the
+/// corpse through `player->attacker` in `P_DeathThink` on every tic: while it
+/// is pending (still in the thinker list) and then, from the observed
+/// `first_freed_read`, from a freed zone block. The port equals the genuine
+/// engine at every capture before that read and refuses its tic with
+/// `FreedRead`, the state kept.
+#[test]
+fn a_freed_attacker_is_refused_where_the_genuine_engine_first_reads_it() {
+    let (first, p) = stale_item("STALE", "stale.wad");
     assert_eq!(p.difference, None, "first differing capture");
     assert_eq!(p.refusal, Some((first, SimError::FreedRead)));
     eprintln!(
         "STALE: {} captures equal, FreedRead at session tic {first}",
+        p.digests.len()
+    );
+}
+
+/// STALE2 (golden `tests/reference/wire29_stale/stale2_state.txt`): an imp whose
+/// `target` is a zombieman's corpse goes back to its spawn state with the
+/// pointer kept; the corpse respawns and is freed, and a barrel's explosion with
+/// no source (p_inter.c:904-911 keeps the target) puts the imp in pain, whose
+/// next state runs `A_Chase`: the genuine engine reads the freed block's flags
+/// there (p_enemy.c:704-705). The port equals the genuine engine at every capture
+/// before that read, the long sleep with the freed target included, and refuses
+/// its tic with `FreedRead`, the state kept.
+#[test]
+fn a_freed_target_is_refused_where_the_genuine_engine_first_reads_it() {
+    let (first, p) = stale_item("STALE2", "stale2.wad");
+    assert_eq!(p.difference, None, "first differing capture");
+    assert_eq!(p.refusal, Some((first, SimError::FreedRead)));
+    eprintln!(
+        "STALE2: {} captures equal, FreedRead at session tic {first}",
         p.digests.len()
     );
 }
