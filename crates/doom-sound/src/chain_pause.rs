@@ -147,6 +147,10 @@ impl Pause {
     }
 }
 
+#[cfg(test)]
+#[path = "chain_pause_tests.rs"]
+mod tests;
+
 /// The saved state of a pause session, `DSND` version 4 (module documentation).
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ChainSoundStateV4 {

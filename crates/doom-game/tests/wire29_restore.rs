@@ -191,3 +191,46 @@ fn a_session_restored_around_the_load_that_clears_a_pause_continues_as_the_unbro
         "LOADP: {paused} paused, {running} running"
     );
 }
+
+/// What the sound session reports of the pause (survivors of step 9: `ChainSound::is_pause` and
+/// `pause_fields` have no other caller): a wire 29 session's sound is a pause session whose
+/// `mus_paused` follows the genuine `paused` column (the toggle pauses and resumes the music,
+/// s_sound.c:497-513) and whose paused tics of the level are the count of that column so far
+/// (PAUSE is one level); a wire 28 session's sound is not a pause session.
+#[test]
+fn the_sound_session_reports_the_pause_of_a_wire_29_session_only() {
+    let (pause, parameters, cmds) = item("PAUSE");
+    let paused = genuine_paused("PAUSE");
+    let settings = SessionSettings {
+        map: pause.map,
+        skill: pause.skill,
+        screenblocks: 10,
+    };
+    let mut s =
+        Session::new_finale_and_melt_wire29(m6a::data(&pause, None), settings, parameters).unwrap();
+    assert!(s.sound().is_pause());
+    assert_eq!(s.sound().pause_fields().unwrap().level_paused, 0);
+    let mut unseen = Frame::new();
+    for (t, &c) in cmds.iter().enumerate() {
+        s.tic_finale_and_melt(c).expect("a tic");
+        while s.melt_in_progress() {
+            s.melt_step(&mut unseen).expect("a melt step");
+        }
+        let f = s.sound().pause_fields().expect("a pause session");
+        assert_eq!(f.mus_paused, paused[t], "tic {t}");
+        assert_eq!(
+            f.level_paused,
+            paused[..=t].iter().filter(|&&p| p).count() as u64,
+            "tic {t}"
+        );
+    }
+    let (easy, _, _) = item("BITS3");
+    let settings = SessionSettings {
+        map: easy.map,
+        skill: easy.skill,
+        screenblocks: 10,
+    };
+    let w28 = Session::new_finale_and_melt_wire28(m6a::data(&easy, None), settings).unwrap();
+    assert!(!w28.sound().is_pause());
+    assert_eq!(w28.sound().pause_fields(), None);
+}
