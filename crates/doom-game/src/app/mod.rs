@@ -989,6 +989,10 @@ fn new_session(
         Configuration::RefusesFinaleAndMelt => Session::new(data, settings),
         Configuration::FinaleAndMelt => Session::new_finale_and_melt(data, settings),
         Configuration::FinaleAndMeltWire28 => Session::new_finale_and_melt_wire28(data, settings),
+        // The app does not launch wire 29 yet (M6b step 8); its parameters are not offered.
+        Configuration::FinaleAndMeltWire29 => {
+            Session::new_finale_and_melt_wire29(data, settings, doom_sim::GameParameters::default())
+        }
     }
 }
 

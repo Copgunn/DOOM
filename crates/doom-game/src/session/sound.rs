@@ -70,27 +70,41 @@ pub fn music_lookup_fails(sound: &ChainSound, target: Music) -> bool {
 }
 
 /// One level tic of `sim` (which has just completed it); with `load` the map loaded in this tic
-/// (module documentation). Transactional (doom-sound's rule).
+/// (module documentation). With `owed` (wire 29) the tic is the level's tic 0 after a paused load
+/// tic, whose records begin with the load's, given to the sound on that load tic. A paused tic
+/// has no records (`Simulation::paused_tic`), a paused load tic only the load's. Transactional
+/// (doom-sound's rule).
 pub fn level_tic(
     sound: &mut ChainSound,
     load: Option<u8>,
     sim: &Simulation,
     rndindex: u8,
+    owed: bool,
 ) -> Result<ChainTic, SoundWitness> {
     let listener = simulation_listener(sim).ok_or(SoundWitness::NoListener)?;
     let records = sim.sound_records();
+    let head = sim.load_sound_records();
+    let stripped = || {
+        records
+            .get(head.len()..)
+            .filter(|_| records.starts_with(head))
+    };
     let (load, tic_records) = match load {
+        None if owed => (None, stripped().ok_or(SoundWitness::LoadRecords)?),
         None => (None, records),
         Some(map) => {
-            let head = sim.load_sound_records();
-            if records.get(..head.len()) != Some(head) {
-                return Err(SoundWitness::LoadRecords);
-            }
+            // A paused load tic: the level's tic 0 has not run (its records are empty).
+            let paused = sim.tic() == 0;
+            let rest = if paused && records.is_empty() {
+                records
+            } else {
+                stripped().ok_or(SoundWitness::LoadRecords)?
+            };
             let load = LevelLoad {
                 map: i32::from(map),
                 records: head,
             };
-            (Some(load), &records[head.len()..])
+            (Some(load), rest)
         }
     };
     Ok(sound.level_tic(

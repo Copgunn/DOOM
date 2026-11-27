@@ -236,6 +236,9 @@ pub struct Display {
     wipe: bool,
     contract: RandomContract,
     inputs: Option<StatusInputs>,
+    /// The last observed tic was a paused one ([`Self::observe_paused`]): the level may be
+    /// drawn before its tic 0 has run.
+    paused: bool,
     bg: Vec<u8>,
     bg_defined: Vec<bool>,
     /// The M6a session part (None for every M5b and M5c display).
@@ -325,6 +328,7 @@ impl Display {
             wipe: true,
             contract: RandomContract::SoundFreeWipeFree,
             inputs: None,
+            paused: false,
             bg: vec![0; SCREENWIDTH * BG_ROWS],
             bg_defined: vec![false; SCREENWIDTH * BG_ROWS],
             session: None,
@@ -458,12 +462,54 @@ impl Display {
         self.observe_inner(sim, fed, 0, adjust)
     }
 
+    /// M6b wire 29: observes a session tic in which the level is paused (`P_Ticker` returned at
+    /// once, p_tick.c:135-136, and the simulation made only `G_Ticker`'s turbo test,
+    /// `Simulation::paused_tic`): `ST_Ticker` with its `M_Random` draw after the tic's `draws`
+    /// of sound, `AM_Ticker` (nothing modelled) and `HU_Ticker` with the turbo message, if any,
+    /// run as in every level tic (g_game.c:729-734); the renderer's state, which follows the
+    /// simulation's tics, does not move, and the level may then be drawn before its tic 0 has
+    /// run. On an error nothing changes. The M_PAUSE picture of a paused frame (d_main.c:303-311)
+    /// is not drawn here (M6b step 7).
+    pub fn observe_paused(
+        &mut self,
+        sim: &Simulation,
+        fed: &TicCommand,
+        draws: u16,
+    ) -> Result<Option<Message>, DisplayObserveError> {
+        self.observe_tic(sim, fed, draws, |_, _| {}, true, true)
+    }
+
+    /// [`Self::observe_paused`] without its `ST_Ticker`, for the planted fault of the session's
+    /// genuine comparison only (the altered genuine engine `pause_st`, which stops `ST_Ticker`
+    /// while paused).
+    #[doc(hidden)]
+    pub fn observe_paused_without_status(
+        &mut self,
+        sim: &Simulation,
+        fed: &TicCommand,
+        draws: u16,
+    ) -> Result<Option<Message>, DisplayObserveError> {
+        self.observe_tic(sim, fed, draws, |_, _| {}, true, false)
+    }
+
     fn observe_inner(
         &mut self,
         sim: &Simulation,
         fed: &TicCommand,
         draws: u16,
         adjust: impl FnOnce(&mut StatusInputs, &mut Option<Message>),
+    ) -> Result<Option<Message>, DisplayObserveError> {
+        self.observe_tic(sim, fed, draws, adjust, false, true)
+    }
+
+    fn observe_tic(
+        &mut self,
+        sim: &Simulation,
+        fed: &TicCommand,
+        draws: u16,
+        adjust: impl FnOnce(&mut StatusInputs, &mut Option<Message>),
+        paused: bool,
+        status_tick: bool,
     ) -> Result<Option<Message>, DisplayObserveError> {
         if self.session.as_ref().is_some_and(|s| s.melt.is_some()) {
             return Err(DisplayObserveError::MeltInProgress);
@@ -480,8 +526,10 @@ impl Display {
         // The tic's `gametic` (the turbo test's, g_game.c:671-679): the tic count before the
         // tic, plus the load's `gametic` under wire 26 (owner's ruling 1 of 2026-11-22).
         let gametic = sim.gametic().wrapping_sub(1);
+        // A paused tic has no events of the level (the simulation emptied them).
+        let events = if paused { &[][..] } else { sim.events() };
         let mut message =
-            hu_stuff::derive_message(sim.events(), gametic, fed.forward, self.hud.stored, stored)
+            hu_stuff::derive_message(events, gametic, fed.forward, self.hud.stored, stored)
                 .map_err(DisplayObserveError::MessageUnderivable)?
                 .map(|m| {
                     hu_stuff::message_text(m).ok_or(DisplayObserveError::MessageUnderivable(m))
@@ -498,17 +546,22 @@ impl Display {
         // The tic's sound draws inside P_Ticker come before ST_Ticker's (g_game.c:730-731); 0
         // under the M5b contract.
         status.rndindex = advanced(status.rndindex, draws);
-        status
-            .tick(&inputs)
-            .map_err(|_| DisplayObserveError::AttackerRemoved)?;
+        if status_tick {
+            status
+                .tick(&inputs)
+                .map_err(|_| DisplayObserveError::AttackerRemoved)?;
+        }
         let mut hud = self.hud.clone();
         if !hud.tick(message) && message.is_some() {
             return Err(DisplayObserveError::MessageNotTaken);
         }
         hud.stored = stored;
-        self.renderer
-            .observe(sim)
-            .map_err(DisplayObserveError::Render)?;
+        if !paused {
+            self.renderer
+                .observe(sim)
+                .map_err(DisplayObserveError::Render)?;
+        }
+        self.paused = paused;
         self.status = status;
         self.hud = hud;
         self.inputs = Some(inputs);
@@ -548,7 +601,7 @@ impl Display {
         {
             return Err(DisplayRefusal::WrongGameState);
         }
-        let Some(inputs) = self.inputs.filter(|_| sim.tic() != 0) else {
+        let Some(inputs) = self.inputs.filter(|_| sim.tic() != 0 || self.paused) else {
             return Err(DisplayRefusal::BeforeFirstTic);
         };
         // wipe_StartScreen before anything of the frame is drawn (d_main.c:226; f_wipe.c:237-245):

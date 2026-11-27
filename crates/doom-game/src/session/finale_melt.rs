@@ -48,14 +48,15 @@ use super::finale;
 use super::intermission::Latches;
 use super::sound::{self as session_sound, Music};
 use super::{
-    CarriedPlayer, PlantedFault, Reader, Refusal, Session, SessionData, SessionSettings,
-    SessionWitness, StartError, TicKind, TicReport, command_domain, dead_latches,
+    BT_SPECIAL, CarriedPlayer, PlantedFault, Reader, Refusal, Session, SessionData,
+    SessionSettings, SessionWitness, StartError, TicKind, TicReport, command_domain,
+    command_domain_wire29, dead_latches,
 };
 use doom_map::Map;
 use doom_render::{Display, FinaleView, Frame, GameMode, GameState, SessionError};
 use doom_sim::{
-    LevelExit, LevelStart, LevelStartError, MapContextOptions, Simulation, Skill, StartKind,
-    TicCommand,
+    GameParameters, LevelExit, LevelStart, LevelStartError, MapContextOptions, Simulation, Skill,
+    StartKind, TicCommand,
 };
 use doom_sound::chain::{ChainSound, ChainTic, IntermissionSound};
 use doom_sound::chain_melt::{ChainFault, ChainMode};
@@ -87,6 +88,13 @@ pub enum Configuration {
     /// the monster escape witness, a refuse-the-tic stop (M6a note §1.17, option 1).
     /// Nightmare (4) stays refused ([`super::StartError::Domain`]).
     FinaleAndMeltWire28,
+    /// Wire 29 (M6b step 6; [`Session::new_finale_and_melt_wire29`],
+    /// [`Session::tic_finale_and_melt`], [`Session::melt_step`], `DSES` version 4 in
+    /// [`super::state_v4`]): [`Self::FinaleAndMeltWire28`] over wire 29 (doom-sim's
+    /// `PlayerMonstersEpisode1V7`, captures DSIM45): skill 4 admitted besides 0 to 3, the `-respawn`
+    /// and `-fast` parameters (rulings N1, N10), and the original's pause (rulings N5, N6:
+    /// the session owns `paused`; module documentation of [`super`] and [`Session::paused`]).
+    FinaleAndMeltWire29,
 }
 
 impl Configuration {
@@ -94,7 +102,9 @@ impl Configuration {
     pub(crate) fn chain_mode(self) -> ChainMode {
         match self {
             Self::RefusesFinaleAndMelt => ChainMode::RefusesMelt,
-            Self::FinaleAndMelt | Self::FinaleAndMeltWire28 => ChainMode::FinaleAndMelt,
+            Self::FinaleAndMelt | Self::FinaleAndMeltWire28 | Self::FinaleAndMeltWire29 => {
+                ChainMode::FinaleAndMelt
+            }
         }
     }
 
@@ -105,13 +115,15 @@ impl Configuration {
     }
 
     /// The skill of the settings' skill byte in this configuration: 2 and 3 in every one, 0
-    /// (`sk_baby`) and 1 (`sk_easy`) under wire 28 only; the two older configurations refuse them
-    /// as before (`NotYet::EasySkill`), and every configuration refuses 4 and above
-    /// (`StartError::Domain`).
+    /// (`sk_baby`) and 1 (`sk_easy`) under wires 28 and 29 only; the two older configurations
+    /// refuse them as before (`NotYet::EasySkill`); 4 (`sk_nightmare`) under wire 29 only, and
+    /// every other configuration refuses 4 and above (`StartError::Domain`). A byte above 4 is the
+    /// demo reader's to clamp (g_game.c:1379-1380), not the session's.
     pub(crate) fn skill(self, byte: u8) -> Result<Skill, StartError> {
         match (self, byte) {
-            (Self::FinaleAndMeltWire28, 0) => Ok(Skill::Baby),
-            (Self::FinaleAndMeltWire28, 1) => Ok(Skill::Easy),
+            (Self::FinaleAndMeltWire28 | Self::FinaleAndMeltWire29, 0) => Ok(Skill::Baby),
+            (Self::FinaleAndMeltWire28 | Self::FinaleAndMeltWire29, 1) => Ok(Skill::Easy),
+            (Self::FinaleAndMeltWire29, 4) => Ok(Skill::Nightmare),
             _ => super::skill_of(byte),
         }
     }
@@ -119,12 +131,14 @@ impl Configuration {
     /// The level of this configuration loaded in the `G_Ticker` whose `gametic` is `gametic`:
     /// wire 26 (`PlayerMonstersEpisode1V4`, DSIM42) for the frozen configuration, wire 27
     /// (`PlayerMonstersEpisode1V5`, DSIM43) for the finale and the melt, wire 28
-    /// (`PlayerMonstersEpisode1V6`, DSIM44) for [`Self::FinaleAndMeltWire28`].
+    /// (`PlayerMonstersEpisode1V6`, DSIM44) for [`Self::FinaleAndMeltWire28`] and wire 29
+    /// (`PlayerMonstersEpisode1V7`, DSIM45, with `parameters`) for [`Self::FinaleAndMeltWire29`];
+    /// the older configurations take no parameters (always the default).
     pub(crate) fn level_at(
         self,
         map: Map,
         map_number: u8,
-        skill: Skill,
+        (skill, parameters): (Skill, GameParameters),
         start: LevelStart,
         gametic: u64,
     ) -> Result<Simulation, LevelStartError> {
@@ -132,6 +146,17 @@ impl Configuration {
             Self::RefusesFinaleAndMelt => Simulation::original_player_episode1_v4_level_at,
             Self::FinaleAndMelt => Simulation::original_player_episode1_v5_level_at,
             Self::FinaleAndMeltWire28 => Simulation::original_player_episode1_v6_level_at,
+            Self::FinaleAndMeltWire29 => {
+                return Simulation::original_player_episode1_v7_level_at(
+                    map,
+                    map_number,
+                    skill,
+                    parameters,
+                    MapContextOptions::default(),
+                    start,
+                    gametic,
+                );
+            }
         };
         build(
             map,
@@ -147,7 +172,7 @@ impl Configuration {
     pub(crate) fn display_config(self, mode: GameMode) -> doom_render::SessionConfig {
         match self {
             Self::RefusesFinaleAndMelt => doom_render::SessionConfig::RefusesFinaleAndMelt,
-            Self::FinaleAndMelt | Self::FinaleAndMeltWire28 => {
+            Self::FinaleAndMelt | Self::FinaleAndMeltWire28 | Self::FinaleAndMeltWire29 => {
                 doom_render::SessionConfig::FinaleAndMelt { mode }
             }
         }
@@ -226,6 +251,10 @@ pub struct FinaleMeltTicReport {
     pub sound: ChainTic,
     /// `finalestage` and `finalecount` after the tic (None outside the finale).
     pub finale: Option<FinaleView>,
+    /// [`Configuration::FinaleAndMeltWire29`]: `paused` after the tic's `G_Ticker`, so that its
+    /// frame is one the C draws `M_PAUSE` over (d_main.c:303-311). **Temporary (M6b step 7 draws
+    /// the picture):** this frame lacks it. Always false in the other configurations.
+    pub paused: bool,
 }
 
 impl FinaleMeltTicReport {
@@ -241,6 +270,7 @@ impl FinaleMeltTicReport {
             wi_starts: r.wi_starts,
             sound: r.sound,
             finale: None,
+            paused: false,
         }
     }
 }
@@ -284,6 +314,33 @@ impl Session {
         Self::new_in(data, settings, Configuration::FinaleAndMeltWire28)
     }
 
+    /// A new game in the wire 29 configuration ([`Configuration::FinaleAndMeltWire29`]): as
+    /// [`Session::new_finale_and_melt_wire28`] with the levels on wire 29, skills 0 to 4 admitted
+    /// and the `-respawn` and `-fast` `parameters`, constant for the session as `respawnparm` and
+    /// `fastparm` are for a game (g_game.c:1416-1428).
+    pub fn new_finale_and_melt_wire29(
+        data: Arc<SessionData>,
+        settings: SessionSettings,
+        parameters: GameParameters,
+    ) -> Result<Self, StartError> {
+        Self::new_in_with(
+            data,
+            settings,
+            Configuration::FinaleAndMeltWire29,
+            parameters,
+        )
+    }
+
+    /// `respawnparm` and `fastparm` (the default outside [`Configuration::FinaleAndMeltWire29`]).
+    pub fn parameters(&self) -> GameParameters {
+        self.parameters
+    }
+
+    /// `paused` after the last tic (always false outside [`Configuration::FinaleAndMeltWire29`]).
+    pub fn paused(&self) -> bool {
+        self.paused
+    }
+
     /// The configuration.
     pub fn configuration(&self) -> Configuration {
         self.config
@@ -322,6 +379,9 @@ impl Session {
                 self.melt_step(&mut unseen)?;
             }
         }
+        if self.config == Configuration::FinaleAndMeltWire29 {
+            return self.tic_wire29(cmd).map_err(refuse);
+        }
         let check = |reader| command_domain(&cmd, reader);
         let frozen = FinaleMeltTicReport::of;
         let r = match self.gamestate() {
@@ -336,6 +396,7 @@ impl Session {
                                 doom_sim::LevelStart::Reborn { p_random },
                                 doom_render::LevelChange::Reborn,
                                 0,
+                                false,
                             )
                         })
                         .map(frozen)
@@ -349,12 +410,12 @@ impl Session {
                     })
                 } else {
                     check(Reader::Level)
-                        .and_then(|()| self.level_tic(cmd))
+                        .and_then(|()| self.level_tic(cmd, false))
                         .map(frozen)
                 }
             }
             GameState::Intermission if self.world_done => check(Reader::Level)
-                .and_then(|()| self.world_done_tic(cmd))
+                .and_then(|()| self.world_done_tic(cmd, false))
                 .map(frozen),
             GameState::Intermission => check(Reader::NonLevel)
                 .and_then(|()| self.intermission_tic(cmd))
@@ -362,6 +423,66 @@ impl Session {
             GameState::Finale => check(Reader::NonLevel).and_then(|()| self.finale_tic()),
         };
         r.map_err(refuse)
+    }
+
+    /// One tic of [`Configuration::FinaleAndMeltWire29`]: [`Self::tic_finale_and_melt`]'s order
+    /// with `G_Ticker`'s special buttons between the game actions and the game-state switch
+    /// (g_game.c:605-748; the pause in [`super`]'s module documentation). `paused` changes only
+    /// with a tic that succeeds.
+    fn tic_wire29(&mut self, cmd: TicCommand) -> Result<FinaleMeltTicReport, SessionWitness> {
+        let fault = self.fault;
+        let state = self.gamestate();
+        let reborn = state == GameState::Level && self.level.reborn_requested();
+        let exit = (state == GameState::Level && !reborn)
+            .then(|| self.level.level_exit_request())
+            .flatten();
+        let loads = reborn || (state == GameState::Intermission && self.world_done);
+        // G_DoLoadLevel clears `paused` (g_game.c:494) before the special buttons (698-724).
+        let before = self.paused && !(loads && fault != Some(PlantedFault::PauseKeep));
+        let toggle = if fault == Some(PlantedFault::PauseMask) {
+            cmd.buttons == 0x81
+        } else {
+            doom_sim::toggles_pause(cmd.buttons)
+        };
+        let paused = before != toggle;
+        // P_Ticker runs in a level tic and on a load tic's new level, unless paused.
+        let level = (state == GameState::Level && exit.is_none()) || loads;
+        let hold = paused && fault != Some(PlantedFault::PauseRun);
+        command_domain_wire29(&cmd, level && !hold)?;
+        let wi_cmd = if fault == Some(PlantedFault::PauseWi) && cmd.buttons & BT_SPECIAL != 0 {
+            TicCommand {
+                buttons: cmd.buttons & !1,
+                ..cmd
+            }
+        } else {
+            cmd
+        };
+        let frozen = FinaleMeltTicReport::of;
+        let mut r = if reborn {
+            let p_random = self.level.rng().indices()[0];
+            let start = LevelStart::Reborn { p_random };
+            let change = doom_render::LevelChange::Reborn;
+            self.load_tic(cmd, self.map, start, change, 0, hold)
+                .map(frozen)?
+        } else if let Some(exit) = exit {
+            if self.map == 8 {
+                self.victory_tic(exit)?
+            } else {
+                self.completion_tic(wi_cmd, exit).map(frozen)?
+            }
+        } else if state == GameState::Level {
+            self.level_tic(cmd, hold).map(frozen)?
+        } else if loads {
+            self.world_done_tic(cmd, hold).map(frozen)?
+        } else if state == GameState::Intermission {
+            self.intermission_tic(wi_cmd).map(frozen)?
+        } else {
+            self.finale_tic()?
+        };
+        self.paused = paused;
+        self.shown_paused |= paused;
+        r.paused = paused;
+        Ok(r)
     }
 
     /// One melt step (`wipe_ScreenWipe` with `ticks = 1`, d_main.c:335-340; f_wipe.c:184-222):
@@ -582,6 +703,7 @@ impl Session {
             wi_starts: Vec::new(),
             sound: ts,
             finale: Some(view),
+            paused: false,
         })
     }
 
