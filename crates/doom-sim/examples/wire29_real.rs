@@ -15,7 +15,10 @@
 //! the first, whose `T` names the session tic at which an intermission ends (the
 //! intermission belongs to the session, not to the simulation); an exit on map 8 is
 //! the victory, where the comparison ends. Every load starts at `gametic` = its
-//! session tic.
+//! session tic. The pause (M6b step 8) as the session runs it: a command that
+//! toggles (`doom_sim::toggles_pause`, g_game.c:698-708) flips `paused` before
+//! the tic, a load clears it first (g_game.c:494), and a paused level tic is
+//! `Simulation::paused_tic`, its capture printed too.
 //!
 //! Prints `L,level,tic,map,kind` per level, `C,level,leveltime,digest` per capture
 //! after a level tic (`tests/reference/m6a_state.txt`'s state digest over DSIM45,
@@ -175,6 +178,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut level = load(map, LevelStart::NewGame, 0)?;
     let mut before = level.sim.snapshot().canonical_bytes();
     let (mut k, mut intermission) = (0, None::<(Option<CarriedStart>, u8)>);
+    let mut paused = false;
     println!("L,0,0,{map},new");
     let none = TicCommand::default();
     let end = 'run: {
@@ -223,6 +227,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                 continue;
             }
             if let Some((m, s)) = start {
+                paused = false;
                 map = m;
                 level = match load(m, s, tic) {
                     Ok(l) => l,
@@ -236,7 +241,12 @@ fn main() -> Result<(), Box<dyn Error>> {
                 };
                 println!("L,{k},{tic},{m},{kind}");
             }
-            let r = level.sim.advance([*c, none, none, none]);
+            paused ^= doom_sim::toggles_pause(c.buttons);
+            let r = if paused {
+                level.sim.paused_tic([*c, none, none, none])
+            } else {
+                level.sim.advance([*c, none, none, none])
+            };
             let r28 = level
                 .old
                 .as_mut()
