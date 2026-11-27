@@ -813,8 +813,11 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
     // DSIM42 (wire 26, M6a ruling U2 = B1) is DSIM41 plus the start group after
     // `events.sounds.pending`.
     // DSIM43 (wire 27) is the DSIM42 layout, field for field, under policy 27,
-    // and DSIM44 (wire 28) the same layout under policy 28.
-    let schema = if sim.player_policy().has_easy_skills() {
+    // and DSIM44 (wire 28) the same layout under policy 28. DSIM45 (wire 29) is
+    // DSIM44 under policy 29 plus `actors.parameters` and `level.gametic_lead`.
+    let schema = if sim.player_policy().has_nightmare() {
+        45
+    } else if sim.player_policy().has_easy_skills() {
         44
     } else if sim.player_policy().has_wrapping_intercept() {
         43
@@ -868,6 +871,14 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
                 0,
                 u8::from(sim.actor_options.no_monsters),
             ],
+        );
+    }
+    if schema == 45 {
+        let p = sim.world.parameters.unwrap_or_default();
+        field(
+            &mut fields,
+            "actors.parameters",
+            [u8::from(p.respawn), u8::from(p.fast)],
         );
     }
     if let Some(stats) = sim.statistics {
@@ -1302,7 +1313,7 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
             field(&mut fields, format!("{prefix}.{i}"), event_bytes(event));
         }
     }
-    if matches!(schema, 41..=44) {
+    if matches!(schema, 41..=45) {
         for (prefix, records) in [
             ("events.sounds.last", &sim.sounds),
             ("events.sounds.pending", &sim.pending_sounds),
@@ -1317,7 +1328,7 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
             }
         }
     }
-    if matches!(schema, 42..=44) {
+    if matches!(schema, 42..=45) {
         // DSIM42's reader requires the start group, so a wire-26 simulation with
         // no recorded start is never written: no public constructor builds one
         // (`with_original_registry` refuses wire 26), and one built inside the
@@ -1328,6 +1339,10 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
             .expect("wire 26 (DSIM42) is constructed only with its level start");
         for (path, value) in crate::carried_start::start_fields(start) {
             field(&mut fields, path, value);
+        }
+        if schema == 45 {
+            let lead = sim.gametic_lead.unwrap_or(start.gametic);
+            field(&mut fields, "level.gametic_lead", lead.to_le_bytes());
         }
     }
     Snapshot {

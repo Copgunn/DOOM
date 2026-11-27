@@ -52,11 +52,13 @@ pub use player_monsters::{
     PLAYER_MAP_SCALE_CONTEXT_SCHEMA, PLAYER_MONSTERS_CONTEXT_SCHEMA, PLAYER_MOVERS_CONTEXT_SCHEMA,
     PLAYER_REAL_MAP_CONTEXT_SCHEMA, PLAYER_SPECIALS_CONTEXT_SCHEMA,
 };
+mod nightmare;
+pub use nightmare::{GameParameters, Wire29Pending};
 mod carried_start;
 pub use carried_start::{
     CarriedField, CarriedStart, LevelExit, LevelFinish, LevelStart, LevelStartError,
     PLAYER_EPISODE1_V4_CONTEXT_SCHEMA, PLAYER_EPISODE1_V5_CONTEXT_SCHEMA,
-    PLAYER_EPISODE1_V6_CONTEXT_SCHEMA, StartKind,
+    PLAYER_EPISODE1_V6_CONTEXT_SCHEMA, PLAYER_EPISODE1_V7_CONTEXT_SCHEMA, StartKind,
 };
 mod player_commands;
 mod player_pistol;
@@ -332,6 +334,9 @@ pub enum SimError {
     PlayerReborn,
     /// Wire 25's sound support refused the map or the tic (M5c decisions T11, T12).
     Sound(sound::SoundError),
+    /// Wire 29: a rule of Nightmare or the parameters that is not built yet
+    /// refused the tic (temporary, M6b phase 2 step 1); no state is advanced.
+    Wire29Pending(Wire29Pending),
 }
 impl fmt::Display for SimError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -339,6 +344,11 @@ impl fmt::Display for SimError {
     }
 }
 impl Error for SimError {}
+impl From<Wire29Pending> for SimError {
+    fn from(e: Wire29Pending) -> Self {
+        Self::Wire29Pending(e)
+    }
+}
 impl From<sound::SoundError> for SimError {
     fn from(e: sound::SoundError) -> Self {
         Self::Sound(e)
@@ -661,6 +671,11 @@ pub struct Simulation {
     /// the sound records the load made and the `gametic` of the load's `G_Ticker`.
     /// Constant for the run; `None` under every other policy.
     pub(crate) level_start: Option<carried_start::StartRecord>,
+    /// Wire 29 alone (ruling N6 (a)): how far `gametic` is ahead of the level's
+    /// tic count (DSIM45 `level.gametic_lead`): the load's `gametic` until the
+    /// session's pause, which runs `G_Ticker` without `P_Ticker`, moves it on.
+    /// `None` under every other policy.
+    pub(crate) gametic_lead: Option<u64>,
 }
 /// Static-geometry table bounds a construction prepares against: the M3f2/M3h3
 /// constants for every historical profile, the WAD format's own bounds (M3h6 note
@@ -852,6 +867,7 @@ impl Simulation {
             sounds: Vec::new(),
             pending_sounds: Vec::new(),
             level_start: None,
+            gametic_lead: None,
         })
     }
     /// The sectors a type's dimensions are admitted against: the heights policy's

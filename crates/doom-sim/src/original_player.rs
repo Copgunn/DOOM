@@ -149,6 +149,11 @@ pub(crate) struct PlayerRuntime {
     /// (p_inter.c:799-800). Fixed at admission from the policy and the skill
     /// (DSIM `actors.options`); false under every other policy and skill.
     pub baby: bool,
+    /// Wire 29 at `sk_nightmare` (`gameskill == sk_nightmare`, ruling N1): every
+    /// `P_GiveAmmo` amount is doubled as at `sk_baby` (p_inter.c:95-101); damage is
+    /// not halved (p_inter.c:799-800 names `sk_baby` alone). False under every
+    /// other policy and skill.
+    pub nightmare: bool,
 }
 impl PlayerRuntime {
     /// `P_DamageMobj`'s `if (player && gameskill == sk_baby) damage >>= 1;`

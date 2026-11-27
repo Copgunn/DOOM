@@ -590,6 +590,11 @@ pub(crate) fn launch_missile<A: lifecycle::ActorAccess>(
     if h.access.live_of_type(ty) >= bound {
         return Err(ProjectileError::WorkLimit.into());
     }
+    // Wire 29: the fast table's missile speeds (g_game.c:1425-1427) are not built
+    // yet (temporary, M6b step 1).
+    if crate::nightmare::fast(h.world, h.options.skill) {
+        return Err(crate::Wire29Pending::FastMissile.into());
+    }
     h.access.reserve(1)?;
     let from = *h.access.get(source).ok_or(ProjectileError::Reference)?;
     let to = *h.access.get(dest).ok_or(ProjectileError::Reference)?;

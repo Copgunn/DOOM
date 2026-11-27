@@ -310,6 +310,15 @@ pub(crate) fn select<A: ActorAccess>(
         h.enter_counted(id, states[3], work);
         return true;
     }
+    // Wire 29: `fastparm`'s half of p_enemy.c:738-739 is not built yet
+    // (temporary, M6b step 1).
+    if states[4].0 != 0
+        && life.movecount != 0
+        && crate::nightmare::chase_fastparm(h.world, h.options.skill)
+    {
+        h.refuse(crate::Wire29Pending::FastChase);
+        return true;
+    }
     if states[4].0 != 0
         && (h.options.skill == Skill::Nightmare || life.movecount == 0)
         && missile(h, id)

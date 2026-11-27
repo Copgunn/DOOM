@@ -37,6 +37,9 @@ pub const PLAYER_EPISODE1_V5_CONTEXT_SCHEMA: &[u8] = b"PLAYER-MONSTERS-EPISODE1-
 /// Explicit Episode 1 part 6 context (wire 28, DSIM44): wire 27's world with
 /// skills 0 and 1 and the spawn rule S″ with the monster escape witness.
 pub const PLAYER_EPISODE1_V6_CONTEXT_SCHEMA: &[u8] = b"PLAYER-MONSTERS-EPISODE1-6-v1";
+/// Explicit Episode 1 part 7 context (wire 29, DSIM45): wire 28's world with
+/// skill 4 and the `-respawn` and `-fast` parameters.
+pub const PLAYER_EPISODE1_V7_CONTEXT_SCHEMA: &[u8] = b"PLAYER-MONSTERS-EPISODE1-7-v1";
 
 /// The largest tic count a flash psprite can hold with a null state at a carried
 /// start: `P_SetupPsprites` nulls the state and keeps the count (p_pspr.c:836-837),
@@ -502,12 +505,57 @@ impl Simulation {
             gametic,
         )
     }
+    /// Wire 29 (`PlayerMonstersEpisode1V7`, rulings N1 and N10):
+    /// [`Self::original_player_episode1_v6_level_at`] under wire 29, which is wire
+    /// 28 plus skill 4 (`sk_nightmare`) and the `-respawn` and `-fast`
+    /// `parameters`, at any skill. Captures are DSIM45, read by
+    /// [`crate::Diagnostic::decode_episode1_v7`]: DSIM44 under policy 29 and
+    /// [`PLAYER_EPISODE1_V7_CONTEXT_SCHEMA`], plus `actors.parameters` and
+    /// `level.gametic_lead`. Rules not built yet refuse the tic
+    /// ([`crate::Wire29Pending`]).
+    pub fn original_player_episode1_v7_level_at(
+        map: Map,
+        map_number: u8,
+        skill: Skill,
+        parameters: GameParameters,
+        context: MapContextOptions,
+        start: LevelStart,
+        gametic: u64,
+    ) -> Result<Self, LevelStartError> {
+        Self::episode1_level_with(
+            OriginalExecutionProfile::PlayerMonstersEpisode1V7,
+            (map, map_number, skill),
+            Some(parameters),
+            context,
+            start,
+            gametic,
+        )
+    }
     /// The level load of wires 26 to 28 (`policy`).
     fn episode1_level_at(
         policy: OriginalExecutionProfile,
         map: Map,
         map_number: u8,
         skill: Skill,
+        context: MapContextOptions,
+        start: LevelStart,
+        gametic: u64,
+    ) -> Result<Self, LevelStartError> {
+        Self::episode1_level_with(
+            policy,
+            (map, map_number, skill),
+            None,
+            context,
+            start,
+            gametic,
+        )
+    }
+    /// The level load of wires 26 to 29; `parameters` is wire 29's (`None` for
+    /// every older wire).
+    fn episode1_level_with(
+        policy: OriginalExecutionProfile,
+        (map, map_number, skill): (Map, u8, Skill),
+        parameters: Option<GameParameters>,
         context: MapContextOptions,
         start: LevelStart,
         gametic: u64,
@@ -532,6 +580,10 @@ impl Simulation {
         };
         let mut sim = Self::episode1_v2_with(policy, map, map_number, skill, context)
             .map_err(LevelStartError::Registry)?;
+        if policy.has_nightmare() {
+            sim.world.parameters = parameters;
+            sim.gametic_lead = Some(gametic);
+        }
         let setup = |e: SimError| LevelStartError::Setup(e);
         if let LevelStart::Carried(carried) = start {
             let p = sim
@@ -600,9 +652,14 @@ impl Simulation {
     /// turbo test reads (g_game.c:671-679); after it, the next tic's. The sum
     /// wraps: its readers use only bits 0 to 6.
     pub fn gametic(&self) -> u64 {
-        self.level_start
-            .as_ref()
-            .map_or(self.tic, |s| s.gametic.wrapping_add(self.tic))
+        self.gametic_lead
+            .or(self.level_start.as_ref().map(|s| s.gametic))
+            .map_or(self.tic, |lead| lead.wrapping_add(self.tic))
+    }
+    /// Wire 29: how far `gametic` is ahead of the level's tic count (DSIM45
+    /// `level.gametic_lead`, ruling N6 (a)); `None` under every other policy.
+    pub fn gametic_lead(&self) -> Option<u64> {
+        self.gametic_lead
     }
     /// Wire 26: how the level began; `None` under every other policy.
     pub fn level_start_kind(&self) -> Option<StartKind> {

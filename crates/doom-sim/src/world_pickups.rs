@@ -887,6 +887,7 @@ impl<A: ActorAccess> movement::MotionAccess for Contacts<'_, A> {
                 // The assigned message; a keycard already held assigns none
                 // (p_inter.c:421–443).
                 let mut message = Some(k.message());
+                let given = [w.bullets, w.shells, w.cells, w.rockets];
                 let mut sound = if matches!(
                     k,
                     PickupKind::Shotgun
@@ -1137,6 +1138,15 @@ impl<A: ActorAccess> movement::MotionAccess for Contacts<'_, A> {
                         gave || fresh
                     }
                 };
+                // Wire 29 at skill 4: the doubling of p_inter.c:95-101 is not built
+                // yet (temporary, M6b step 1): ammunition given refuses the tic.
+                if let (true, Some(PlayerWeaponRuntime::Pack(w))) =
+                    (self.player.nightmare, self.player.weapon.as_ref())
+                {
+                    if given != [w.bullets, w.shells, w.cells, w.rockets] {
+                        return Err(crate::Wire29Pending::NightmareAmmo.into());
+                    }
+                }
                 if accepted {
                     let state = self
                         .player

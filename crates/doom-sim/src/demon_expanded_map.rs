@@ -29,6 +29,8 @@ pub(crate) struct ExpandedSelection {
     /// The walk exits 52 and 124 (wire 26 alone, a superset of wire 24's rules:
     /// `teleport` is set too); false under every other policy.
     pub walk_exits: bool,
+    /// Skill 4 (wire 29 alone, ruling N1); false under every other policy.
+    pub nightmare: bool,
 }
 impl Simulation {
     /// Profile 20: larger static maps with the exact map-context Demon registry.
@@ -58,6 +60,7 @@ impl Simulation {
                 episode1: None,
                 teleport: false,
                 walk_exits: false,
+                nightmare: false,
             },
         )
     }
@@ -80,6 +83,7 @@ impl Simulation {
             episode1,
             teleport,
             walk_exits,
+            nightmare,
         } = selection;
         if context.respawn_monsters {
             return Err(MapSpawnError::Respawn.into());
@@ -87,7 +91,7 @@ impl Simulation {
         if options.mode != ActorGameMode::SinglePlayer {
             return Err(ActorError::UnsupportedMode.into());
         }
-        if options.skill == Skill::Nightmare {
+        if options.skill == Skill::Nightmare && !nightmare {
             return Err(MonsterError::Definition.into());
         }
         // The real-map policy takes the THING count from the lump (the parser's

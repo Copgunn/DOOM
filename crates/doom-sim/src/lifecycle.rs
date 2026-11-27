@@ -1465,6 +1465,13 @@ impl<A: ActorAccess> LifeHost<'_, A> {
             .and_then(|p| p.checked)
             .is_some_and(|c| c.failure.get().is_some())
     }
+    /// Wire 29's temporary refusal of a rule not built yet: the first latched
+    /// cause is kept and the staged tic is discarded.
+    pub(crate) fn refuse(&self, pending: crate::Wire29Pending) {
+        if !self.sight_failed() {
+            self.fail_sight(pending.into());
+        }
+    }
     pub(crate) fn fail_sight(&self, error: crate::SimError) {
         self.perception
             .and_then(|p| p.checked)
@@ -1590,6 +1597,13 @@ impl<A: ActorAccess> LifeHost<'_, A> {
                     .unwrap()
                     .state = None;
                 self.mark(id);
+                return;
+            }
+            // Wire 29: the fast table is not built yet (temporary, M6b step 1).
+            if crate::nightmare::FAST_STATES.contains(&state.0)
+                && crate::nightmare::fast(self.world, self.options.skill)
+            {
+                self.refuse(crate::Wire29Pending::FastStates);
                 return;
             }
             let definition = self.registry.state(state).expect("validated state");
@@ -1799,6 +1813,13 @@ impl<A: ActorAccess> LifeHost<'_, A> {
             .as_mut()
             .expect("typed actor");
         if life.tics == -1 {
+            // Wire 29: a corpse's respawn timer is not built yet (temporary, M6b
+            // step 1): p_mobj.c:450-471 would count it on.
+            if life.flags & crate::world_pickups::MF_COUNTKILL != 0
+                && crate::nightmare::respawn_monsters(self.world, self.options.skill)
+            {
+                self.refuse(crate::Wire29Pending::Respawn);
+            }
             return;
         }
         life.tics -= 1;
