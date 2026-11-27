@@ -51,3 +51,5 @@ __pycache__/
 # The wire 29 stale-pointer item's synthetic IWAD and demo lump (tools/reference/wire29_stale.py; no commercial data).
 !/tests/reference/wire29_stale/*.wad
 !/tests/reference/wire29_stale/*.lmp
+# The wire 29 pause items' demo lumps (tools/reference/wire29_pause.py; synthetic ticcmds, no commercial data).
+!/tests/reference/wire29_session/*.lmp
