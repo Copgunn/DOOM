@@ -153,9 +153,8 @@ impl Display {
     /// size; None for a display that is not a pause display.
     pub fn pause_origin(&self) -> Option<(i32, i32)> {
         let p = self.pause_part()?;
-        let v = self.renderer.view_size();
-        let y = v.viewwindowy + 4 + i32::from(p.lower);
-        Some((v.viewwindowx + (v.scaledviewwidth - CENTRED_WIDTH) / 2, y))
+        let (x, y) = pause_origin_for(self.renderer.view_size());
+        Some((x, y + i32::from(p.lower)))
     }
 
     /// The picture and its origin when the next frame draws it (paused), else None.
@@ -306,6 +305,15 @@ impl SessionDisplayStateV5 {
             },
         })
     }
+}
+
+/// Where `M_PAUSE` is drawn before its offsets for the view size `v`, the automap down
+/// (d_main.c:303-311): x = `viewwindowx + (scaledviewwidth - 68) / 2`, y = `viewwindowy + 4`.
+pub fn pause_origin_for(v: &crate::r_main::ViewSize) -> (i32, i32) {
+    (
+        v.viewwindowx + (v.scaledviewwidth - CENTRED_WIDTH) / 2,
+        v.viewwindowy + 4,
+    )
 }
 
 /// `V_DrawPatchDirect(x, y, 0, M_PAUSE)` (v_video.c:336-343) when `at` is given.

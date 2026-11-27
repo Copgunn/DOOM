@@ -804,3 +804,59 @@ fn paused_states_restore_and_continue() {
     }
     assert_eq!(checked, 14);
 }
+
+/// The pause picture below screen size 10 (`tools/reference/wire29_border.py`, our own border
+/// lumps): where the genuine engine drew `M_PAUSE` in the first paused frame of PAUSE at screen
+/// sizes 10, 9, 5 and 3. The port's display admits sizes 10 and 11 only (its session start refuses
+/// the others), and its renderer's view tables 9 to 11: at 10 and 9 the picture's place from
+/// those tables (d_main.c:303-311, the patch offsets subtracted, v_video.c:219-220) equals the
+/// genuine one; at 5 and 3 the tables are refused, so nothing is compared there (the genuine frame
+/// digests are kept in `tests/reference/wire29_border/` for a later small-size renderer).
+#[test]
+fn the_pause_picture_below_screen_size_10() {
+    use doom_render::d_display::session::pause::pause_origin_for;
+    use doom_render::r_main::ViewSize;
+    use doom_render::{ConfigError, Detail, RenderConfig};
+    let text = read("wire29_border/border.txt");
+    let head: Vec<&str> = text
+        .lines()
+        .find(|l| l.starts_with("#patch,"))
+        .unwrap()
+        .split(',')
+        .collect();
+    let (left, top): (i32, i32) = (head[7].parse().unwrap(), head[9].parse().unwrap());
+    let (mut compared, mut refused) = (Vec::new(), Vec::new());
+    for o in text.lines().filter(|l| l.starts_with("O,")) {
+        let f: Vec<&str> = o.split(',').collect();
+        let sb: u8 = f[2].parse().unwrap();
+        let genuine: (i32, i32) = (f[4].parse().unwrap(), f[5].parse().unwrap());
+        match ViewSize::new(RenderConfig {
+            screenblocks: sb,
+            detail: Detail::High,
+        }) {
+            Ok(v) => {
+                let (x, y) = pause_origin_for(&v);
+                assert_eq!((x - left, y - top), genuine, "screen size {sb}");
+                compared.push(sb);
+            }
+            Err(e) => {
+                assert_eq!(e, ConfigError::ScreenBlocks(sb));
+                refused.push(sb);
+            }
+        }
+        let (item, parameters, _) = item("PAUSE");
+        let settings = SessionSettings {
+            map: item.map,
+            skill: item.skill,
+            screenblocks: sb,
+        };
+        let start =
+            Session::new_finale_and_melt_wire29(m6a::data(&item, None), settings, parameters);
+        assert_eq!(
+            start.is_ok(),
+            sb >= 10,
+            "screen size {sb}: the session start"
+        );
+    }
+    assert_eq!((compared, refused), (vec![10, 9], vec![5, 3]));
+}
