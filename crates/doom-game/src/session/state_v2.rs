@@ -963,6 +963,11 @@ impl Session {
             // G_InitNew): the carried index is the finished level's.
             s.p_random = level.rng().indices()[0];
         }
+        // Version 4: a level whose tic 0 has not run after paused tics was loaded paused, so its
+        // tic 0 will publish the load's sound records again (the session's `head_owed`, module
+        // documentation of `super`); a first level has none.
+        let head_owed =
+            in_level && level.tic() == 0 && v4.is_some_and(|v| v.sound.level_paused > 0);
         Ok(Self {
             settings: state.settings,
             skill,
@@ -984,7 +989,7 @@ impl Session {
             finale: state.finale,
             parameters: v4.unwrap_or_default().parameters,
             paused: v4.unwrap_or_default().paused,
-            head_owed: false,
+            head_owed,
             data,
         })
     }
