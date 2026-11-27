@@ -144,7 +144,12 @@ impl Simulation {
                 }
             } else if self.is_roster_monster(life.actor_type) {
                 owners += 1;
-                if suffix || owners > self.map_demon_limit() {
+                // Wire 29: P_NightmareRespawn spawns the monster at the tail
+                // (p_mobj.c:396, P_AddThinker), after its two fogs; it replaces
+                // its corpse, so the roster bound holds.
+                let respawned = suffix
+                    && crate::nightmare::respawn_monsters(&self.world, self.actor_options.skill);
+                if (suffix && !respawned) || owners > self.map_demon_limit() {
                     return Err(MapSpawnError::Ownership.into());
                 }
                 if life.health > 0 {

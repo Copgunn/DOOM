@@ -1467,13 +1467,6 @@ impl<A: ActorAccess> LifeHost<'_, A> {
             .and_then(|p| p.checked)
             .is_some_and(|c| c.failure.get().is_some())
     }
-    /// Wire 29's temporary refusal of a rule not built yet: the first latched
-    /// cause is kept and the staged tic is discarded.
-    pub(crate) fn refuse(&self, pending: crate::Wire29Pending) {
-        if !self.sight_failed() {
-            self.fail_sight(pending.into());
-        }
-    }
     pub(crate) fn fail_sight(&self, error: crate::SimError) {
         self.perception
             .and_then(|p| p.checked)
@@ -1529,7 +1522,7 @@ impl<A: ActorAccess> LifeHost<'_, A> {
             .target = target;
         self.observe(ActorStateEvent::Target { actor: id, target });
     }
-    fn draw(&mut self, id: ActorId) -> u8 {
+    pub(crate) fn draw(&mut self, id: ActorId) -> u8 {
         let value = self.rng.p_random();
         self.observe(ActorStateEvent::Random { actor: id, value });
         value
@@ -1801,7 +1794,14 @@ impl<A: ActorAccess> LifeHost<'_, A> {
             },
         }
     }
+    /// `P_MobjThinker`'s state countdown of a missile under the historical
+    /// policies, which never reach the `tics == -1` respawn branch.
     pub fn tick(&mut self, id: ActorId) {
+        self.tick_at(id, None);
+    }
+    /// `P_MobjThinker`'s state countdown (p_mobj.c:439-471) at `leveltime`, which
+    /// the corpse respawn branch of wire 29 reads ([`crate::nightmare::corpse_think`]).
+    pub(crate) fn tick_at(&mut self, id: ActorId, leveltime: Option<u64>) {
         let life = self
             .access
             .get_mut(id)
@@ -1810,12 +1810,13 @@ impl<A: ActorAccess> LifeHost<'_, A> {
             .as_mut()
             .expect("typed actor");
         if life.tics == -1 {
-            // Wire 29: a corpse's respawn timer is not built yet (temporary, M6b
-            // step 1): p_mobj.c:450-471 would count it on.
-            if life.flags & crate::world_pickups::MF_COUNTKILL != 0
-                && crate::nightmare::respawn_monsters(self.world, self.options.skill)
-            {
-                self.refuse(crate::Wire29Pending::Respawn);
+            match leveltime {
+                Some(leveltime) => crate::nightmare::corpse_think(self, id, leveltime),
+                None => assert!(
+                    life.flags & crate::world_pickups::MF_COUNTKILL == 0
+                        || !crate::nightmare::respawn_monsters(self.world, self.options.skill),
+                    "the respawn branch runs with the level's tic"
+                ),
             }
             return;
         }

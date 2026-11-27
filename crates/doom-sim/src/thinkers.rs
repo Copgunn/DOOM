@@ -460,7 +460,7 @@ pub(crate) fn run(actors: &mut ThinkerStore<Actor>, input: Inputs<'_>) {
                         bindings: live_bindings,
                         events,
                     }
-                    .tick(id);
+                    .tick_at(id, Some(leveltime));
                 }
             }
         })

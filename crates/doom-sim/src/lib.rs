@@ -53,7 +53,7 @@ pub use player_monsters::{
     PLAYER_REAL_MAP_CONTEXT_SCHEMA, PLAYER_SPECIALS_CONTEXT_SCHEMA,
 };
 mod nightmare;
-pub use nightmare::{GameParameters, Wire29Pending};
+pub use nightmare::GameParameters;
 mod carried_start;
 pub use carried_start::{
     CarriedField, CarriedStart, LevelExit, LevelFinish, LevelStart, LevelStartError,
@@ -334,9 +334,6 @@ pub enum SimError {
     PlayerReborn,
     /// Wire 25's sound support refused the map or the tic (M5c decisions T11, T12).
     Sound(sound::SoundError),
-    /// Wire 29: a rule of Nightmare or the parameters that is not built yet
-    /// refused the tic (temporary, M6b phase 2 step 1); no state is advanced.
-    Wire29Pending(Wire29Pending),
 }
 impl fmt::Display for SimError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -344,11 +341,6 @@ impl fmt::Display for SimError {
     }
 }
 impl Error for SimError {}
-impl From<Wire29Pending> for SimError {
-    fn from(e: Wire29Pending) -> Self {
-        Self::Wire29Pending(e)
-    }
-}
 impl From<sound::SoundError> for SimError {
     fn from(e: sound::SoundError) -> Self {
         Self::Sound(e)

@@ -13,9 +13,9 @@
 //! Each item plays its demo under wire 29 at the skill and parameters of its header
 //! and must equal the genuine engine at every capture up to the end [`EXPECTED`]
 //! names: the whole level, or a refusal at a session tic. The refusals are the
-//! rules later steps of M6b build (temporary [`Wire29Pending`] refusals, the
-//! pause command's `BT_SPECIAL` byte). A step that builds a rule moves its items'
-//! ends; nothing else in this file needs to change.
+//! rules later steps of M6b build (the pause command's `BT_SPECIAL` byte). A step
+//! that builds a rule moves its items' ends; nothing else in this file needs to
+//! change.
 use crate::nightmare::Fault;
 use crate::*;
 use doom_test_evidence::sha256;
@@ -170,18 +170,14 @@ enum End {
     Level,
     /// Session tic `N` refused with this error.
     Refused(usize, SimError),
-    /// The load refused with this setup error.
-    Load(SimError),
 }
 
-const UNBUILT_RESPAWN: SimError = SimError::Wire29Pending(Wire29Pending::Respawn);
 const SPECIAL: SimError = SimError::UnsupportedButtons;
 
-/// Each item's end at this step (M6b phase 2 step 3: Nightmare's ammunition,
-/// spawn bit and reaction time, the fast table and `A_Chase`'s `fastparm` half
-/// built; the corpse respawn is step 4). GIB4's zombieman stands in a closed door
-/// sector, taller than it (`MapScale(Fit)`, at every wire). The pause command's
-/// byte is refused (`UnsupportedButtons`) until step 6.
+/// Each item's end at this step (M6b phase 2 step 4: Nightmare's ammunition,
+/// spawn bit and reaction time, the fast table, `A_Chase`'s `fastparm` half and
+/// the corpse respawn built). The pause command's byte is refused
+/// (`UnsupportedButtons`) until step 6.
 const EXPECTED: [(&str, End); 19] = [
     ("AMMO4", End::Level),
     ("BITS4", End::Level),
@@ -193,11 +189,11 @@ const EXPECTED: [(&str, End); 19] = [
     ("FAST4", End::Level),
     ("FAST3", End::Level),
     ("FAST3F", End::Level),
-    ("RESP4", End::Refused(158, UNBUILT_RESPAWN)),
+    ("RESP4", End::Level),
     ("RESP3", End::Level),
-    ("RESP3R", End::Refused(192, UNBUILT_RESPAWN)),
-    ("BLOCK4", End::Refused(65, UNBUILT_RESPAWN)),
-    ("GIB4", End::Load(SimError::MapScale(MapScaleError::Fit))),
+    ("RESP3R", End::Level),
+    ("BLOCK4", End::Level),
+    ("GIB4", End::Level),
     ("PAUSE", End::Refused(72, SPECIAL)),
     ("PAUSE0", End::Refused(0, SPECIAL)),
     ("PAUSEWI", End::Level),
@@ -311,13 +307,6 @@ fn wire_29_equals_the_genuine_engine_up_to_each_items_end() {
     let mut compared = 0;
     for (item, (name, end)) in items.iter().zip(EXPECTED) {
         assert_eq!(item.name, name);
-        if let End::Load(error) = end {
-            let (map, _) = demo(name);
-            let got = level(name, map, item.skill, item.parameters).map(|_| ());
-            assert_eq!(got, Err(LevelStartError::Setup(error)), "{name}");
-            eprintln!("{name}: refused at the load, {error:?}");
-            continue;
-        }
         let p = run(item);
         assert_eq!(p.difference, None, "{name}: first differing capture");
         match end {
@@ -329,7 +318,6 @@ fn wire_29_equals_the_genuine_engine_up_to_each_items_end() {
                 assert_eq!(p.refusal, Some((n, error)), "{name}");
                 assert_eq!(p.digests.len(), n + 1, "{name}");
             }
-            End::Load(_) => unreachable!(),
         }
         compared += p.digests.len();
         eprintln!("{name}: {} captures equal, end {end:?}", p.digests.len());

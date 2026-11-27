@@ -658,14 +658,21 @@ impl Simulation {
                 ) {
                     return Err(MonsterError::Arithmetic.into());
                 }
-                self.spawn_fits(
-                    ty,
-                    [
-                        Fixed::from_map_units(thing.position.x),
-                        Fixed::from_map_units(thing.position.y),
-                    ],
-                    SpawnHeight::Floor,
-                )?;
+                let position = [thing.position.x, thing.position.y].map(Fixed::from_map_units);
+                // Wire 29 (M6b step 4): a monster that does not fit its sector is
+                // spawned on its floor as the C spawns it (p_mobj.c:515-521, no
+                // test), the shootable case of the movers policy's V′ witness;
+                // GIB4's zombieman stands in a closed door.
+                let unfit_monster = self.player_policy().has_nightmare()
+                    && info.flags() & world_pickups::MF_COUNTKILL != 0
+                    && {
+                        let sectors = self.sector_view();
+                        let s = sectors[usize::from(self.world.locate_validated(position).sector)];
+                        s.floor <= s.ceiling
+                    };
+                if !unfit_monster {
+                    self.spawn_fits(ty, position, SpawnHeight::Floor)?;
+                }
                 if !pickup && !former && !decoration && !barrel && !landing {
                     ty = self.demon_owner_type();
                 }

@@ -511,8 +511,7 @@ impl Simulation {
     /// `parameters`, at any skill. Captures are DSIM45, read by
     /// [`crate::Diagnostic::decode_episode1_v7`]: DSIM44 under policy 29 and
     /// [`PLAYER_EPISODE1_V7_CONTEXT_SCHEMA`], plus `actors.parameters` and
-    /// `level.gametic_lead`. Rules not built yet refuse the tic
-    /// ([`crate::Wire29Pending`]).
+    /// `level.gametic_lead`.
     pub fn original_player_episode1_v7_level_at(
         map: Map,
         map_number: u8,
