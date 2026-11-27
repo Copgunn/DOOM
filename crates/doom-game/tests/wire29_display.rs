@@ -9,7 +9,7 @@ mod m6a;
 
 use doom_game::session::demo::SessionDemo;
 use doom_game::session::{Session, SessionSettings};
-use doom_render::{Frame, PauseFields, SessionDisplayStateV5, SessionStateRefusal};
+use doom_render::{DisplayRefusal, Frame, PauseFields, SessionDisplayStateV5, SessionStateRefusal};
 use doom_sim::TicCommand;
 use m6a::{Rows, int};
 
@@ -199,4 +199,17 @@ fn a_version_5_display_state_is_checked_for_paused_tics() {
     let mut bad = inter.clone();
     bad.pause.level_paused = 1;
     assert!(bad.check().is_err(), "a paused tic outside a level");
+}
+
+/// D_Display draws nothing at gametic 0 (m5b_restore.rs): a level whose tic 0 has not run is
+/// refused, the pause display's carve-out being a paused load tic only (`level_paused > 0`,
+/// covered by LOADP's frames).
+#[test]
+fn a_level_before_its_first_tic_is_not_drawn() {
+    let (s, _, _) = start("PAUSE");
+    let mut d = s.display().clone();
+    assert_eq!(
+        d.draw(s.level(), &mut Frame::new()).unwrap_err(),
+        DisplayRefusal::BeforeFirstTic
+    );
 }
