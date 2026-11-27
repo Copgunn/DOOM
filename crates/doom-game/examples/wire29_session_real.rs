@@ -9,8 +9,10 @@
 //! levelstarttic,prndindex,rndindex,paused` (the genuine session stream's G columns of those names)
 //! and, after a tic that ends in a level (paused tics and paused load tics included),
 //! `C,tic,digest,shift`: `tests/reference/m6a_state.txt`'s state digest over DSIM45 and the same
-//! digest without `level.gametic_lead` and `player.0.buttons` (the fields an inserted pause or
-//! special byte changes on a level tic whose own command had buttons 0, p_user.c:280-281, 227).
+//! digest without `level.gametic_lead`, `level.start.gametic` (a later load's session tic) and
+//! `player.0.buttons` (what inserted pause commands or a special byte in place of buttons 0 change
+//! on a level tic, p_user.c:280-281, 227), nor, in a demo with a `forward` above 50, the pickup
+//! message, which the turbo test sets by `gametic` (g_game.c:672-679).
 //! Ends with `E,marker,tics` or `E,refused,tic,witness`.
 //!
 //! `--record <lmp> --skill N --tics T [--respawn] [--fast]` (with the `--wad`s and `--mode`) instead
@@ -133,6 +135,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut s = Session::new_finale_and_melt_wire29(Arc::new(data), settings, parameters)
         .map_err(|e| format!("{e:?}"))?;
     let mut unseen = Frame::new();
+    let turbo = d.commands.iter().any(|c| c.forward > 50); // TURBOTHRESHOLD 0x32
     for (tic, &cmd) in d.commands.iter().enumerate() {
         let r = match s.tic_finale_and_melt(cmd) {
             Ok(r) => r,
@@ -158,7 +161,13 @@ fn main() -> Result<(), Box<dyn Error>> {
         );
         if matches!(r.kind, Kind::Level | Kind::Load { .. }) {
             let snap = l.snapshot();
-            let shift = |p: &str| p != "level.gametic_lead" && p != "player.0.buttons";
+            let moved = [
+                "level.gametic_lead",
+                "level.start.gametic",
+                "player.0.buttons",
+            ];
+            let message = "original_player.0.pickups.message";
+            let shift = |p: &str| !moved.contains(&p) && !(turbo && p == message);
             println!(
                 "C,{tic},{},{}",
                 digest(&snap, |_| true),

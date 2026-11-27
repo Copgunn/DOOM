@@ -10,15 +10,24 @@ tests/reference/m4b_real_results.json, the E1M1-E1M9 scripts and DEMO1, tools/lo
   both      both bytes set, the recording's own skill;
   own       the recording unchanged, played under wire 29: the control, with Rust wire 28 played alongside (the example's
             --twin28: every capture DSIM44's but for the profile, context and the two DSIM45 fields);
-  pause     (slot: pause commands inserted into a level; a later commit).
+  pause     pause commands inserted into the recording at deterministic level tics (with_pauses, step 8).
 --recording FILE (repeatable, kind 'sessions'): the owner's doom-play recordings (ruling N8; read only), the game mode
 from the file name's token; --selftest-recording N first makes one headlessly through doom-play's app
 (wire29_session_real --record, skill 4 with both parameters, pauses at session tics 200/260 and 700/701).
 Each demo is played to its last command: a player who now dies or misses the exit is still a valid input.
 
-The session level (--session; always for sessions): crates/doom-game/examples/wire29_session_real.rs plays the
+The session level (--session; always for pause and sessions): crates/doom-game/examples/wire29_session_real.rs plays the
 demo through Session::new_finale_and_melt_wire29, as doom-play does, and every session tic's G columns (SESSION_COLUMNS)
-must equal the genuine session stream's, every level capture (paused tics included) the projected one.
+must equal the genuine session stream's, every level capture (paused tics included) the projected one. The pause kind
+also requires (2): the paused run's captures on its unpaused level tics equal the unpaused run's one for one, by the
+digest without level.gametic_lead, level.start.gametic and player.0.buttons (the session tic of a later load moves with
+the inserted tics; the stored command's byte differs on a replaced tic; and in a run with a forward above 50 the pickup
+message, which the turbo test sets by gametic, g_game.c:672-679). What an insertion replaces: a pair is inserted before
+level tic t of the unpaused run (t ran a level tic: in a level before and after it, leveltime one higher, the same level
+start; and t's command has buttons 0): a toggling byte with no movement, K paused tics of t's movement with BT_ATTACK,
+then t's own command with a toggling byte for its buttons, which runs the level as t did (a live player's special byte
+is zeroed, p_user.c:280-281; a dead one's raw byte has no BT_USE, p_user.c:227); a lone 0x80 replaces the buttons of
+such a tic t. Paused tics run no level (p_tick.c:135).
 
 Genuine: the M6b runner (tools/reference/m6b_build.py, read-only), strict build (the genuine text, -fwrapv), with
 tools/reference/m6a_state.py's two exact-once state patches applied in memory (the dumps of the later loads), --render
@@ -35,7 +44,7 @@ Per-run lines and logs go to --work/logs (IWAD-derived digests, scratch only); o
 
     python3 tools/local/wire29_real.py --iwad PATH --work DIR --kind KIND[,KIND] [--only NAME,..] [--jobs N] [--cc CC]
 """
-import argparse, concurrent.futures as cf, functools, inspect, json, multiprocessing as mp, re, shutil, subprocess
+import argparse, concurrent.futures as cf, functools, inspect, json, multiprocessing as mp, random, re, shutil, subprocess
 import sys, threading, types
 from collections import Counter
 from pathlib import Path
@@ -54,8 +63,7 @@ import m6a_session_real as SR         # noqa: E402  (read-only: cut_at)
 from m5a_real import runs_selected, demo_path   # noqa: E402
 
 KINDS = {'skill4': (4, 0, 0), 'respawn': (None, 1, 0), 'fast': (None, 0, 1), 'both': (None, 1, 1), 'own': (None, 0, 0),
-         'sessions': (None, None, None)}
-PAUSE_SLOT = 'pause'          # the next commit's kind: pause commands inserted (the level rows equal the unpaused, shifted)
+         'pause': (None, 0, 0), 'sessions': (None, None, None)}
 SESSION_COLUMNS = ('gamestate', 'map', 'leveltime', 'gametic', 'levelstarttic', 'prndindex', 'rndindex', 'paused')
 # m6a_state.levels for runs with paused tics (in memory, the module file unchanged): a paused tic's dump repeats its
 # leveltime, so the captures are those after the load dump and their session tics must be consecutive
@@ -193,7 +201,28 @@ def session_check(g, s):
     return tics, ncaps, None
 
 
-def one(kind, a, binary, example, work, kr, flip=None, extra=()):
+def with_pauses(data, gs, seed, bad=False):
+    """The demo with pause pairs and a lone 0x80 inserted at seeded level tics (module text), and how many; `bad` (the
+    self-test of (2)) drops t's movement from the unpausing command, which then replaces meaningful input."""
+    n, rng = (len(data) - 14) // 4, random.Random(seed)
+    # tic t ran a level tic: in a level before and after it, leveltime one higher, the same level start
+    ran = lambda t: t - 1 in gs and t in gs and gs[t - 1][0] == gs[t][0] == 0 and gs[t][2] == gs[t - 1][2] + 1 \
+        and gs[t][4] == gs[t - 1][4]
+    ok = [t for t in range(1, n) if data[16 + 4 * t] == 0 and ran(t)]
+    plan = sorted(zip(rng.sample(ok, min(5, len(ok))), [(0x81, 0x81, 0), (0x81, 0x85, rng.randint(1, 35)),
+                                                         (0xfd, 0x81, rng.randint(36, 350)), (0x85, 0xfd, rng.randint(1, 35)),
+                                                         (None, 0x80, 0)]))
+    out, last = bytearray(data[:13]), 0
+    for t, (a, b, k) in plan:
+        out += data[13 + 4 * last:13 + 4 * t]
+        c = bytearray(data[13 + 4 * t:17 + 4 * t])
+        if a is not None: out += bytes([0, 0, 0, a]) + (c[:3] + b'\x01') * k
+        out += (bytes(3) if bad and a is not None else c[:3]) + bytes([b])
+        last = t + 1
+    return bytes(out + data[13 + 4 * last:]), len(plan)
+
+
+def one(kind, a, binary, example, work, kr, flip=None, extra=(), bad=False):
     """One run of a kind; `flip` (a session tic: the Rust demo's command there changed) and `extra` (the genuine
     runner's switches) are the self-test's faults."""
     k, run = kr
@@ -212,8 +241,16 @@ def one(kind, a, binary, example, work, kr, flip=None, extra=()):
     lmp = d / f'W{k:02}.lmp'; lmp.write_bytes(bytes(data))
     item = dict(SR.item_for(name, lmp, mode, a.iwad, min(data[1], 4), data[3]))
     rec = dict(kind=kind, name=name, map=item['map'], skill=data[1])
+    if kind == 'pause':
+        g0 = genuine(binary, item, work / 'g' / f'own_{name}', 0, 0)
+        if 'fail' in g0: return dict(rec, fail=g0['fail'])
+        s0 = session(a, item)
+        if session_check(g0, s0)[2]: return dict(rec, fail=f'unpaused session: {session_check(g0, s0)[2]}')
+        new, rec['inserted'] = with_pauses(bytes(data), g0['grows'], k, bad)
+        data = bytearray(new)
+        lmp.write_bytes(new)
     rec['session_tics'] = (len(data) - 14) // 4
-    g = genuine(binary, item, work / 'g' / f'{kind}_{name}', respawn, fast, extra=extra, paused=kind == 'sessions')
+    g = genuine(binary, item, work / 'g' / f'{kind}_{name}', respawn, fast, extra=extra, paused=kind in ('pause', 'sessions'))
     if 'fail' in g: return dict(rec, fail=g['fail'])
     sched = work / 'g' / f'{kind}_{name}.sched'
     sched.write_text(''.join(f'{v[1]},{v[2]}\n' for v in g['levels'][1:]))
@@ -239,11 +276,16 @@ def one(kind, a, binary, example, work, kr, flip=None, extra=()):
         gd = {p: v.hex() for p, v in gf if not p.startswith('map.')}
         rec['fields'] = [(p, gd.get(p), rf.get(p)) for p in dict.fromkeys([*gd, *rf]) if gd.get(p) != rf.get(p)]
     sched.unlink(missing_ok=True)
-    if a.session or kind == 'sessions':
+    if a.session or kind in ('pause', 'sessions'):
         s = session(a, ritem)
         rec['session_equal'], rec['session_captures'], diff = session_check(g, s)
         rec['session_end'], rec['paused_tics'] = s[2], sum(c[-1] for _, c in s[0])
         if diff: return dict(rec, fail=f'session level: {diff}', session_first=diff)
+        if kind == 'pause':
+            mine = [v[1] for t, v in sorted(s[1].items()) if not dict(s[0])[t][-1]]
+            theirs = [v[1] for _, v in sorted(s0[1].items())]
+            rec['shift_equal'] = sum(x == y for x, y in zip(mine, theirs))
+            if mine != theirs: rec['fail'] = f'(2): {rec["shift_equal"]} of {len(theirs)} unpaused captures equal'
     return rec
 
 
@@ -255,13 +297,12 @@ def main():
     ap.add_argument('--jobs', type=int, default=2); ap.add_argument('--cc', default='cc')
     ap.add_argument('--diagnose', action='store_true', help='at a differing capture, rerun both sides and log the fields')
     ap.add_argument('--selftest', action='store_true', help='faults on the first run of the first kind must be caught')
-    ap.add_argument('--session', action='store_true', help='also the session level (always for sessions)')
+    ap.add_argument('--session', action='store_true', help='also the session level (always for pause and sessions)')
     ap.add_argument('--session-example', type=Path, default=ROOT / 'target/release/examples/wire29_session_real')
     ap.add_argument('--recording', type=Path, action='append', default=[])
     ap.add_argument('--selftest-recording', type=int, metavar='TICS')
     a = ap.parse_args()
     kinds = a.kind.split(',')
-    if PAUSE_SLOT in kinds: sys.exit('--kind pause: the next commit')
     if any(k not in KINDS for k in kinds): sys.exit(f'--kind: one of {", ".join(KINDS)}')
     if not a.iwad.is_file(): print(f'skip: no IWAD at {a.iwad} (local-only check)'); return 0
     work = a.work.resolve()
@@ -294,7 +335,9 @@ def main():
                       f"{rec.get('genuine_captures', '?')} captures equal; Rust {at}"
                       + (f"; witness {rec['witness']}" if 'witness' in rec else '')
                       + (f"; session level {rec['session_equal']} tics, {rec['session_captures']} captures equal, "
-                         f"{rec['paused_tics']} paused, end {rec['session_end']}" if 'session_equal' in rec else ''), flush=True)
+                         f"{rec['paused_tics']} paused, end {rec['session_end']}" if 'session_equal' in rec else '')
+                      + (f"; (2) {rec['shift_equal']} unpaused captures equal, {rec['inserted']} insertions"
+                         if 'shift_equal' in rec else ''), flush=True)
                 for path, gv, rv in rec.get('fields', []): print(f'  field {path}: genuine {gv} Rust {rv}')
         ok = [r for r in recs if 'fail' not in r]
         done = [r for r in ok if 'witness' not in r]
@@ -306,7 +349,8 @@ def main():
             sw = Counter(r['session_end'].split(',')[2] for r in recs if r.get('session_end', '').startswith('refused'))
             print(f"  session level: {sum(r.get('session_equal', 0) for r in recs)} session tics and "
                   f"{sum(r.get('session_captures', 0) for r in recs)} captures equal, {sum(r.get('paused_tics', 0) for r in recs)}"
-                  f" paused tics, {sum(sw.values())} end at a refusal {dict(sw)}")
+                  f" paused tics, {sum(sw.values())} end at a refusal {dict(sw)}; (2): "
+                  f"{sum(r.get('shift_equal', 0) for r in recs)} captures equal shifted")
         for w, n in wit.most_common():
             fr = [r['end'][1] / r['session_tics'] for r in ok if r.get('witness') == w]
             print(f"  {w}: {n} runs, at {min(fr):.0%} to {max(fr):.0%} of the run (median {sorted(fr)[len(fr) // 2]:.0%})")
@@ -318,7 +362,7 @@ def main():
                             ('an extra genuine P_Random draw', dict(extra=('--selftest-extra-draw', '200')), 200)):
             rec = one(kinds[0], a, binary, a.example, work, (0, runs[0]), **kw)
             ok = rec.get('first') is not None and rec['first'][0] == 0
-            if a.session or kinds[0] == 'sessions':
+            if a.session or kinds[0] in ('pause', 'sessions'):
                 # a pause keeps leveltime still, so the session level's tic is the measure
                 m = re.search(r'session tic (\d+)', rec.get('session_first') or '')
                 ok = ok and m is not None and int(m[1]) >= t
@@ -327,6 +371,12 @@ def main():
             print(f"selftest {'pass' if ok else 'FAIL'}: {what} at session tic {t} ({kinds[0]} {rec['name']}): first "
                   f"difference at (level, leveltime) {rec.get('first')}; session level: {rec.get('session_first')}")
             if not ok: fails.append(f'selftest: {what}')
+        if kinds[0] == 'pause':
+            rec = one('pause', a, binary, a.example, work, (0, runs[0]), bad=True)
+            ok = rec.get('fail', '').startswith('(2)')
+            print(f"selftest {'pass' if ok else 'FAIL'}: unpausing commands without their tic's movement fail (2): "
+                  f"{rec.get('fail')}")
+            if not ok: fails.append('selftest: (2)')
     print(f'{len(fails)} failures'); [print(f) for f in fails]
     return 1 if fails else 0
 
