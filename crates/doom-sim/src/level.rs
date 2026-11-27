@@ -19,10 +19,13 @@ const ANG180: u32 = 0x8000_0000;
 /// delta > (unsigned)-ANG5` sets the angle exactly and decrements a nonzero
 /// `damagecount`, otherwise the angle steps `ANG5` toward it (`+` below
 /// `ANG180`, `-` otherwise). Without one, a nonzero `damagecount` decrements.
-/// The source reads the attacker through a raw pointer; an attacker handle that
-/// no longer resolves to an actor that is not pending removal (only a
-/// nightmare-respawned corpse can be one) is refused as
-/// `PlayerBodyError::Invariant` inside the staged tic, state preserved.
+/// The source reads the attacker through a raw pointer. Only a corpse removed by
+/// `P_NightmareRespawn` (wire 29) can stop being a live actor while it is named.
+/// Under wire 29, pending, it is still in the thinker list and its record is read
+/// as the C reads it; once `P_RunThinkers` has freed it (p_tick.c:107-112) the
+/// read is of freed zone memory and the tic is refused ([`SimError::FreedRead`]).
+/// Older wires keep their refusal of both as `PlayerBodyError::Invariant`. The
+/// state is preserved either way.
 pub(crate) fn death_turn(
     host: &mut LifeHost<'_, &mut ThinkerStore<Actor>>,
 ) -> Result<(), SimError> {
@@ -31,13 +34,14 @@ pub(crate) fn death_turn(
     let attacker = p.attacker.filter(|a| *a != mo);
     let mut decay = true;
     if let Some(attacker) = attacker {
-        if host.access.is_pending(attacker) != Some(false) {
+        let wire29 = host.world.parameters.is_some();
+        if !wire29 && host.access.is_pending(attacker) != Some(false) {
             return Err(PlayerBodyError::Invariant.into());
         }
         let target = host
             .access
             .get(attacker)
-            .ok_or(PlayerBodyError::Invariant)?
+            .ok_or(SimError::FreedRead)?
             .position();
         let body = host.access.get_mut(mo).ok_or(PlayerBodyError::Binding)?;
         let position = body.position();

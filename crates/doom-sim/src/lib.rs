@@ -334,6 +334,11 @@ pub enum SimError {
     PlayerReborn,
     /// Wire 25's sound support refused the map or the tic (M5c decisions T11, T12).
     Sound(sound::SoundError),
+    /// Wire 29: the source would read a mobj through a pointer to a corpse that
+    /// `P_NightmareRespawn` removed (p_mobj.c:408) and `P_RunThinkers` has since
+    /// freed (p_tick.c:107-112): zone memory whose contents the C leaves to the
+    /// allocator (M6b step 4). No state is advanced.
+    FreedRead,
 }
 impl fmt::Display for SimError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
