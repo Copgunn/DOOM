@@ -3523,6 +3523,21 @@ cargo test -p doom-sim --release --lib nightmare_genuine_tests
   test steps.
 - Address runs use `detect_leaks=0`: leak detection is disabled, which is not LeakSanitizer coverage.
 
+**Restore and continue, and the five fuzz targets of wire 29** (step 9; counts are in the facts of the step, not here).
+`cargo test -p doom-game --test wire29_restore` saves and restores a `DSES` 4 state at every tic of four windows (a pause,
+the respawn gate and the fogs, the loads that clear a pause) and steps the restored session beside the unbroken one.
+The fuzz targets are `wire29_dsim45`, `wire29_dses4`, `wire29_ddsp5`, `wire29_dsnd4` and `wire29_demo4`; their seeds are
+written outside the repository, and a campaign runs on a copy of them. The workspace forbids `unsafe`, so the fuzz
+campaign with AddressSanitizer is the sanitizer coverage of these readers; leak detection is on unless `ASAN_OPTIONS`
+says otherwise.
+
+```sh
+WIRE29_FUZZ_SEEDS=DIR cargo test --release -p doom-game --test wire29_fuzz_seeds -- --ignored write_fuzz_seeds
+cargo +nightly fuzz build --sanitizer address
+cargo +nightly fuzz run TARGET DIR/TARGET --sanitizer address -- -runs=0   # seed replay, per TARGET
+cargo +nightly fuzz run TARGET CORPUS --sanitizer address -- -max_total_time=600 -max_len=300000 -seed=1 -timeout=20 -rss_limit_mb=2048
+```
+
 ## Mutation testing
 
 M4a used cargo-mutants 27.1.0 with cargo-nextest 0.9.151. These are separate

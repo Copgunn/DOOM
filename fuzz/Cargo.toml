@@ -521,3 +521,38 @@ path = "fuzz_targets/wire28_demo3.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "wire29_dsim45"
+path = "fuzz_targets/wire29_dsim45.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "wire29_dses4"
+path = "fuzz_targets/wire29_dses4.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "wire29_ddsp5"
+path = "fuzz_targets/wire29_ddsp5.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "wire29_dsnd4"
+path = "fuzz_targets/wire29_dsnd4.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "wire29_demo4"
+path = "fuzz_targets/wire29_demo4.rs"
+test = false
+doc = false
+bench = false
