@@ -154,7 +154,7 @@ impl Simulation {
                 }
                 // Wire 29: a corpse removed by P_NightmareRespawn may still be a
                 // monster's target (p_mobj.c:408 sweeps no reference). The C holds
-                // the pointer without reading it until A_Chase (p_enemy.c:686-705),
+                // the pointer without reading it until A_Chase (p_enemy.c:683-705),
                 // where `pursuit::chase` reads a pending corpse and refuses a freed
                 // one (`SimError::FreedRead`), so it is not refused here.
                 let removed = |t: ActorId| respawning && self.actors.is_pending(t) != Some(false);

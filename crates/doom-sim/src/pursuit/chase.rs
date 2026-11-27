@@ -9,7 +9,7 @@ fn chase_body<A: ActorAccess>(h: &mut LifeHost<'_, A>, id: ActorId, work: &mut u
     let before = *h.access.get(id).unwrap();
     let life = before.life.unwrap();
     // Wire 29: a target freed after `P_NightmareRespawn` removed it would be read
-    // here first (p_enemy.c:686-687, 704-705): refused, state kept. Every later
+    // here first (p_enemy.c:683-684, 704-705): refused, state kept. Every later
     // reader of `target` in this tic comes after this test passed on a live one.
     let target = match life.target.map(|t| h.access.get(t).copied()) {
         Some(None) => return h.fail_sight(SimError::FreedRead),
