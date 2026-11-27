@@ -241,7 +241,7 @@ fn run(item: &Item) -> Play {
 
 /// The planted faults of the port ([`Fault`]) and the `V` rows of the altered
 /// genuine engine each makes the port behave like.
-const FAULTS: [(Fault, &str); 7] = [
+const FAULTS: [(Fault, &str); 16] = [
     (Fault::Bit, "bit"),
     (Fault::NoDouble, "nodouble"),
     (Fault::React, "react"),
@@ -249,6 +249,15 @@ const FAULTS: [(Fault, &str); 7] = [
     (Fault::FastSpeeds, "fast_speeds"),
     (Fault::ChaseDir, "chase_dir"),
     (Fault::ChaseCount, "chase_count"),
+    (Fault::RespawnFlag, "respawn_flag"),
+    (Fault::Timer, "timer"),
+    (Fault::Clock, "clock"),
+    (Fault::Gate, "gate"),
+    (Fault::NoCheck, "nocheck"),
+    (Fault::FogSpot, "fog_spot"),
+    (Fault::React18, "react18"),
+    (Fault::Ambush, "ambush"),
+    (Fault::Count, "count"),
 ];
 
 /// The port with `fault` planted: its digests of captures 0 to `last`, without the
@@ -294,7 +303,7 @@ fn planted_faults_are_caught_at_the_variants_captures() {
             rows += 1;
         }
     }
-    assert_eq!(rows, 12);
+    assert_eq!(rows, 28);
 }
 
 /// Every item equals the genuine engine at every capture up to its end at this
