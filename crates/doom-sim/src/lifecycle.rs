@@ -1409,7 +1409,9 @@ pub(crate) fn make_actor(
             sprite: initial.sprite,
             frame: initial.frame,
             health: info.spawn_health(),
-            reaction_time: if options.skill == Skill::Nightmare {
+            reaction_time: if options.skill == Skill::Nightmare
+                && !crate::nightmare::planted(crate::nightmare::Fault::React)
+            {
                 0
             } else {
                 info.reaction_time()

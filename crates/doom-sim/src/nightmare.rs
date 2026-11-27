@@ -48,6 +48,45 @@ pub enum Wire29Pending {
     Respawn,
 }
 
+/// A rule of Nightmare or the parameters changed as the altered genuine engine
+/// of the same name changes the C (`tools/reference/m6b_goldens.py` `VARIANTS`),
+/// for the planted-fault tests of `nightmare_genuine_tests`. Only a test can
+/// plant one ([`with_fault`]); outside `cfg(test)` [`planted`] is always false.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(crate) enum Fault {
+    /// `bit`: Nightmare's THING bit `1<<(gameskill-1)`, 8 (p_mobj.c:746).
+    Bit,
+    /// `nodouble`: Nightmare does not double `P_GiveAmmo` (p_inter.c:96).
+    NoDouble,
+    /// `react`: the type's reaction time on Nightmare too (p_mobj.c:503), which
+    /// the spawn witnesses then expect.
+    React,
+}
+#[cfg(test)]
+thread_local! {
+    static FAULT: std::cell::Cell<Option<Fault>> = const { std::cell::Cell::new(None) };
+}
+/// Whether a test planted `fault` on this thread (never outside `cfg(test)`).
+pub(crate) fn planted(fault: Fault) -> bool {
+    #[cfg(test)]
+    {
+        FAULT.with(|f| f.get() == Some(fault))
+    }
+    #[cfg(not(test))]
+    {
+        let _ = fault;
+        false
+    }
+}
+/// Runs `f` with `fault` planted on this thread.
+#[cfg(test)]
+pub(crate) fn with_fault<R>(fault: Fault, f: impl FnOnce() -> R) -> R {
+    FAULT.with(|c| c.set(Some(fault)));
+    let result = f();
+    FAULT.with(|c| c.set(None));
+    result
+}
+
 /// The thirteen states the fast table halves (g_game.c:1423-1424).
 pub(crate) const FAST_STATES: RangeInclusive<u16> =
     OriginalState::S_SARG_RUN1.ordinal()..=OriginalState::S_SARG_PAIN2.ordinal();
@@ -79,7 +118,11 @@ pub(crate) fn respawn_monsters(world: &StaticWorld, skill: Skill) -> bool {
 /// `P_SpawnMobj`'s reaction time (p_mobj.c:503-504): the type's `defined` value,
 /// left 0 on Nightmare (`nightmare`: wire 29 at skill 4).
 pub(crate) fn spawn_reaction_time(nightmare: bool, defined: i32) -> i32 {
-    if nightmare { 0 } else { defined }
+    if nightmare && !planted(Fault::React) {
+        0
+    } else {
+        defined
+    }
 }
 
 impl Simulation {

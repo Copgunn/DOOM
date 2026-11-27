@@ -885,7 +885,9 @@ impl<A: ActorAccess> movement::MotionAccess for Contacts<'_, A> {
             };
             if outcome == PickupOutcome::NotNeeded {
                 // p_inter.c:95-101: `sk_baby` (wire 28) and `sk_nightmare` (wire 29).
-                let double = self.player.baby || self.player.nightmare;
+                let double = self.player.baby
+                    || (self.player.nightmare
+                        && !crate::nightmare::planted(crate::nightmare::Fault::NoDouble));
                 let weapon = self.player.weapon.as_mut().ok_or(WeaponError::Player)?;
                 let PlayerWeaponRuntime::Pack(w) = weapon else {
                     return Err(WeaponError::Inventory.into());

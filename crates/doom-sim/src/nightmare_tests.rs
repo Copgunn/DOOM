@@ -309,6 +309,51 @@ fn dsim45_reader_rules() {
     }
 }
 
+/// The spawn witnesses of items (E1M1) and decorations (E1M6) expect the reaction
+/// time `P_SpawnMobj` gave (p_mobj.c:503-504): 0 under wire 29 at skill 4, the
+/// type's (8) at skill 3. The other value refuses the next tic, state kept.
+#[test]
+fn spawn_witnesses_expect_the_skills_reaction_time() {
+    for (map, item) in [(1, true), (6, false)] {
+        for (skill, spawned, other) in [(Skill::Nightmare, 0, 8), (Skill::Hard, 8, 0)] {
+            let mut s = level_at(map, skill, NONE, 0);
+            let policy = s.player_policy();
+            let id = s
+                .actors
+                .order()
+                .find(|&id| {
+                    s.actor(id).and_then(|a| a.life()).is_some_and(|l| {
+                        if item {
+                            world_pickups::kind_for(policy, l.actor_type).is_some()
+                        } else {
+                            e1m1_rules::is_decoration(policy, l.actor_type)
+                        }
+                    })
+                })
+                .expect("an item or a decoration");
+            let reaction = |s: &Simulation| s.actor(id).unwrap().life().unwrap().reaction_time;
+            assert_eq!(reaction(&s), spawned, "E1M{map} {skill:?}");
+            let mut bad = s.clone();
+            bad.actors
+                .get_mut(id)
+                .unwrap()
+                .life
+                .as_mut()
+                .unwrap()
+                .reaction_time = other;
+            let kept = bad.snapshot().canonical_bytes();
+            assert_eq!(
+                bad.advance([TicCommand::default(); 4]),
+                Err(PlayerBodyError::Invariant.into()),
+                "E1M{map} {skill:?}"
+            );
+            assert_eq!(bad.snapshot().canonical_bytes(), kept);
+            idle(&mut s, 1);
+            assert_eq!(reaction(&s), spawned);
+        }
+    }
+}
+
 /// Skill 4 is admitted under wire 29 alone; wire 28 refuses it at the load as
 /// before. Wire 29 takes the parameters at any skill and keeps them in the
 /// capture; `with_original_registry` refuses wire 29 as it refuses wires 26 to

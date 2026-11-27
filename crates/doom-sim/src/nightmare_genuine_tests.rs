@@ -16,6 +16,7 @@
 //! rules later steps of M6b build (temporary [`Wire29Pending`] refusals, the
 //! pause command's `BT_SPECIAL` byte). A step that builds a rule moves its items'
 //! ends; nothing else in this file needs to change.
+use crate::nightmare::Fault;
 use crate::*;
 use doom_test_evidence::sha256;
 use std::path::{Path, PathBuf};
@@ -242,6 +243,60 @@ fn run(item: &Item) -> Play {
     let (map, commands) = demo(&item.name);
     let mut s = level(&item.name, map, item.skill, item.parameters).expect("the map loads");
     play(&mut s, &commands, &item.captures)
+}
+
+/// The planted faults of the port ([`Fault`]) and the `V` rows of the altered
+/// genuine engine each makes the port behave like.
+const FAULTS: [(Fault, &str); 3] = [
+    (Fault::Bit, "bit"),
+    (Fault::NoDouble, "nodouble"),
+    (Fault::React, "react"),
+];
+
+/// The port with `fault` planted: its digests of captures 0 to `last`, without the
+/// DSIM45 reader (a variant's state may be outside it, e.g. the slow table on
+/// Nightmare).
+fn planted(item: &Item, fault: Fault, last: usize) -> Vec<String> {
+    crate::nightmare::with_fault(fault, || {
+        let (map, commands) = demo(&item.name);
+        let mut s = level(&item.name, map, item.skill, item.parameters).expect("the map loads");
+        let mut digests = vec![digest(&s.snapshot())];
+        let none = TicCommand::default();
+        for c in &commands[..last] {
+            s.advance([*c, none, none, none])
+                .expect("a tic of the planted port");
+            digests.push(digest(&s.snapshot()));
+        }
+        digests
+    })
+}
+
+/// Planted faults: with a rule of the port changed as an altered genuine engine
+/// changes the C, the port first differs from the genuine engine at that
+/// variant's `V` row capture, and there equals the variant's DSIM45 capture.
+/// `clamp` has no such row (its skill 5 is outside DSIM45; the clamp belongs to
+/// the demo reader, a later step).
+#[test]
+fn planted_faults_are_caught_at_the_variants_captures() {
+    let (items, variants) = golden();
+    let mut rows = 0;
+    for (fault, name) in FAULTS {
+        for (_, item, k, d) in variants.iter().filter(|v| v.0 == name) {
+            let k = k.expect("a differing capture");
+            let item = items.iter().find(|i| i.name == *item).unwrap();
+            let port = planted(item, fault, k);
+            let first = port.iter().zip(&item.captures).position(|(a, b)| a != b);
+            assert_eq!(first, Some(k), "{name} on {}", item.name);
+            assert_eq!(
+                port[k], *d,
+                "{name} on {}: the variant's capture",
+                item.name
+            );
+            eprintln!("planted {name}: {} caught at capture {k}", item.name);
+            rows += 1;
+        }
+    }
+    assert_eq!(rows, 4);
 }
 
 /// Every item equals the genuine engine at every capture up to its end at this

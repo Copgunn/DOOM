@@ -548,6 +548,7 @@ impl Simulation {
             let bit = match self.actor_options.skill {
                 Skill::Baby | Skill::Easy => 1,
                 Skill::Medium => 2,
+                Skill::Nightmare if crate::nightmare::planted(crate::nightmare::Fault::Bit) => 8,
                 Skill::Hard | Skill::Nightmare => 4,
             };
             if thing.options & 16 != 0 || thing.options & bit == 0 {
