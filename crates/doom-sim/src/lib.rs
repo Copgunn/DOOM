@@ -1715,6 +1715,10 @@ mod wire25_tests;
 #[cfg(test)]
 mod m4p_elision_tests;
 #[cfg(test)]
+mod nightmare_genuine_tests;
+#[cfg(test)]
+mod nightmare_tests;
+#[cfg(test)]
 mod overshoot_walk_tests;
 #[cfg(test)]
 mod slide_checked_flag_tests;
