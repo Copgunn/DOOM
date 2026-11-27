@@ -25,7 +25,7 @@ tests/reference/m6b_scripts/:
                  for Z1 and Z2 at every gate, and for Z3 while the player stands on its spawn point
     E1M7 GIB     a zombieman asleep inside a door sector (ambush, facing east); the player opens the door (DR 1),
                  kills it in the doorway, and the door closes on the corpse: PIT_ChangeSector turns it into S_GIBS
-                 with radius 0 and height 0 (p_map.c:1247-1258) and it still respawns, inside the closed door
+                 with radius 0 and height 0 (p_map.c:1268-1275) and it still respawns, inside the closed door
     E1M8 PAUSE   an imp on a ledge it cannot leave throwing at the player, a clip on the player's path (a message)
                  and a demon in the room: what stops and what keeps running while paused
   m6b_gfx.wad  a PWAD with M_PAUSE, our own picture (d_main.c:310); 62 by 18, drawn where the original centres its
@@ -195,6 +195,7 @@ ITEMS = {
     'AMMO4': item(1, 4, W28.WALK, 'Nightmare: every P_GiveAmmo path of Episode 1 doubled before the cap (p_inter.c:95-101)'),
     'BITS4': item(2, 4, ['idle 20'], 'Nightmare spawns the things of the hard bit, 4 (p_mobj.c:745-746)'),
     'BITS3': item(2, 3, ['idle 20'], 'skill 3: the same set'),
+    'CLAMP5': item(2, 5, ['idle 20'], 'a skill byte of 5 is played as Nightmare (g_game.c:1379-1380)'),
     'REACT4': item(3, 4, REACT_LINES, 'Nightmare: reactiontime 0 at spawn; A_Chase without the new direction after an attack and '
                                       'without the movecount test before a missile'),
     'REACT3': item(3, 3, REACT_LINES, 'skill 3: the same commands (reactiontime 8, both A_Chase rules)'),

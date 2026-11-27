@@ -3477,6 +3477,26 @@ cargo test -p doom-play session_writer::tests::the_stalled_disk_measurement_keep
 - `audit1.rs` pins that the version 3 demo readers accept a button byte the writers refuse, and that `diagnostic_bytes` refuses the captures of wires 27 and 28.
 - The three genuine steps and the reader are in the "M6a genuine session" job of `rust.yml`; the Rust tests run in the existing workspace test steps.
 
+### M6b phase 1: Nightmare and the pause
+
+Commands for the genuine-engine items of M6b phase 1 ([draft PR #88](https://github.com/Copgunn/mutara/pull/88)). There is no Rust side yet, so no cargo
+command. The facts are in the [M6b note](M6B_REFERENCE_INVESTIGATION.md) and the tools are described in the
+[tools README](../tools/reference/README.md#m6b-phase-1-nightmare-and-the-originals-pause-against-the-genuine-engine). The genuine builds need a C compiler with the address and
+undefined-behaviour sanitizers.
+
+```sh
+# the synthetic WADs (eight map slots, our own M_PAUSE) and the 18 demo scripts
+python3 tools/reference/m6b_wad.py --check
+# the runner's contract against the regenerated driver text (writes nothing)
+python3 tools/reference/m6b_build.py --check
+# the genuine engine: strict, overflow and address builds, planted-fault variants, table runs and the two self-tests
+# (default work directory ~/scratch/m6b/goldens, outside the repository; about 2 minutes locally)
+python3 tools/reference/m6b_goldens.py --check --selftest
+```
+
+- The three steps are in the "M6a genuine session" job of `rust.yml`.
+- Address runs use `detect_leaks=0`: leak detection is disabled, which is not LeakSanitizer coverage.
+
 ## Mutation testing
 
 M4a used cargo-mutants 27.1.0 with cargo-nextest 0.9.151. These are separate

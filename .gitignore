@@ -45,3 +45,6 @@ __pycache__/
 
 # Local Claude Code settings are per-machine.
 .claude/settings.local.json
+# The M6b phase 1 synthetic IWAD, pause-picture PWAD (tools/reference/m6b_wad.py; no commercial data) and demo lumps.
+!/tests/reference/m6b_wads/*.wad
+!/tests/reference/m6b_scripts/*.lmp

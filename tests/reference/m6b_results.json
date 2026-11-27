@@ -58,6 +58,20 @@
     "BITS4"
    ]
   },
+  "clamp": {
+   "what": "g_game.c:1380: a skill above Nightmare not clamped",
+   "replacements": {
+    "g_game.c": [
+     {
+      "original": "\tskill = sk_nightmare;\n",
+      "replacement": "\t;\n"
+     }
+    ]
+   },
+   "items": [
+    "CLAMP5"
+   ]
+  },
   "nodouble": {
    "what": "p_inter.c:96: Nightmare no longer doubles P_GiveAmmo",
    "replacements": {
@@ -392,6 +406,12 @@
   {
    "variant": "bit",
    "item": "BITS4",
+   "stream": "capture",
+   "place": 0
+  },
+  {
+   "variant": "clamp",
+   "item": "CLAMP5",
    "stream": "capture",
    "place": 0
   },
@@ -942,8 +962,8 @@
   }
  ],
  "tools_sha256": {
-  "m6b_goldens.py": "bab2ada43238621b957061870190d89b68a749d05f514853213b33c146b2622c",
-  "m6b_wad.py": "b57bff78c46053f120932ea4a2422747704a5a082110e04edf42a5198d8844b3",
+  "m6b_goldens.py": "bedb294f2518e40269678c2de4de6e2c3154eeb2ad0c9026cef4652523d95592",
+  "m6b_wad.py": "07e8c46b5ea1e18788e096c0b69f471307c7b2b694715c66a332ca316ce3122f",
   "m6b_build.py": "b30fff7303d14c7bcff6b11a52b42d52f265b12858b29b74c46709fce26e6d50",
   "m6b_session.c": "b0ab90889f8aec0dff1bea34007386b04132faf838a7116b7821ca1d66bc6adb"
  },
@@ -957,6 +977,7 @@
   "tests/reference/m6b_scripts/BITS3.lmp": "fe3610ac381120906ecae806bc649121da64808f8fe8a1fec68493aa1748cf4b",
   "tests/reference/m6b_scripts/BITS4.lmp": "f74c20fa19a975f7245075a0ac1f0b52cfee2eafd2bb41119ffb6af71196aab0",
   "tests/reference/m6b_scripts/BLOCK4.lmp": "ca6b0377a2ac911132cf2237baaa05dbcbaca22f5a9273291467a3873e68a43f",
+  "tests/reference/m6b_scripts/CLAMP5.lmp": "b9fe3e4e76e975f46fdacaf085be78968c3317edd5898f542ede02cadd860892",
   "tests/reference/m6b_scripts/FAST3.lmp": "26beb89ce3507d77aa53724ce2da140193414a8e75c56c428196999d0db505f8",
   "tests/reference/m6b_scripts/FAST3F.lmp": "35cd597f4e492fc105175a7e49a4362b0d4a3370d0e513f7c82d8a7adcc0c193",
   "tests/reference/m6b_scripts/FAST4.lmp": "2b8c7d233bad2ed2b69c4fa436f4eb07e2ac4024a8277c72dae400956b01bce3",
@@ -974,7 +995,7 @@
   "tests/reference/m6b_wads/m6b.wad": "6612c16344bba148bcc3d43c3d5bbf679e07fe2c7f9db7a35b316224f87db6dc",
   "tests/reference/m6b_wads/m6b_gfx.wad": "89429227e9e022646ab241cf472d3236cbc5cd67a1bc20a2993d87f0f4a5bb79"
  },
- "waits_on_decisions": "state digests over the wire 29 schema (DSIM45) are not generated: decisions N2 to N4",
+ "waits_on_decisions": "state digests over the wire 29 schema (DSIM45) are not generated: decisions N2, N4, N5 and N6",
  "generated_with": {
   "compiler": "cc (Ubuntu 15.2.0-16ubuntu1) 15.2.0"
  },
@@ -1118,6 +1139,55 @@
       "983040",
       "655360",
       "655360"
+     ]
+    ]
+   }
+  },
+  "CLAMP5": {
+   "what": "a skill byte of 5 is played as Nightmare (g_game.c:1379-1380)",
+   "tics": 20,
+   "captures": 21,
+   "rendered_at": [],
+   "observed": {
+    "totalkills": 1,
+    "killcount": 0,
+    "spawned": [
+     "POSSESSED@256,0"
+    ],
+    "reactiontime_at_load": [
+     0
+    ],
+    "missile_speeds": {},
+    "first_missile_tic": {},
+    "demon_state_tics_seen": [],
+    "respawns": [],
+    "gates": [],
+    "gate_tics_unresolved": 0,
+    "paused_intervals": [],
+    "song_calls": [],
+    "paused_at_end": false,
+    "tables": [
+     [
+      "start",
+      "0",
+      "0",
+      "0",
+      "0",
+      "2 2 2 2 2 2 2 2 8 8 8 2 2",
+      "983040",
+      "655360",
+      "655360"
+     ],
+     [
+      "demo",
+      "4",
+      "0",
+      "0",
+      "1",
+      "1 1 1 1 1 1 1 1 4 4 4 1 1",
+      "1310720",
+      "1310720",
+      "1310720"
      ]
     ]
    }
@@ -1491,7 +1561,9 @@
    "what": "Nightmare: two demons shot from a ledge respawn; one is shot again (kills above the level total) and the exit switch is used: the intermission counts past 100 %",
    "tics": 1516,
    "captures": 1317,
-   "rendered_at": [],
+   "rendered_at": [
+    10
+   ],
    "observed": {
     "totalkills": 2,
     "killcount": 4,
@@ -1608,7 +1680,7 @@
     "paused_at_end": false,
     "intermission": {
      "maxkills": 2,
-     "skills": 1,
+     "skills": 4,
      "cnt_kills_max": 200
     },
     "tables": [
@@ -1666,7 +1738,7 @@
     "paused_at_end": false,
     "intermission": {
      "maxkills": 2,
-     "skills": 1,
+     "skills": 2,
      "cnt_kills_max": 100
     },
     "tables": [
@@ -1699,7 +1771,9 @@
    "what": "skill 3 with respawnparm: corpses respawn; reactiontime 8, nothing doubled",
    "tics": 1516,
    "captures": 1317,
-   "rendered_at": [],
+   "rendered_at": [
+    10
+   ],
    "observed": {
     "totalkills": 2,
     "killcount": 3,
@@ -1795,7 +1869,7 @@
     "paused_at_end": false,
     "intermission": {
      "maxkills": 2,
-     "skills": 1,
+     "skills": 3,
      "cnt_kills_max": 150
     },
     "tables": [
@@ -2476,7 +2550,7 @@
     "paused_at_end": false,
     "intermission": {
      "maxkills": 1,
-     "skills": 1,
+     "skills": 0,
      "cnt_kills_max": 0
     },
     "tables": [

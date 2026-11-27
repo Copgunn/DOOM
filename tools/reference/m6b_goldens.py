@@ -10,7 +10,7 @@ tools/reference/m6b_wad.py ITEMS (the M5c recommended switches, game mode regist
 
   plain     --render none with dumps, sound, session and M6b streams in the three builds: identical dumps and streams,
             a clean exit, no sanitizer report;
-  rendered  the items of RENDER (the pause items) also in the strict build with --render every at each screen size of
+  rendered  the items of RENDER (the pause items, and the two whose intermission counts kills past 100 %) also in the strict build with --render every at each screen size of
             RENDER (10 and 11; 9 needs the border flat FLOOR7_2 and the border patches, which this WAD set does not
             have: the genuine engine stops with "W_GetNumForName: FLOOR7_2 not found!", observed): the frame stream (every level frame's digest, and the G rows of the intermission and finale
             frames) and the M6b stream, whose B rows carry the digest of every frame displayed while paused. The
@@ -27,8 +27,8 @@ Tables (TABLES): runs of an item after earlier games of the same process (--prio
 game rows of every dump (without the observer rows T, K and RM, whose serial numbers count the earlier loads) equal
 those of the named run.
 
-What is not here, and why: state digests over the wire 29 schema. Their shape waits on the owner's decisions N2 to N4
-(what the wire admits and how the table and the pause are carried); the dumps they will be projected from are pinned
+What is not here, and why: state digests over the wire 29 schema. Their shape waits on the owner's decisions N2, N4, N5
+and N6 (what the wire admits and how the table and the pause are carried); the dumps they will be projected from are pinned
 here by digest (the D column of the I rows).
 
 Tic convention (owner): a session tic is the 0-based index of a G_Ticker; capture j is the state after j tics.
@@ -69,7 +69,7 @@ DIRS = {k: ROOT / f'tests/reference/m6b_{k}' for k in ('session', 'sound', 'fram
 TOOLS = ['m6b_goldens.py', 'm6b_wad.py', 'm6b_build.py', 'm6b_session.c']
 ENV = dict(os.environ, ASAN_OPTIONS='detect_leaks=0', UBSAN_OPTIONS='print_stacktrace=1')
 CLAIM = B.BUILDS
-RENDER = {'PAUSE': (10, 11), 'PAUSE0': (10,), 'PAUSEWI': (10, 11), 'PAUSEFIN': (10, 11)}   # the first size is the variants'
+RENDER = {'RESP4': (10,), 'RESP3R': (10,), 'PAUSE': (10, 11), 'PAUSE0': (10,), 'PAUSEWI': (10, 11), 'PAUSEFIN': (10, 11)}   # the first size is the variants'
 SESSION = ['RESP4', 'RESP3R', 'PAUSE', 'PAUSE0', 'PAUSEWI', 'PAUSEFIN']
 SOUND = ['RESP4', 'RESP3R', 'BLOCK4', 'GIB4', 'PAUSE', 'PAUSE0', 'PAUSEWI', 'PAUSEFIN']
 # The address build stops at the M6a-declared report (m6a_goldens.DECLARED_UB: st_stuff.c:1292, the key box index, at a
@@ -82,6 +82,8 @@ address_stops = {}
 VARIANTS = {
     'bit': ({'p_mobj.c': [('\tbit = 4;\n', '\tbit = 1<<(gameskill-1);\n')]}, ['BITS4'],
             'p_mobj.c:746: Nightmare\'s spawn bit computed like the other skills\' (8, the ambush flag)'),
+    'clamp': ({'g_game.c': [('\tskill = sk_nightmare;\n', '\t;\n')]}, ['CLAMP5'],
+              'g_game.c:1380: a skill above Nightmare not clamped'),
     'nodouble': ({'p_inter.c': [('\t|| gameskill == sk_nightmare)\n', '\t|| gameskill == sk_nightmare + 1)\n')]}, ['AMMO4'],
                  'p_inter.c:96: Nightmare no longer doubles P_GiveAmmo'),
     'react': ({'p_mobj.c': [('    if (gameskill != sk_nightmare)\n', '    if (gameskill != sk_nightmare + 1)\n')]}, ['REACT4', 'RESP4'],
@@ -303,7 +305,7 @@ def session_facts(r):
              paused_at_end=bool(G and v(G[-1], 'paused')))
     J = [l.split(',') for l in r['session'].splitlines() if l.startswith('J,')]
     I = [l.split(',') for l in r['session'].splitlines() if l.startswith('I,')]
-    if J: f['intermission'] = dict(maxkills=int(I[0][6]), skills=int(I[0][12]), cnt_kills_max=max(int(x[9]) for x in J))
+    if J: f['intermission'] = dict(maxkills=int(I[0][6]), skills=int(I[0][13]), cnt_kills_max=max(int(x[9]) for x in J))
     return f
 
 
@@ -423,7 +425,7 @@ def results(recs, variants, tables, cc):
         address_declared_stops=dict(report=G6.DECLARED_UB, captures_before_the_stop=dict(address_stops)),
         tables=tables, tools_sha256={t: digest_of(f'tools/reference/{t}') for t in TOOLS},
         inputs_sha256={p: digest_of(p) for p in inputs},
-        waits_on_decisions='state digests over the wire 29 schema (DSIM45) are not generated: decisions N2 to N4',
+        waits_on_decisions='state digests over the wire 29 schema (DSIM45) are not generated: decisions N2, N4, N5 and N6',
         generated_with=dict(compiler=subprocess.run([cc, '--version'], capture_output=True, text=True).stdout.split('\n')[0]),
         items={n: dict(what=WAD.ITEMS[n]['what'], tics=r['tics'], captures=len(r['strict']['digests']),
                        rendered_at=sorted(r['rendered']), observed=r['facts']) for n, r in recs.items()})

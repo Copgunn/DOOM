@@ -1,0 +1,8 @@
+#schema,DOOM-M6B-RUNNER-v1
+#columns,T,when,skill,respawnparm,fastparm,respawnmonsters,sarg_tics,bruisershot_speed,headshot_speed,troopshot_speed
+#columns,MP,tic,call,handle
+#columns,B,tic,gamestate,leveltime,gametic,prndindex,rndindex,drawn,frame_sha256
+#columns,Z,totals
+T,start,0,0,0,0,2 2 2 2 2 2 2 2 8 8 8 2 2,983040,655360,655360
+T,demo,4,0,0,1,1 1 1 1 1 1 1 1 4 4 4 1 1,1310720,1310720,1310720
+Z,prior_games,0,paused_tics,0,pause_frames,0,song_calls,0,paused_at_end,0

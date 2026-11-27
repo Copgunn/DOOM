@@ -864,3 +864,35 @@ DOOM2.WAD).
   [wire28_results.json](../../tests/reference/wire28_results.json) (the observed pickups, hits, the escape and the stuck
   imps). Two in-process overrides are declared in its `OVERRIDES`. The Rust side is
   `cargo test -p doom-sim --lib wire28_genuine` and `cargo test -p doom-game --test wire28_genuine`.
+
+## M6b phase 1: Nightmare and the original's pause against the genuine engine
+
+Phase 1 of M6b builds the genuine-engine side only. There is no Rust side yet: nothing under `crates/` changes and nothing
+becomes supported. The facts, the labels (run, read, inferred) and the decisions N1 to N11 are in the
+[M6b note](../../docs/M6B_REFERENCE_INVESTIGATION.md) (§6.1 describes these tools).
+
+- [m6b_build.py](m6b_build.py) and [m6b_session.c](m6b_session.c) build the M6b runner. It compiles the same genuine files as the
+  M6a runner (read-only) and generates its driver from the M6a driver text with exact-once patches. `m6b_session.c` is the new
+  code the driver includes: the pause picture of `d_main.c:303-311`, observers of `I_PauseSong` and `I_ResumeSong`, the
+  `--prior-game SKILL,RESPAWN,FAST` option (an earlier game of the same process) and the M6b stream. `--check` compares
+  [m6b_runner_contract.json](../../tests/reference/m6b_runner_contract.json) with the regenerated text and writes nothing.
+- [m6b_wad.py](m6b_wad.py) draws [m6b.wad and m6b_gfx.wad](../../tests/reference/m6b_wads) (eight map slots and our own `M_PAUSE`;
+  nothing from any IWAD) and the 19 demo scripts under [m6b_scripts](../../tests/reference/m6b_scripts). The demo header's skill,
+  `respawnparm` and `fastparm` bytes are patched after the frozen script format. `--check` compares them.
+- [m6b_goldens.py](m6b_goldens.py) runs every item in three builds: strict (the genuine text, the claim), overflow and address
+  (identical dumps and streams required). The pause items and the two items that count kills past 100 % are also run rendered.
+  It runs 24 planted-fault variants, 7 table runs after an earlier game of the same process, and (with `--selftest`) 2 self-tests
+  of the runner. It writes or `--check`s, under `tests/reference/`: [m6b_genuine.txt](../../tests/reference/m6b_genuine.txt)
+  (per item the digests, the respawn gate rows, the table rows and each variant's first differing place),
+  [m6b_session](../../tests/reference/m6b_session), [m6b_sound](../../tests/reference/m6b_sound),
+  [m6b_frames](../../tests/reference/m6b_frames) and [m6b_pause](../../tests/reference/m6b_pause) (the stream goldens) and
+  [m6b_results.json](../../tests/reference/m6b_results.json) (the observed facts the note quotes).
+- **One new declared sanitizer adapter.** `mo->angle = ANG45 * (mthing->angle/45)` at `p_mobj.c:400` (in `P_NightmareRespawn`)
+  overflows `int` for a spawn angle of 180 or more, like the two frozen adapters of the same statement at `p_mobj.c:671` and 794.
+  The adapter is the unsigned product, in the overflow and address builds only; the strict build compiles the original text.
+- **One declared address stop.** Item `PAUSEWI` loads a second level, where the address build reports the M6a-declared
+  `st_stuff.c:1292` index. The address build of `PAUSEWI` must show exactly that report after the strict run's first 127
+  captures; the overflow build runs it whole.
+- Address runs use `detect_leaks=0`: leak detection is disabled, so they are not LeakSanitizer coverage.
+- No file is edited by the tools: variants are made in the build directory by exact-once replacements. The commands are in
+  [TESTING](../../docs/TESTING.md#m6b-phase-1-nightmare-and-the-pause); in CI they run in the "M6a genuine session" job.
