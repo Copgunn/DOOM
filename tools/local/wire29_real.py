@@ -215,7 +215,7 @@ def main():
     for kind in kinds:
         log = (work / 'logs' / f'{kind}.jsonl').open('a')
         recs = []
-        with cf.ProcessPoolExecutor(max(1, min(a.jobs, 2)), mp_context=mp.get_context('fork')) as ex:
+        with cf.ProcessPoolExecutor(max(1, min(a.jobs, 5)), mp_context=mp.get_context('fork')) as ex:
             for rec in ex.map(functools.partial(one, kind, a, binary, a.example, work), enumerate(runs)):
                 recs.append(rec); log.write(json.dumps(rec) + '\n'); log.flush()
                 at = f"{rec['end'][0]} at session tic {rec['end'][1]} of {rec['session_tics']}" if rec.get('end') else '-'
