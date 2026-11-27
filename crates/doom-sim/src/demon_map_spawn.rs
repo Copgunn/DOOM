@@ -147,13 +147,19 @@ impl Simulation {
                 // Wire 29: P_NightmareRespawn spawns the monster at the tail
                 // (p_mobj.c:396, P_AddThinker), after its two fogs; it replaces
                 // its corpse, so the roster bound holds.
-                let respawned = suffix
-                    && crate::nightmare::respawn_monsters(&self.world, self.actor_options.skill);
-                if (suffix && !respawned) || owners > self.map_demon_limit() {
+                let respawning =
+                    crate::nightmare::respawn_monsters(&self.world, self.actor_options.skill);
+                if (suffix && !respawning) || owners > self.map_demon_limit() {
                     return Err(MapSpawnError::Ownership.into());
                 }
+                // Wire 29: a corpse removed by P_NightmareRespawn may still be a
+                // monster's target (p_mobj.c:408 sweeps no reference). The C holds
+                // the pointer without reading it until A_Chase (p_enemy.c:686-705),
+                // where `pursuit::chase` reads a pending corpse and refuses a freed
+                // one (`SimError::FreedRead`), so it is not refused here.
+                let removed = |t: ActorId| respawning && self.actors.is_pending(t) != Some(false);
                 if life.health > 0 {
-                    if let Some(target) = life.target {
+                    if let Some(target) = life.target.filter(|t| !removed(*t)) {
                         self.validate_perception_reference(target)?;
                     }
                 }
