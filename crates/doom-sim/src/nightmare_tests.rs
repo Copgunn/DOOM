@@ -359,6 +359,89 @@ fn spawn_witnesses_expect_the_skills_reaction_time() {
 /// skill 3 with and without it (a map without a monster or a missile, where the
 /// fast table has nothing to act on) give captures that differ only in
 /// `actors.parameters`, at every tic of the corridor's pickups.
+/// The pause's simulation part (rulings N5 (a), N6 (a)). Under wire 29 a level
+/// tic admits every byte with `BT_SPECIAL` but the save command and keeps a live
+/// player's zeroed (p_user.c:280-281); bit 6 alone stays refused; wire 28 refuses
+/// every special byte and has no paused tic. A paused tic changes only the kept
+/// command, the events, `level.gametic_lead` (one more) and, on a turbo tic
+/// (`gametic` 128 with `forwardmove` 60, g_game.c:672-679), the message; each
+/// refusal keeps the state.
+#[test]
+fn the_pause_commands_and_the_paused_tic() {
+    let cmd = |buttons: u8, forward: i8| TicCommand {
+        forward,
+        buttons,
+        ..TicCommand::default()
+    };
+    let one = |c| {
+        [
+            c,
+            TicCommand::default(),
+            TicCommand::default(),
+            TicCommand::default(),
+        ]
+    };
+    let mut s = level_at(2, Skill::Hard, NONE, 128);
+    for b in [0x82, 0xc2, 0x40] {
+        let before = s.snapshot().canonical_bytes();
+        assert_eq!(s.advance(one(cmd(b, 0))), Err(SimError::UnsupportedButtons));
+        if b & 0x80 != 0 {
+            assert_eq!(
+                s.paused_tic(one(cmd(b, 0))),
+                Err(SimError::UnsupportedButtons)
+            );
+        }
+        assert_eq!(s.snapshot().canonical_bytes(), before, "{b:#x}");
+    }
+    let before = fields(&s.snapshot());
+    s.paused_tic(one(cmd(0x81, 60))).expect("a paused tic");
+    let after = fields(&s.snapshot());
+    let changed: Vec<&str> = before
+        .iter()
+        .zip(&after)
+        .filter(|(a, b)| a != b)
+        .map(|(a, _)| a.0.as_str())
+        .filter(|p| !p.starts_with("events."))
+        .collect();
+    assert_eq!(
+        changed,
+        [
+            "player.0.forward",
+            "player.0.buttons",
+            "original_player.0.pickups.message",
+            "level.gametic_lead"
+        ]
+    );
+    assert_eq!(
+        (s.tic(), s.gametic_lead(), s.gametic()),
+        (0, Some(129), 129)
+    );
+    for b in [0x81, 0x83, 0x85, 0xfd, 0x80] {
+        s.advance(one(cmd(b, 25)))
+            .expect("a special byte on a level tic");
+        let kept = fields(&s.snapshot());
+        let buttons = kept.iter().find(|f| f.0 == "player.0.buttons");
+        assert_eq!(buttons.map(|f| f.1.clone()), Some(vec![0]), "{b:#x}");
+    }
+    let mut old = Simulation::original_player_episode1_v6_level_at(
+        m6b_map(2),
+        2,
+        Skill::Hard,
+        MapContextOptions::default(),
+        LevelStart::NewGame,
+        0,
+    )
+    .expect("wire 28");
+    assert_eq!(
+        old.advance(one(cmd(0x81, 0))),
+        Err(SimError::UnsupportedButtons)
+    );
+    assert_eq!(
+        old.paused_tic(one(cmd(0x81, 0))),
+        Err(PlayerBodyError::Profile.into())
+    );
+}
+
 #[test]
 fn fastparm_alone_changes_no_ammunition_or_reaction_time() {
     let (map, commands) = crate::nightmare_genuine_tests::demo("AMMO4");

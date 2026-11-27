@@ -12,10 +12,16 @@
 //!
 //! Each item plays its demo under wire 29 at the skill and parameters of its header
 //! and must equal the genuine engine at every capture up to the end [`EXPECTED`]
-//! names: the whole level, or a refusal at a session tic. The refusals are the
-//! rules later steps of M6b build (the pause command's `BT_SPECIAL` byte). A step
-//! that builds a rule moves its items' ends; nothing else in this file needs to
-//! change.
+//! names: the whole level, or a refusal at a session tic. A step that builds a
+//! rule moves its items' ends; nothing else in this file needs to change.
+//!
+//! **The pause** (step 6). The session owns `paused` (ruling N6 (a)); here the
+//! schedule is derived from the committed demo bytes alone, by `G_Ticker`'s rule
+//! written out in [`toggles`] (g_game.c:698-708, independent of the port's own
+//! function): each tic first toggles on a byte with bit 7 and low bits 01, then
+//! runs the level's tic when not paused and otherwise
+//! [`Simulation::paused_tic`] (p_tick.c:135-136). Every item's first level is
+//! loaded once, so no `G_DoLoadLevel` clears the flag inside a projected level.
 use crate::nightmare::Fault;
 use crate::*;
 use doom_test_evidence::sha256;
@@ -180,15 +186,16 @@ enum End {
     /// Every projected capture; the run may then stop at the level's exit.
     Level,
     /// Session tic `N` refused with this error.
+    #[allow(
+        dead_code,
+        reason = "no item ends refused at step 6; a later step may need it"
+    )]
     Refused(usize, SimError),
 }
 
-const SPECIAL: SimError = SimError::UnsupportedButtons;
-
-/// Each item's end at this step (M6b phase 2 step 4: Nightmare's ammunition,
-/// spawn bit and reaction time, the fast table, `A_Chase`'s `fastparm` half and
-/// the corpse respawn built). The pause command's byte is refused
-/// (`UnsupportedButtons`) until step 6.
+/// Each item's end at this step (M6b phase 2 step 6: Nightmare's ammunition,
+/// spawn bit and reaction time, the fast table, `A_Chase`'s `fastparm` half, the
+/// corpse respawn and the pause's simulation part built).
 const EXPECTED: [(&str, End); 19] = [
     ("AMMO4", End::Level),
     ("BITS4", End::Level),
@@ -205,8 +212,8 @@ const EXPECTED: [(&str, End); 19] = [
     ("RESP3R", End::Level),
     ("BLOCK4", End::Level),
     ("GIB4", End::Level),
-    ("PAUSE", End::Refused(72, SPECIAL)),
-    ("PAUSE0", End::Refused(0, SPECIAL)),
+    ("PAUSE", End::Level),
+    ("PAUSE0", End::Level),
     ("PAUSEWI", End::Level),
     ("PAUSEFIN", End::Level),
 ];
@@ -219,17 +226,37 @@ struct Play {
     refusal: Option<(usize, SimError)>,
 }
 
+/// `G_Ticker`'s toggle (g_game.c:698-708), written from the C for the schedule:
+/// `BT_SPECIAL` 0x80 with `buttons & BT_SPECIALMASK` (3) equal to `BTS_PAUSE` (1).
+fn toggles(buttons: u8) -> bool {
+    buttons & 0x80 != 0 && buttons & 3 == 1
+}
+
+/// One session tic of the schedule (module documentation): `paused` toggled by
+/// the command, then the level's tic or the paused tic.
+fn session_tic(s: &mut Simulation, paused: &mut bool, c: TicCommand) -> Result<(), SimError> {
+    let none = TicCommand::default();
+    let next = *paused ^ toggles(c.buttons);
+    let r = if next {
+        s.paused_tic([c, none, none, none])
+    } else {
+        s.advance([c, none, none, none])
+    };
+    *paused = next;
+    r
+}
+
 /// Plays the commands while there are genuine captures to compare (or until a
 /// refusal); after a refusal the kept state must be the capture before it.
 fn play(s: &mut Simulation, commands: &[TicCommand], expected: &[String]) -> Play {
-    let none = TicCommand::default();
+    let mut paused = false;
     let mut p = Play {
         digests: vec![checked(s)],
         difference: None,
         refusal: None,
     };
     for (tic, c) in commands.iter().take(expected.len() - 1).enumerate() {
-        if let Err(e) = s.advance([*c, none, none, none]) {
+        if let Err(e) = session_tic(s, &mut paused, *c) {
             assert_eq!(
                 checked(s),
                 p.digests[tic],
@@ -380,7 +407,7 @@ fn a_fast_fireball_outside_the_map_flies_as_in_the_genuine_engine() {
 
 /// The planted faults of the port ([`Fault`]) and the `V` rows of the altered
 /// genuine engine each makes the port behave like.
-const FAULTS: [(Fault, &str); 16] = [
+const FAULTS: [(Fault, &str); 18] = [
     (Fault::Bit, "bit"),
     (Fault::NoDouble, "nodouble"),
     (Fault::React, "react"),
@@ -397,6 +424,8 @@ const FAULTS: [(Fault, &str); 16] = [
     (Fault::React18, "react18"),
     (Fault::Ambush, "ambush"),
     (Fault::Count, "count"),
+    (Fault::PauseBtn, "pause_btn"),
+    (Fault::PauseRun, "pause_run"),
 ];
 
 /// The port with `fault` planted: its digests of captures 0 to `last`, without the
@@ -407,10 +436,9 @@ fn planted(item: &Item, fault: Fault, last: usize) -> Vec<String> {
         let (map, commands) = demo(&item.name);
         let mut s = level(&item.name, map, item.skill, item.parameters).expect("the map loads");
         let mut digests = vec![digest(&s.snapshot())];
-        let none = TicCommand::default();
+        let mut paused = false;
         for c in &commands[..last] {
-            s.advance([*c, none, none, none])
-                .expect("a tic of the planted port");
+            session_tic(&mut s, &mut paused, *c).expect("a tic of the planted port");
             digests.push(digest(&s.snapshot()));
         }
         digests
@@ -421,7 +449,8 @@ fn planted(item: &Item, fault: Fault, last: usize) -> Vec<String> {
 /// changes the C, the port first differs from the genuine engine at that
 /// variant's `V` row capture, and there equals the variant's DSIM45 capture.
 /// `clamp` has no such row (its skill 5 is outside DSIM45; the clamp belongs to
-/// the demo reader, a later step).
+/// the demo reader, a later step); `pause_mask` changes `G_Ticker`'s toggle, which
+/// the session owns (its test is doom-game's `wire29_session`).
 #[test]
 fn planted_faults_are_caught_at_the_variants_captures() {
     let (items, variants) = golden();
@@ -442,7 +471,7 @@ fn planted_faults_are_caught_at_the_variants_captures() {
             rows += 1;
         }
     }
-    assert_eq!(rows, 28);
+    assert_eq!(rows, 31);
 }
 
 /// Every item equals the genuine engine at every capture up to its end at this
