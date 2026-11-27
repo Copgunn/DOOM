@@ -60,6 +60,13 @@ def projector(mapdata, skill, map_number, sounds, start):
         if (k, d.tic) == TL.at: TL.seen['fields'] = out[0]
         return out
     pr.step = recorded
+    found = pr.respawned
+
+    def counted(d):
+        out = found(d)
+        TL.respawns += len(out)
+        return out
+    pr.respawned = counted
     return pr
 
 
@@ -96,14 +103,14 @@ def genuine(binary, item, out, respawn, fast, at=None, extra=()):
         gs = S6.rows(r['session'], 'G')
         victory = next((g['tic'] for g in gs if g['gamestate'] == 2), None)
         if victory is not None: r = dict(r, session=SR.cut_at(r['session'], victory), sound=SR.cut_at(r['sound'], victory))
-        TL.made, TL.seen, TL.parameters, TL.at = 0, {}, (respawn, fast), at
+        TL.made, TL.seen, TL.parameters, TL.at, TL.respawns = 0, {}, (respawn, fast), at, 0
         lv = ST.levels(r, item)
     except (ST.L.ProjectionError, SystemExit) as e:
         return dict(fail=f'genuine side: {e}')
     finally:
         shutil.rmtree(out, ignore_errors=True)
     return dict(levels=[(v['load'], max(v['tic'], 0), v['map'], v['kind'], [(c[0], c[2].hex()) for c in v['captures']]) for v in lv],
-                tics=len(gs), victory=victory, fields=TL.seen.get('fields'))
+                tics=len(gs), victory=victory, fields=TL.seen.get('fields'), respawns=TL.respawns)
 
 
 def rust(example, item, sched, twin, at=None):
@@ -165,7 +172,7 @@ def one(kind, a, binary, example, work, kr, flip=None, extra=()):
     r, end = rust(example, ritem, sched, kind == 'own')
     equal, diff = compare(g['levels'], r)
     gcaps = sum(len(v[4]) for v in g['levels'])
-    rec.update(genuine_captures=gcaps, genuine_levels=[f'{v[3]}@{v[1]}' for v in g['levels']], victory=g['victory'],
+    rec.update(genuine_captures=gcaps, respawns=g['respawns'], genuine_levels=[f'{v[3]}@{v[1]}' for v in g['levels']], victory=g['victory'],
                rust_levels=[f'{v[3]}@{v[1]}' for v in r], equal=equal, diff=diff, end=end, first=compare.at)
     if end is None or end[0] == 'failed': rec['fail'] = f'Rust run failed: {end}'
     elif diff: rec['fail'] = f'differs: {diff}'
@@ -220,6 +227,7 @@ def main():
         done = [r for r in ok if 'witness' not in r]
         wit = Counter(r['witness'] for r in ok if 'witness' in r)
         print(f"{kind}: {len(recs)} runs, {sum(r.get('equal', 0) for r in recs)} captures compared equal, {len(done)} complete, "
+              f"{sum(r.get('respawns', 0) for r in recs)} genuine respawns in {sum(1 for r in recs if r.get('respawns'))} runs, "
               f"{sum(wit.values())} end at a refusal, {len(recs) - len(ok)} fail")
         for w, n in wit.most_common():
             fr = [r['end'][1] / r['session_tics'] for r in ok if r.get('witness') == w]
