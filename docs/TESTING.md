@@ -3497,6 +3497,32 @@ python3 tools/reference/m6b_goldens.py --check --selftest
 - The three steps are in the "M6a genuine session" job of `rust.yml`.
 - Address runs use `detect_leaks=0`: leak detection is disabled, which is not LeakSanitizer coverage.
 
+### M6b phase 2: wire 29 against the genuine engine
+
+The genuine-engine tools of wire 29 ([draft PR #89](https://github.com/Copgunn/mutara/pull/89)); each writes its goldens
+without `--check` and compares them with `--check`, writing nothing (work directories default to `~/scratch/wire29/`
+and `~/scratch/doom-wire29-mixer`, outside the repository).
+
+```sh
+# the 19 M6b items through the independent DSIM45 encoder (tests/reference/wire29_state.txt)
+python3 tools/reference/wire29_goldens.py --check
+# the stale-pointer items STALE, STALE2, BOSS2 and FASTOUT, with their self-tests
+python3 tools/reference/wire29_stale.py --check --selftest
+# the pinned session streams and the pause items DEADSPEC, LOADP and TURBOP (their frame, pause and sound streams)
+python3 tools/reference/wire29_pause.py --check --selftest
+# the pause picture at screen sizes 9, 5 and 3 with our own border lumps
+python3 tools/reference/wire29_border.py --check --selftest
+# the genuine mixer on the M6b and wire 29 sound streams
+python3 tools/reference/wire29_mixer.py --check --selftest --jobs 4
+# the Rust side: the session, the frames, sound and mixer, and the simulation's genuine items
+cargo test -p doom-game --release --test wire29_session --test wire29_frames
+cargo test -p doom-sim --release --lib nightmare_genuine_tests
+```
+
+- The five genuine steps are in the "M6a genuine session" job of `rust.yml`; the Rust tests run in the existing workspace
+  test steps.
+- Address runs use `detect_leaks=0`: leak detection is disabled, which is not LeakSanitizer coverage.
+
 ## Mutation testing
 
 M4a used cargo-mutants 27.1.0 with cargo-nextest 0.9.151. These are separate

@@ -692,6 +692,14 @@ jobs:
           python3 tools/reference/m6b_wad.py --check
           python3 tools/reference/m6b_build.py --check
           python3 tools/reference/m6b_goldens.py --work "$RUNNER_TEMP/m6b" --check --selftest
+      - name: Wire 29 against the genuine engine (DSIM45 state goldens, the stale-pointer items, the pause items and session streams, the pause picture below screen size 10, mixer goldens of the M6b sound streams; strict, overflow and address builds; address with leak detection DISABLED, detect_leaks=0), and self-tests
+        if: env.DOCS_ONLY != 'true'
+        run: |
+          python3 tools/reference/wire29_goldens.py --work "$RUNNER_TEMP/wire29" --check
+          python3 tools/reference/wire29_stale.py --work "$RUNNER_TEMP/wire29_stale" --check --selftest
+          python3 tools/reference/wire29_pause.py --work "$RUNNER_TEMP/wire29_pause" --check --selftest
+          python3 tools/reference/wire29_border.py --work "$RUNNER_TEMP/wire29_border" --check --selftest
+          python3 tools/reference/wire29_mixer.py --work "$RUNNER_TEMP/wire29_mixer" --check --selftest --jobs 4
       - name: Documentation-only fast path
         if: env.DOCS_ONLY == 'true'
         run: echo "documentation-only change, so the genuine M6a runs were skipped"
