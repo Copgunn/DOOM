@@ -31,6 +31,8 @@ mod window;
 mod window_handler_tests;
 #[cfg(test)]
 mod wire28_tests;
+#[cfg(test)]
+mod wire29_tests;
 mod write_stats;
 
 use audio::{Output, Trial, Volume};
