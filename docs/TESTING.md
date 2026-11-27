@@ -2402,7 +2402,7 @@ cargo +nightly fuzz run render_display_state --sanitizer none CORPUS -- -fork=2 
 fact to check.
 
 **Mutation testing.** The `Mutants` workflow covers `-p doom-game` as well as `-p doom-sim -p doom-render`
-(see [CI mutation workflow](#ci-mutation-workflow-m4b)); `doom-play` is deliberately out of scope (a window
+(see [CI mutation workflow](#ci-mutation-workflow-m4b); since certificate audit 1 the `doom-sim`, `doom-render` and `doom-sound` mutants are also judged by `doom-game`'s tests, see the end of that section); `doom-play` is deliberately out of scope (a window
 shell with no logic a test could pin). The shard count is one value in the workflow's `Mutants plan` job. Each
 test process runs under a memory and time cap (below), because one first-run mutant made `wrap()` allocate without
 bound. The runs and the survivors' dispositions are recorded in
@@ -3441,6 +3441,42 @@ python3 -u tools/local/wire28_real.py --iwad IWAD --work DIR --set sessions --wi
   finished demo leaves `done/NAME.json` under `--work/ref`, so a rerun skips it; never run two on one `--work`. The goldens are IWAD-derived and stay
   in scratch.
 
+### Certificate audit 1
+
+Commands for the audit's tools, goldens and tests ([PR #87](https://github.com/Copgunn/mutara/pull/87); the observations are in [the record](validation/AUDIT1.md)).
+The genuine builds need a C compiler with the address and undefined-behaviour sanitizers; `--work` is outside the repository.
+
+```sh
+# item 1: the sector-11 cap per damage path (genuine goldens, eleven items; the second line needs no genuine build)
+python3 tools/reference/audit1_cap.py --check --work "$HOME/scratch/audit1/cap"
+python3 tools/reference/audit1_cap.py --check --files
+cargo test -p doom-sim --test audit1_cap                  # also with --release
+# item 4: the block-walk overshoot (items SLIDE and WRAP)
+python3 tools/reference/overshoot_wad.py --check
+python3 tools/reference/overshoot_goldens.py --work DIR --check
+cargo test --locked -p doom-sim --test overshoot_walk     # also with --release
+# items 4 and 5: the in-crate tests
+cargo test --locked -p doom-sim --lib -- overshoot_walk_tests slide_checked_flag_tests   # also with --release
+# item 6: the independent reader's differential (genuine P_InterceptVector text against intercept_vector.rs)
+python3 tools/reference/wire27_read.py --work DIR --check --selftest
+# items 8a and 8b
+cargo test -p doom-game --test audit1
+# item 7
+cargo test -p doom-play session_writer::tests::a_stalled_disk_keeps_the_queue_bounded_and_loses_no_tic
+cargo test -p doom-play session_writer::tests::the_stalled_disk_measurement_keeps_a_delay_that_repeats
+```
+
+- `audit1_cap.py` writes or `--check`s `tests/reference/audit1_cap/` (WADs, demos, `cap_state.txt`, `cap_results.json`); the genuine runner is built strict, overflow and
+  address (`detect_leaks=0`: leak detection disabled, not LeakSanitizer coverage) and with the cap removed, which must differ from strict at the capture after the lethal blow.
+  `audit1_cap` compares Rust under wires 23 to 28 (whole state on 26 to 28, a projection on 23 to 25), runs a planted fault, and pins `damage_actor` on the player.
+- `overshoot_wad.py` writes or `--check`s the WAD and the two demos; `overshoot_goldens.py` builds strict, overflow, address, witness, observer and planted-fault runners and writes or
+  `--check`s `tests/reference/overshoot_state.txt`. `overshoot_walk` compares every capture under wires 26, 27 and 28 and runs the planted-fault self-tests; the two in-crate files pin
+  the genuine far intercept and the slide's `checked` flag (the `movement.rs:869` survivor).
+- `wire27_read.py` extracts the genuine C text and `checked_intercept` into `--work`, compares 300,000 operand sets with the counts file `tests/reference/wire27_read_stats.txt`
+  (`--check`) and runs two planted faults (`--selftest`).
+- `audit1.rs` pins that the version 3 demo readers accept a button byte the writers refuse, and that `diagnostic_bytes` refuses the captures of wires 27 and 28.
+- The three genuine steps and the reader are in the "M6a genuine session" job of `rust.yml`; the Rust tests run in the existing workspace test steps.
+
 ## Mutation testing
 
 M4a used cargo-mutants 27.1.0 with cargo-nextest 0.9.151. These are separate
@@ -3568,6 +3604,12 @@ first value, used in the second and third runs) the wrapper killed a looping tes
 mutant that makes a loop endless was reported as caught, not as a timeout. The cap is per process, so the bound
 is jobs x test threads x cap (2 x 2 x 1.5 GB); keep that product under the runner's memory, and note that a 3 GB cap with default parallelism
 did not protect a 7 GB host locally. Use the same runner and `--test-threads` when re-running a shard locally.
+
+**Cross-crate judgment and its self-test (certificate audit 1, 2026-11-26).** Each shard makes one cargo-mutants run per crate. A mutant of `doom-sim`, `doom-render` or `doom-sound` is judged by its own crate's tests
+plus `doom-game`'s (`--test-package <crate> --test-package doom-game`, `--timeout 1500`), so a mutant only the integration tests catch is counted as caught; `doom-game`'s mutants are judged by `doom-game`'s tests with
+`--timeout 300`, as before. The per-process cap follows each run's timeout (+30 s), results are uploaded as `<group>.<kind>.txt`, and the summary says who judged. The job "Mutants cross-crate self-test" runs one named
+`doom-sim` mutant both ways and fails if `doom-game`'s tests do not catch it; when it warns that `doom-sim`'s own tests catch it, pick another mutant. A missed `doom-sim` mutant now also runs `doom-game`'s suite
+(about 170 s against about 65 s locally), so a large diff may need more shards. Record: [AUDIT1 section 9](validation/AUDIT1.md#9-cross-crate-mutation-testing-in-ci).
 
 #### Re-running one shard or the survivors locally (M5a)
 

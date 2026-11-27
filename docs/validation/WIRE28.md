@@ -301,6 +301,8 @@ Exit code 2 is cargo-mutants' "a mutant was missed"; the runs that exited 2 are 
 rerun with `doom-game`'s tests. Each hand-applied kill is an observation of one mutation, not of the whole selection. Reading a mutant as equivalent is an argument,
 not a run.
 
+**2026-11-26 (certificate audit 1, item 9):** the `v40_skill` guard mutant (`diagnostic.rs:580:25`) is now caught by `doom-sim`'s own tests (exit 0 with or without `doom-game`'s; the test added at `fff2a40d` kills it), so the first row of the survivor table, "killed once `doom-game`'s tests run", is out of date for it at this head. The table above is left as written. The mutation workflow now judges `doom-sim` mutants with `doom-game`'s tests too ([AUDIT1 section 9](AUDIT1.md#9-cross-crate-mutation-testing-in-ci)).
+
 ## 10. Witness timing
 
 Reported, not gated. Taken 2026-11-26, 02:30 to 02:33 (America/Los_Angeles), **run alone**: nothing else was running (no cargo, no real-map job, no agent; `ps` showed only the
@@ -395,6 +397,8 @@ Seven rulings on the three open decisions and on this record, applied the same d
 | Crushers, lost soul | none found | not admitted | not admitted | no |
 
 **What the census did not settle:** whether any profile configuration reaches `damage_actor` or the older missile `strike` on wires 23 to 28 (inferred: none in play); whether the player's own rocket can ever touch the player directly (the owner skip was read in part; its splash is the splash row); that the older fixture attacks (`execute_attack` with a plan prepared earlier, `current_map_melee`), which have no cap, never run on wires 23 to 28 (inferred from the dispatch). The skill 0 halving sits before the cap on all three request builders.
+
+**2026-11-26 (certificate audit 1):** the audit list and the census above are answered in [AUDIT1](AUDIT1.md); no engine line changed. The census was run: the three open points are settled (no configuration reaches `damage_actor`, `ExecutionContext::damage` or the older missile `strike` with the player as target on wires 23 to 28 except a direct API call; the player's own rocket cannot touch the player directly; the older fixture attacks never run on wires 23 to 28), and the wires 23 to 26 bite is confirmed against the genuine engine, not only by the Rust-only probe. The tables above are left as written.
 
 ## Limits
 
