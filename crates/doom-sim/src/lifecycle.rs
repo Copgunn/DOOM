@@ -1811,7 +1811,13 @@ impl<A: ActorAccess> LifeHost<'_, A> {
             .expect("typed actor");
         if life.tics == -1 {
             match leveltime {
-                Some(leveltime) => crate::nightmare::corpse_think(self, id, leveltime),
+                // Wires 1 to 28 have no respawn: decided once here, not in the call.
+                Some(leveltime)
+                    if crate::nightmare::respawn_monsters(self.world, self.options.skill) =>
+                {
+                    crate::nightmare::corpse_think(self, id, leveltime)
+                }
+                Some(_) => {}
                 None => assert!(
                     life.flags & crate::world_pickups::MF_COUNTKILL == 0
                         || !crate::nightmare::respawn_monsters(self.world, self.options.skill),

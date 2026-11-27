@@ -944,11 +944,24 @@ impl Simulation {
     }
     /// The absolute bound of every live actor ([`Self::sight_margin`]), or under
     /// wire 29 for an escaped missile ([`Self::escaped_missile`]) the sight margin
-    /// on its height alone.
+    /// on its height alone. An actor within the whole bound passes either way, so
+    /// the wire 29 test is made only for one outside it (the per-actor preflights
+    /// of every wire call this; older wires pay one branch on the refusal path).
+    #[inline]
     pub(crate) fn actor_bounds_admitted(&self, a: &Actor) -> Result<(), SimError> {
+        let margin = self.sight_margin();
+        match sight::actor_bounds_within(a, margin) {
+            Ok(()) => Ok(()),
+            Err(e) => self.escaped_bounds(a, margin, e),
+        }
+    }
+    /// [`Self::actor_bounds_admitted`] for an actor outside the whole bound.
+    #[cold]
+    #[inline(never)]
+    fn escaped_bounds(&self, a: &Actor, margin: u32, e: SimError) -> Result<(), SimError> {
         if !self.escaped_missile(a) {
-            sight::actor_bounds_within(a, self.sight_margin())
-        } else if sight::within(a.z, self.sight_margin()) {
+            Err(e)
+        } else if sight::within(a.z, margin) {
             Ok(())
         } else {
             Err(PerceptionError::Arithmetic.into())
