@@ -48,3 +48,6 @@ __pycache__/
 # The M6b phase 1 synthetic IWAD, pause-picture PWAD (tools/reference/m6b_wad.py; no commercial data) and demo lumps.
 !/tests/reference/m6b_wads/*.wad
 !/tests/reference/m6b_scripts/*.lmp
+# The wire 29 stale-pointer item's synthetic IWAD and demo lump (tools/reference/wire29_stale.py; no commercial data).
+!/tests/reference/wire29_stale/*.wad
+!/tests/reference/wire29_stale/*.lmp
