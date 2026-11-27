@@ -90,6 +90,9 @@ pub enum ChainStateError {
     },
     /// Restore: not yet ([`NotYet::MeltInProgress`]).
     NotYet(NotYet),
+    /// `DSND` version 4 only (`crate::chain_pause`): a pause field out of its domain (the
+    /// `mus_paused` byte other than 0 or 1, more paused tics than the level's session tics).
+    Pause(&'static str),
     /// A state no session reaches, by the named rule (checked by version 2's reader only;
     /// version 1's reader is frozen): an actor origin of generation 0 (no actor has it), a
     /// labelled detector with no texture (it has no candidate to fire on), an occupied channel
@@ -389,11 +392,13 @@ impl ChainSound {
         if state.melt {
             return Err(ChainStateError::NotYet(NotYet::MeltInProgress));
         }
-        Self::restore_mode(set, music, state, sim, expected, ChainMode::RefusesMelt)
+        Self::restore_mode(set, music, state, sim, expected, ChainMode::RefusesMelt, 0)
     }
 
     /// [`Self::restore`]'s checks and rebuild in configuration `mode`; `state.melt` is a pending
-    /// display (only [`ChainMode::FinaleAndMelt`] reaches here with one).
+    /// display (only [`ChainMode::FinaleAndMelt`] reaches here with one). `level_paused` is the
+    /// level's paused tics (`DSND` version 4; 0 for versions 2 and 3), which the simulation did
+    /// not run.
     pub(crate) fn restore_mode(
         set: Arc<SoundSet>,
         music: MusicLumps,
@@ -401,6 +406,7 @@ impl ChainSound {
         sim: &Simulation,
         expected: ChainConfig,
         mode: ChainMode,
+        level_paused: u64,
     ) -> Result<Self, ChainStateError> {
         if state.config != expected {
             return Err(StateError::ConfigMismatch {
@@ -413,9 +419,13 @@ impl ChainSound {
         if !music.present(playing) {
             return Err(ChainStateError::MusicMissing(playing));
         }
-        if sim.tic() != state.level_tics() {
+        let level_tics = state
+            .level_tics()
+            .checked_sub(level_paused)
+            .ok_or(ChainStateError::Pause("level paused tics"))?;
+        if sim.tic() != level_tics {
             return Err(ChainStateError::TicMismatch {
-                state: state.level_tics(),
+                state: level_tics,
                 simulation: sim.tic(),
             });
         }
@@ -464,6 +474,7 @@ impl ChainSound {
             owed,
             updates: state.tics,
             fault: None,
+            pause: None,
         })
     }
 }

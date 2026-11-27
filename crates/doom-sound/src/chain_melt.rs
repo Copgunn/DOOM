@@ -100,6 +100,10 @@ pub enum ChainSaveRefusal {
     RefusesMeltSavesVersion2,
     /// The session holds a planted fault (evidence self-tests only).
     PlantedFault,
+    /// A pause session (`crate::chain_pause`) is saved as `DSND` version 4 only.
+    PauseSavesVersion4,
+    /// `DSND` version 4 is the save of a pause session only.
+    NotPauseSession,
 }
 
 impl std::fmt::Display for ChainSaveRefusal {
@@ -224,10 +228,11 @@ impl ChainSound {
     }
 
     /// The saved state of a [`ChainMode::FinaleAndMelt`] session, `DSND` version 3; `None` for a
-    /// [`ChainMode::RefusesMelt`] session (it saves as version 2, [`Self::save`]) and for a
-    /// session holding a planted fault.
+    /// [`ChainMode::RefusesMelt`] session (it saves as version 2, [`Self::save`]), for a
+    /// session holding a planted fault and for a pause session (`DSND` version 4,
+    /// [`Self::save_v4_checked`]).
     pub fn save_v3(&self) -> Option<ChainSoundStateV3> {
-        (self.mode == ChainMode::FinaleAndMelt && self.fault.is_none())
+        (self.mode == ChainMode::FinaleAndMelt && self.fault.is_none() && self.pause.is_none())
             .then(|| ChainSoundStateV3 { state: self.save() })
     }
 
@@ -246,6 +251,9 @@ impl ChainSound {
 
     /// [`Self::save_v3`] with the reason for a refusal named.
     pub fn save_v3_checked(&self) -> Result<ChainSoundStateV3, ChainSaveRefusal> {
+        if self.pause.is_some() {
+            return Err(ChainSaveRefusal::PauseSavesVersion4);
+        }
         match (self.mode, self.fault) {
             (ChainMode::RefusesMelt, _) => Err(ChainSaveRefusal::RefusesMeltSavesVersion2),
             (ChainMode::FinaleAndMelt, Some(_)) => Err(ChainSaveRefusal::PlantedFault),
@@ -271,6 +279,7 @@ impl ChainSound {
             sim,
             expected,
             ChainMode::FinaleAndMelt,
+            0,
         )
     }
 }
