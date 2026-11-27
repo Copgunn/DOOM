@@ -123,7 +123,10 @@ fn digest(s: &Snapshot) -> String {
 /// The demo's header byte 3 (the map) and its commands as `G_ReadDemoTiccmd`
 /// reads them, every button byte kept (the wire-29 demo reader is a later step).
 pub(crate) fn demo(name: &str) -> (u8, Vec<TicCommand>) {
-    let lmp = std::fs::read(reference(&format!("m6b_scripts/{name}.lmp"))).expect("demo");
+    demo_at(&format!("m6b_scripts/{name}.lmp"))
+}
+fn demo_at(path: &str) -> (u8, Vec<TicCommand>) {
+    let lmp = std::fs::read(reference(path)).expect("demo");
     let body = &lmp[13..lmp.len() - 1];
     assert_eq!((body.len() % 4, lmp.last()), (0, Some(&demo::DEMO_MARKER)));
     let commands = body.chunks_exact(4).map(|c| TicCommand {
@@ -146,6 +149,14 @@ pub(crate) fn level(
     } else {
         "m6b_wads/m6b.wad"
     };
+    level_from(wad, map, skill, parameters)
+}
+fn level_from(
+    wad: &str,
+    map: u8,
+    skill: Skill,
+    parameters: GameParameters,
+) -> Result<Simulation, LevelStartError> {
     let bytes = std::fs::read(reference(wad)).expect("wad");
     let wad = doom_wad::Wad::parse(&bytes, doom_wad::Limits::default()).expect("wad parse");
     let map_data =
@@ -237,6 +248,51 @@ fn run(item: &Item) -> Play {
     let (map, commands) = demo(&item.name);
     let mut s = level(&item.name, map, item.skill, item.parameters).expect("the map loads");
     play(&mut s, &commands, &item.captures)
+}
+
+/// STALE (`tools/reference/wire29_stale.py`, golden
+/// `tests/reference/wire29_stale/stale_state.txt`): a dead player whose
+/// `attacker` is an imp's corpse that respawns. The genuine engine reads the
+/// corpse through `player->attacker` in `P_DeathThink` on every tic: while it
+/// is pending (still in the thinker list) and then, from the observed
+/// `first_freed_read`, from a freed zone block. The port equals the genuine
+/// engine at every capture before that read and refuses its tic with
+/// `FreedRead`, the state kept.
+#[test]
+fn a_freed_attacker_is_refused_where_the_genuine_engine_first_reads_it() {
+    let text = std::fs::read_to_string(reference("wire29_stale/stale_state.txt")).expect("golden");
+    let rows: Vec<Vec<&str>> = text
+        .lines()
+        .filter(|l| !l.starts_with('#'))
+        .map(|l| l.split(',').collect())
+        .collect();
+    let captures: Vec<String> = rows
+        .iter()
+        .filter(|f| f[0] == "C")
+        .map(|f| f[3].to_owned())
+        .collect();
+    let fact = |name: &str| -> usize {
+        let row = rows.iter().find(|f| f[0] == "O" && f[1] == name);
+        row.expect(name)[2].parse().expect(name)
+    };
+    let (first, reads) = (fact("first_freed_read"), fact("freed_reads"));
+    assert!(
+        reads > 0 && first < captures.len(),
+        "the genuine engine reads freed memory"
+    );
+    let (map, commands) = demo_at("wire29_stale/STALE.lmp");
+    let respawn = GameParameters {
+        respawn: true,
+        fast: false,
+    };
+    let mut s = level_from("wire29_stale/stale.wad", map, Skill::Hard, respawn).expect("loads");
+    let p = play(&mut s, &commands, &captures);
+    assert_eq!(p.difference, None, "first differing capture");
+    assert_eq!(p.refusal, Some((first, SimError::FreedRead)));
+    eprintln!(
+        "STALE: {} captures equal, FreedRead at session tic {first}",
+        p.digests.len()
+    );
 }
 
 /// The planted faults of the port ([`Fault`]) and the `V` rows of the altered
