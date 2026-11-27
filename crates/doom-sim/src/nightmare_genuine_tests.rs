@@ -251,31 +251,21 @@ fn run(item: &Item) -> Play {
 }
 
 /// One item of `tools/reference/wire29_stale.py` (skill 3 with the respawn byte):
-/// its golden's captures, the genuine engine's first read of a freed corpse
-/// (`first_freed_read`, a leveltime, which is the session tic: the level starts at
-/// tic 0) and the port's play of its demo.
-fn stale_item(name: &str, wad: &str) -> (usize, Play) {
+/// its golden's rows, split by comma, and the port's play of its demo against the
+/// golden's captures.
+fn wire29_item(name: &str, wad: &str) -> (Vec<Vec<String>>, Play) {
     let golden = format!("wire29_stale/{}_state.txt", name.to_lowercase());
     let text = std::fs::read_to_string(reference(&golden)).expect("golden");
-    let rows: Vec<Vec<&str>> = text
+    let rows: Vec<Vec<String>> = text
         .lines()
         .filter(|l| !l.starts_with('#'))
-        .map(|l| l.split(',').collect())
+        .map(|l| l.split(',').map(str::to_owned).collect())
         .collect();
     let captures: Vec<String> = rows
         .iter()
         .filter(|f| f[0] == "C")
-        .map(|f| f[3].to_owned())
+        .map(|f| f[3].clone())
         .collect();
-    let fact = |fact: &str| -> usize {
-        let row = rows.iter().find(|f| f[0] == "O" && f[1] == fact);
-        row.expect(fact)[2].parse().expect(fact)
-    };
-    let (first, reads) = (fact("first_freed_read"), fact("freed_reads"));
-    assert!(
-        reads > 0 && first < captures.len(),
-        "the genuine engine reads freed memory"
-    );
     let (map, commands) = demo_at(&format!("wire29_stale/{name}.lmp"));
     let respawn = GameParameters {
         respawn: true,
@@ -283,7 +273,25 @@ fn stale_item(name: &str, wad: &str) -> (usize, Play) {
     };
     let wad = format!("wire29_stale/{wad}");
     let mut s = level_from(&wad, map, Skill::Hard, respawn).expect("loads");
-    (first, play(&mut s, &commands, &captures))
+    let p = play(&mut s, &commands, &captures);
+    (rows, p)
+}
+
+/// A STALE item: the genuine engine's first read of a freed corpse
+/// (`first_freed_read`, a leveltime, which is the session tic: the level starts at
+/// tic 0) and the port's play of its demo.
+fn stale_item(name: &str, wad: &str) -> (usize, Play) {
+    let (rows, p) = wire29_item(name, wad);
+    let fact = |fact: &str| -> usize {
+        let row = rows.iter().find(|f| f[0] == "O" && f[1] == fact);
+        row.expect(fact)[2].parse().expect(fact)
+    };
+    let (first, reads) = (fact("first_freed_read"), fact("freed_reads"));
+    assert!(
+        reads > 0 && first < rows.iter().filter(|f| f[0] == "C").count(),
+        "the genuine engine reads freed memory"
+    );
+    (first, p)
 }
 
 /// STALE (golden `tests/reference/wire29_stale/stale_state.txt`): a dead player
@@ -320,6 +328,27 @@ fn a_freed_target_is_refused_where_the_genuine_engine_first_reads_it() {
     eprintln!(
         "STALE2: {} captures equal, FreedRead at session tic {first}",
         p.digests.len()
+    );
+}
+
+/// BOSS2 (golden `tests/reference/wire29_stale/boss2_state.txt`, map E1M8): two
+/// Barons telefragged, respawned and telefragged again. `A_BossDeath` keeps no
+/// memory (p_enemy.c:1693-1704) and calls the tag-666 `EV_DoFloor` on every last
+/// Baron's death (1730-1733): the genuine engine's calls start the floor, skip it
+/// while it still moves (p_floor.c's busy test) and start a mover of 0 units on the
+/// lowered floor (the `O` rows `boss_calls`, `boss_started`). The port equals the
+/// genuine engine at every capture.
+#[test]
+fn a_repeated_boss_death_re_fires_tag_666_as_the_genuine_engine_does() {
+    let (rows, p) = wire29_item("BOSS2", "boss2.wad");
+    let fact = |k: &str| rows.iter().find(|f| f[0] == "O" && f[1] == k).expect(k)[2].clone();
+    assert_eq!(fact("boss_started"), "1 0 1", "the genuine calls");
+    assert_eq!((p.difference, p.refusal), (None, None));
+    assert_eq!(p.digests.len(), rows.iter().filter(|f| f[0] == "C").count());
+    eprintln!(
+        "BOSS2: {} captures equal, boss calls at {}",
+        p.digests.len(),
+        fact("boss_calls")
     );
 }
 
