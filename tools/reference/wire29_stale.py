@@ -24,6 +24,12 @@ room; its explosion kills a barrel Y in one blow, so Y's `target` stays NULL and
 source (A_Explode passes the barrel's target, p_enemy.c:1600; p_map.c:1227), which keeps B's target; B's pain state leads to A_Chase, which reads the
 freed block's flags (p_enemy.c:704-705).
 
+The item BOSS2 (the same skill and byte; room3, on the E1M8 slot): A_BossDeath has no memory of having fired
+(p_enemy.c:1693-1704), so with respawning every death of the last live Baron calls the tag-666 EV_DoFloor again
+(1730-1733). The player telefrags two Barons, waits for their respawns and telefrags them again; the calls start the
+floor, find it still moving (p_floor.c's specialdata test: nothing started) and start a mover of 0 units on the
+lowered floor. The observer prints each call and EV_DoFloor's return.
+
 Runs, as m6b_goldens.py runs its items (the M6b runner of tools/reference/m6b_build.py, imported read-only; the M5c
 recommended switches; ASAN_OPTIONS=detect_leaks=0: leak detection disabled, not LeakSanitizer coverage):
   strict, overflow, address   identical dumps, sound and session streams and a clean exit are required;
@@ -31,13 +37,15 @@ recommended switches; ASAN_OPTIONS=detect_leaks=0: leak detection disabled, not 
                               only; its dumps must equal the strict ones): it records the corpse each
                               P_NightmareRespawn removes, prints every read of such a pointer by P_DeathThink and
                               A_Chase with whether the zone block is then free (its memblock_t id no longer ZONEID,
-                              z_zone.c:142-144) and the health and flags the block holds, and every Z_Malloc whose
-                              block overlaps a removed corpse.
+                              z_zone.c:142-144) and the health and flags the block holds, every Z_Malloc whose
+                              block overlaps a removed corpse, and each tag-666 EV_DoFloor of A_BossDeath.
 
 Output (written without --check; --check regenerates and compares, writing nothing):
   tests/reference/wire29_stale/stale.wad, STALE.txt, STALE.lmp      STALE's map and demo
   tests/reference/wire29_stale/stale2.wad, STALE2.txt, STALE2.lmp   STALE2's
-  tests/reference/wire29_stale/stale_state.txt, stale2_state.txt    DOOM-WIRE29-STALE-v1: the I row (as
+  tests/reference/wire29_stale/boss2.wad, BOSS2.txt, BOSS2.lmp      BOSS2's
+  tests/reference/wire29_stale/stale_state.txt, stale2_state.txt,
+      boss2_state.txt                                              DOOM-WIRE29-STALE-v1: the I row (as
       wire29_state.txt's), a C row per capture (its state digest over DSIM45) and O rows (observed facts)
 
     wire29_stale.py [--check] [--selftest] [--author] [--only ITEM[,ITEM]] [--work DIR] [--cc CC]
