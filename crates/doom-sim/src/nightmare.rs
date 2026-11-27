@@ -13,7 +13,7 @@
 //! state before it kept, wherever wire 28's rules would otherwise run on: each
 //! variant names the step that replaces it with the original's behaviour.
 use crate::identity::OriginalState;
-use crate::{Skill, StaticWorld};
+use crate::{Simulation, Skill, StaticWorld};
 use std::ops::RangeInclusive;
 
 /// The `-respawn` and `-fast` parameters (`respawnparm`, `fastparm`;
@@ -33,9 +33,6 @@ pub struct GameParameters {
 /// differ from the original's.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Wire29Pending {
-    /// `P_GiveAmmo` doubling on Nightmare (p_inter.c:95-101): a pickup that
-    /// gives ammunition at skill 4. Step 2.
-    NightmareAmmo,
     /// A state of the fast table entered while it is fast (g_game.c:1423-1424:
     /// `S_SARG_RUN1` to `S_SARG_PAIN2`, info.c:613-625). Step 3.
     FastStates,
@@ -77,6 +74,19 @@ pub(crate) fn respawn_monsters(world: &StaticWorld, skill: Skill) -> bool {
     world
         .parameters
         .is_some_and(|p| p.respawn || skill == Skill::Nightmare)
+}
+
+/// `P_SpawnMobj`'s reaction time (p_mobj.c:503-504): the type's `defined` value,
+/// left 0 on Nightmare (`nightmare`: wire 29 at skill 4).
+pub(crate) fn spawn_reaction_time(nightmare: bool, defined: i32) -> i32 {
+    if nightmare { 0 } else { defined }
+}
+
+impl Simulation {
+    /// Wire 29 at skill 4 (`PlayerRuntime::nightmare`).
+    pub(crate) fn nightmare(&self) -> bool {
+        self.original_player.as_ref().is_some_and(|p| p.nightmare)
+    }
 }
 
 /// The longest a state may last, of the table in force: the thirteen halved

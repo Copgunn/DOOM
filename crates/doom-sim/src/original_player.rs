@@ -151,8 +151,9 @@ pub(crate) struct PlayerRuntime {
     pub baby: bool,
     /// Wire 29 at `sk_nightmare` (`gameskill == sk_nightmare`, ruling N1): every
     /// `P_GiveAmmo` amount is doubled as at `sk_baby` (p_inter.c:95-101); damage is
-    /// not halved (p_inter.c:799-800 names `sk_baby` alone). False under every
-    /// other policy and skill.
+    /// not halved (p_inter.c:799-800 names `sk_baby` alone); every mobj spawns
+    /// with reaction time 0 (p_mobj.c:503-504), which the spawn witnesses of
+    /// items and decorations expect. False under every other policy and skill.
     pub nightmare: bool,
 }
 impl PlayerRuntime {

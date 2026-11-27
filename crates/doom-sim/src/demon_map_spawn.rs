@@ -114,7 +114,7 @@ impl Simulation {
                 if decorations > self.decoration_limit() {
                     return Err(MapSpawnError::DecorationLimit.into());
                 }
-                e1m1_rules::validate_decoration(self.room(), *a)?;
+                e1m1_rules::validate_decoration_at(self.room(), *a, self.nightmare())?;
             } else if crate::barrels::is_barrel(self.player_policy(), life.actor_type) {
                 // An exploding barrel (M3h9b note §2.1) interleaves with the other
                 // THINGs in lump order and is never the suffix; its witness covers
