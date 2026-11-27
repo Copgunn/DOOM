@@ -250,8 +250,8 @@ fn run(item: &Item) -> Play {
     play(&mut s, &commands, &item.captures)
 }
 
-/// One item of `tools/reference/wire29_stale.py` (skill 3 with the respawn byte):
-/// its golden's rows, split by comma, and the port's play of its demo against the
+/// One item of `tools/reference/wire29_stale.py` at its I row's skill and
+/// parameters: its golden's rows, split by comma, and the port's play of its demo against the
 /// golden's captures.
 fn wire29_item(name: &str, wad: &str) -> (Vec<Vec<String>>, Play) {
     let golden = format!("wire29_stale/{}_state.txt", name.to_lowercase());
@@ -267,12 +267,15 @@ fn wire29_item(name: &str, wad: &str) -> (Vec<Vec<String>>, Play) {
         .map(|f| f[3].clone())
         .collect();
     let (map, commands) = demo_at(&format!("wire29_stale/{name}.lmp"));
-    let respawn = GameParameters {
-        respawn: true,
-        fast: false,
+    let i = rows.iter().find(|f| f[0] == "I").expect("the I row");
+    let skill =
+        [Skill::Medium, Skill::Hard, Skill::Nightmare][i[2].parse::<usize>().expect("skill") - 2];
+    let parameters = GameParameters {
+        respawn: i[3] == "1",
+        fast: i[4] == "1",
     };
     let wad = format!("wire29_stale/{wad}");
-    let mut s = level_from(&wad, map, Skill::Hard, respawn).expect("loads");
+    let mut s = level_from(&wad, map, skill, parameters).expect("loads");
     let p = play(&mut s, &commands, &captures);
     (rows, p)
 }
@@ -349,6 +352,29 @@ fn a_repeated_boss_death_re_fires_tag_666_as_the_genuine_engine_does() {
         "BOSS2: {} captures equal, boss calls at {}",
         p.digests.len(),
         fact("boss_calls")
+    );
+}
+
+/// FASTOUT (golden `tests/reference/wire29_stale/fastout_state.txt`, Nightmare):
+/// an imp's fireball (20 units a tic on the fast table) passes through the map's
+/// outer wall in one move (p_mobj.c:152 splits only positive moves above 15) and
+/// flies outside the vertex rectangle until it meets the floor there and
+/// explodes (`O` rows `first_outside`, `explode_outside`). Wire 29 follows it
+/// (`escaped_missile`) and equals the genuine engine at every capture.
+#[test]
+fn a_fast_fireball_outside_the_map_flies_as_in_the_genuine_engine() {
+    let (rows, p) = wire29_item("FASTOUT", "fastout.wad");
+    let fact = |k: &str| rows.iter().find(|f| f[0] == "O" && f[1] == k).expect(k)[2].clone();
+    assert!(
+        fact("explode_outside").starts_with("True"),
+        "the genuine escape"
+    );
+    assert_eq!((p.difference, p.refusal), (None, None));
+    assert_eq!(p.digests.len(), rows.iter().filter(|f| f[0] == "C").count());
+    eprintln!(
+        "FASTOUT: {} captures equal, outside from capture {}",
+        p.digests.len(),
+        fact("first_outside")
     );
 }
 
