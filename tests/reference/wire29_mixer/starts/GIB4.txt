@@ -1,0 +1,16 @@
+# Start list of GIB4.sound (sha256 0b575aa87d2da6fd08dbab287bc3bd9b38425d3cfc3ee0a78e0b88929e4afbcc), written by tools/reference/m5c_starts.py:
+# the 10 S rows with outcome started, in stream order; 10 S rows in all; 1067 R rows.
+# handle convention: integrated (stated by the stream).
+schema DOOM-M5C-STARTS-v1
+config integrated
+tics 1067
+s 0 2 0 33 8 128 136 64 100
+s 66 3 66 20 8 129 134 64 101
+s 82 4 82 37 8 129 139 64 102
+s 92 5 92 1 8 129 143 64 103
+s 96 6 96 25 8 128 138 64 104
+s 100 7 100 2 8 128 129 64 105
+s 103 8 103 59 8 129 116 64 106
+s 278 17 278 21 8 129 136 64 107
+s 1024 19 1024 35 8 129 141 64 108
+s 1024 20 1024 35 8 129 116 64 109
