@@ -44,10 +44,11 @@ const SHARED: [&str; 5] = [
     "tests/reference/m6a_wads/m6a_music.wad",
     "tests/reference/m6b_wads/m6b_gfx.wad",
 ];
-/// The 19 M6b items (`tools/reference/m6b_wad.py` ITEMS).
-const ITEMS: [&str; 19] = [
+/// The 19 M6b items (`tools/reference/m6b_wad.py` ITEMS) and the two new ones.
+const ITEMS: [&str; 22] = [
     "AMMO4", "BITS4", "BITS3", "CLAMP5", "REACT4", "REACT3", "REACT3F", "FAST4", "FAST3", "FAST3F",
     "RESP4", "RESP3", "RESP3R", "BLOCK4", "GIB4", "PAUSE", "PAUSE0", "PAUSEWI", "PAUSEFIN",
+    "DEADSPEC", "LOADP", "TURBOP",
 ];
 
 fn read(path: &str) -> String {
@@ -494,6 +495,36 @@ fn wire_29_session_equals_every_genuine_session_stream() {
     );
 }
 
+/// TURBOP: the turbo message assigned on paused tic 256 (and not on 160) reaches the HUD, which
+/// ticks while paused: `message_on` of every level frame equals the genuine frame stream's P row,
+/// and the message shown (X row) appears on the genuine tics.
+#[test]
+fn the_turbo_message_during_a_pause_reaches_the_hud_as_in_the_genuine_engine() {
+    let d = drive("TURBOP", None);
+    assert_eq!((&d.row, &d.refusal, &d.capture), (&None, &None, &None));
+    let golden = read("wire29_session/turbop_state.txt");
+    let mut compared = 0;
+    for l in golden.lines().filter(|l| l.starts_with("H,")) {
+        let f: Vec<&str> = l.split(',').collect();
+        let tic: i64 = f[1].parse().unwrap();
+        assert_eq!(
+            d.message_on.get(&tic),
+            Some(&(f[2] == "1")),
+            "message_on at tic {tic}"
+        );
+        compared += 1;
+    }
+    let shown: Vec<&str> = golden.lines().filter(|l| l.starts_with("X,")).collect();
+    assert!(
+        shown
+            .iter()
+            .any(|l| l.starts_with("X,256,") && l.contains("turbo")),
+        "{shown:?}"
+    );
+    assert!(!shown.iter().any(|l| l.starts_with("X,160,")), "{shown:?}");
+    eprintln!("TURBOP: message_on equal at {compared} tics; shown {shown:?}");
+}
+
 /// The session's planted faults are caught at their variants' places (module documentation).
 #[test]
 fn the_sessions_planted_faults_are_caught_at_the_variants_places() {
@@ -544,6 +575,41 @@ fn the_sessions_planted_faults_are_caught_at_the_variants_places() {
     let (t, e) = d.row.expect("pause_wi differs");
     assert!(t < load, "pause_wi at {t}: {e}");
     eprintln!("planted pause_wi: PAUSEWI caught at tic {t}, before the load at {load} ({e})");
+}
+
+/// DEADSPEC: 0x81 on a dead player's tic pauses and unpauses without a reborn (the byte has no
+/// `BT_USE`), and 0x83 asks for the reborn, loaded on the next tic (the genuine L rows).
+#[test]
+fn special_bytes_on_a_dead_players_tics() {
+    let d = drive("DEADSPEC", None);
+    assert_eq!((&d.row, &d.refusal, &d.capture), (&None, &None, &None));
+    let loads: Vec<i64> = stream("DEADSPEC")
+        .of("L")
+        .iter()
+        .map(|r| int(r, "tic"))
+        .collect();
+    assert_eq!(loads, [-1, 186], "the reborn after 0x83 at tic 185");
+    assert_eq!(d.paused_tics, 10, "paused from tic 170 to 179");
+}
+
+/// LOADP: 0x81 on the load tic of E1M2 pauses the new level before its tic 0 (the genuine G rows:
+/// `leveltime` 0 and paused from the load tic), while the carried chainsaw's `sfx_sawup` starts at
+/// the load; the unpausing tic runs tic 0, whose records the simulation publishes after the
+/// load's, which the sound must not start again (the G rows' cumulative sound draws).
+#[test]
+fn a_paused_load_tic_defers_the_levels_tic_0() {
+    let d = drive("LOADP", None);
+    assert_eq!((&d.row, &d.refusal, &d.capture), (&None, &None, &None));
+    let g = stream("LOADP");
+    let load = g.of("L").iter().map(|r| int(r, "tic")).max().unwrap();
+    let at = |t: i64| {
+        let r = g.at("G", t).unwrap();
+        (int(r, "leveltime"), int(r, "paused"))
+    };
+    assert_eq!(
+        (load, at(load), at(load + 3), at(load + 4)),
+        (142, (0, 1), (0, 1), (1, 0))
+    );
 }
 
 /// Admission and `DSES` version 4 (Rust-only safety): skill 4 starts under wire 29 alone; a
