@@ -9,7 +9,10 @@ mod m6a;
 
 use doom_game::session::demo::SessionDemo;
 use doom_game::session::{Session, SessionSettings};
-use doom_render::{DisplayRefusal, Frame, PauseFields, SessionDisplayStateV5, SessionStateRefusal};
+use doom_render::{
+    DisplayRefusal, Frame, PauseFields, SessionDisplayStateV5, SessionRestoreError,
+    SessionStateRefusal,
+};
 use doom_sim::TicCommand;
 use m6a::{Rows, int};
 
@@ -57,6 +60,32 @@ fn start(name: &str) -> (Session, Vec<TicCommand>, Vec<bool>) {
     (s, demo.commands, paused)
 }
 
+/// A wire 28 session (skill 3, BITS3's demo): a finale-and-melt display, not a pause display.
+fn start28() -> (Session, Vec<TicCommand>, ()) {
+    let lmp = "tests/reference/m6b_scripts/BITS3.lmp";
+    let (demo, _) = SessionDemo::parse_v4(&std::fs::read(m6a::root(lmp)).unwrap()).unwrap();
+    let item = m6a::Item {
+        name: "BITS3".into(),
+        mode: "registered".into(),
+        wads: std::iter::once("tests/reference/m6b_wads/m6b.wad")
+            .chain(SHARED)
+            .map(String::from)
+            .collect(),
+        lmp: lmp.into(),
+        map: demo.map,
+        skill: demo.skill,
+        end: "marker".into(),
+        session_tics: demo.commands.len(),
+    };
+    let settings = SessionSettings {
+        map: item.map,
+        skill: item.skill,
+        screenblocks: 10,
+    };
+    let w28 = Session::new_finale_and_melt_wire28(m6a::data(&item, None), settings).unwrap();
+    (w28, demo.commands, ())
+}
+
 /// Runs `tics` tics (melts stepped).
 fn run(s: &mut Session, cmds: &[TicCommand], tics: usize) {
     let mut unseen = Frame::new();
@@ -98,28 +127,8 @@ fn the_pause_display_reports_its_fields_and_saves_as_version_5_only() {
         Some(SessionStateRefusal::PauseSavesVersion5)
     );
     // The wire 28 session's display is a finale-and-melt display: version 4, never 5.
-    let lmp = "tests/reference/m6b_scripts/BITS3.lmp";
-    let (demo, _) = SessionDemo::parse_v4(&std::fs::read(m6a::root(lmp)).unwrap()).unwrap();
-    let item = m6a::Item {
-        name: "BITS3".into(),
-        mode: "registered".into(),
-        wads: std::iter::once("tests/reference/m6b_wads/m6b.wad")
-            .chain(SHARED)
-            .map(String::from)
-            .collect(),
-        lmp: lmp.into(),
-        map: demo.map,
-        skill: demo.skill,
-        end: "marker".into(),
-        session_tics: demo.commands.len(),
-    };
-    let settings = SessionSettings {
-        map: item.map,
-        skill: item.skill,
-        screenblocks: 10,
-    };
-    let mut w28 = Session::new_finale_and_melt_wire28(m6a::data(&item, None), settings).unwrap();
-    run(&mut w28, &demo.commands, 3);
+    let (mut w28, wcmds, _) = start28();
+    run(&mut w28, &wcmds, 3);
     let d = w28.display();
     assert_eq!(d.pause_fields(), None);
     assert!(d.session_state_v5().is_none());
@@ -211,5 +220,31 @@ fn a_level_before_its_first_tic_is_not_drawn() {
     assert_eq!(
         d.draw(s.level(), &mut Frame::new()).unwrap_err(),
         DisplayRefusal::BeforeFirstTic
+    );
+}
+
+/// Each display restores its own state kind only (the modes are equal, the pause kinds differ): a
+/// pause display refuses a `DDSP` 4 state and a finale-and-melt display a `DDSP` 5 one, as
+/// `WrongConfig`, before anything else is read (so no level is given).
+#[test]
+fn a_display_restores_only_its_own_kind_of_state() {
+    let (mut s, cmds, _) = start("PAUSE");
+    run(&mut s, &cmds, 10);
+    let saved = s.save_v4().unwrap();
+    let v5 = SessionDisplayStateV5 {
+        display: saved.base.display.clone(),
+        pause: saved.v4.display,
+    };
+    let mut pause = s.display().clone();
+    assert_eq!(
+        pause.restore_session_v4(saved.base.display.clone(), None),
+        Err(SessionRestoreError::WrongConfig)
+    );
+    let (mut w28, wcmds, _) = start28();
+    run(&mut w28, &wcmds, 3);
+    let mut plain = w28.display().clone();
+    assert_eq!(
+        plain.restore_session_v5(v5, None),
+        Err(SessionRestoreError::WrongConfig)
     );
 }
