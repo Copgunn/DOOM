@@ -13,20 +13,20 @@
 //! | skill | u8 at 9: 0..=3 | u8 at 9: 0..=4 |
 //! | `respawnparm`, `fastparm`, `paused` | absent | 3 x u8 (0 or 1) at 11, 12, 13; every later field 3 bytes later |
 //! | level | `DSIM` 44 | `DSIM` 45 (`Diagnostic::decode_episode1_v7`) |
-//! | display | u32 length, `DDSP` 4 | u8 display kind, then u32 length and the bytes of that kind |
-//! | sound | u8 kind = 3, `DSND` 3 | unchanged: u8 kind, then the bytes of that kind |
+//! | display | u32 length, `DDSP` 4 | u8 display kind = 5, then u32 length and `DDSP` 5 (a pause display's state) |
+//! | sound | u8 kind = 3, `DSND` 3 | u8 kind = 4, then u32 length and `DSND` 4 (a pause session's state) |
 //!
-//! The two kind bytes are the slots of the embedded formats: this build writes and reads display
-//! kind 4 (`DDSP` 4) and sound kind 3 (`DSND` 3) only; M6b step 7 moves them to `DDSP` 5 and
-//! `DSND` 4, whose tic rules hold through a pause, without changing the layout.
+//! The two kind bytes are the slots of the embedded formats; this build writes and reads display
+//! kind 5 and sound kind 4 only (any other is [`DsesError::DisplayKind`] or
+//! [`DsesError::SoundKind`]). [`SessionStateV2`] holds the embedded states' `DDSP` 4 and `DSND` 3
+//! parts, [`V4Fields`] the fields the two new versions add.
 //!
-//! Rules (besides version 3's, [`SessionStateV2::check`]): the parameters equal the level's
-//! `actors.parameters`; the level's paused tics, `level.gametic_lead` - `level.start.gametic`,
-//! are session tics the simulation did not run, so the capture's tic plus them equals the sound's
-//! level tics (version 3: the capture's tic alone); a paused level has `gameaction` 0 and at least
-//! one paused tic. **Temporary (M6b step 7):** a session that has shown a frame while paused
-//! is not saved ([`DsesError::PausedNotYet`]), so every state written now has `paused` 0 and no
-//! paused tic; the reader admits `paused` 1 and paused tics as the rules above say.
+//! Rules (besides version 3's, [`SessionStateV2::check`], with the display checked by `DDSP` 5's
+//! rules): the parameters equal the level's `actors.parameters`; the level's paused tics,
+//! `level.gametic_lead` - `level.start.gametic`, are session tics the simulation did not run, so
+//! the capture's tic plus them equals the session tics of the level and they equal the sound's
+//! paused tics (and in a level the display's); a paused level has `gameaction` 0 and at least one
+//! paused tic; `paused` equals the display's and the sound's `mus_paused`.
 use super::Session;
 use super::SessionData;
 use super::state::DsesError;
@@ -36,8 +36,10 @@ use std::sync::Arc;
 
 /// The version written and read here.
 pub const VERSION: u16 = 4;
-/// The display slot kind of `DDSP` version 4.
-pub const DISPLAY_DDSP4: u8 = 4;
+/// The display slot kind of `DDSP` version 5.
+pub const DISPLAY_DDSP5: u8 = 5;
+/// The sound slot kind of `DSND` version 4.
+pub const SOUND_DSND4: u8 = 4;
 
 /// A decoded `DSES` version 4 state: version 2's fields ([`SessionStateV2`], its `level` a DSIM45
 /// capture) and the fields version 4 adds.
@@ -71,20 +73,19 @@ impl SessionStateV4 {
 }
 
 impl Session {
-    /// The saved state (`DSES` version 4) between two calls of a wire 29 session, in a melt too.
-    /// Refused: in another configuration ([`DsesError::Configuration`]), after a rule-2 refusal
-    /// or with a planted fault ([`DsesError::NotSaveable`]), and, temporarily, once a frame has
-    /// been shown while paused ([`DsesError::PausedNotYet`]).
+    /// The saved state (`DSES` version 4) between two calls of a wire 29 session, in a melt and
+    /// a pause too. Refused: in another configuration ([`DsesError::Configuration`]), and after a
+    /// rule-2 refusal or with a planted fault ([`DsesError::NotSaveable`]).
     pub fn save_v4(&self) -> Result<SessionStateV4, DsesError> {
-        let base = self.save_as(Layout::V4)?;
-        if self.shown_paused {
-            return Err(DsesError::PausedNotYet);
-        }
+        let (base, pause) = self.save_parts(Layout::V4)?;
+        let (display, sound) = pause.ok_or(DsesError::NotSaveable)?;
         Ok(SessionStateV4 {
             base,
             v4: V4Fields {
                 parameters: self.parameters,
                 paused: self.paused,
+                display,
+                sound,
             },
         })
     }

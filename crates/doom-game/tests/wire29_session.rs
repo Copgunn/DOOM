@@ -614,8 +614,8 @@ fn a_paused_load_tic_defers_the_levels_tic_0() {
 
 /// Admission and `DSES` version 4 (Rust-only safety): skill 4 starts under wire 29 alone; a
 /// state round-trips, restores and continues as the uninterrupted session; version 3 refuses
-/// version 4's bytes and version 4 refuses version 3's; a session that has shown a paused frame
-/// is not saved (temporary, M6b step 7).
+/// version 4's bytes and version 4 refuses version 3's; a paused session saves, restores and
+/// continues as the uninterrupted one.
 #[test]
 fn dses_version_4_and_the_wire_29_admission() {
     let (resp4, parameters, cmds) = item("RESP4");
@@ -691,7 +691,26 @@ fn dses_version_4_and_the_wire_29_admission() {
         }
     }
     assert!(s.paused());
-    assert!(matches!(s.save_v4(), Err(DsesError::PausedNotYet)));
+    // Paused (M6b step 7, 2026-11-27; this assertion was `Err(DsesError::PausedNotYet)` while the
+    // picture was not drawn): the state round-trips with `paused` and the paused tic, and the
+    // restored session continues through the unpausing tic 113 as the uninterrupted one.
+    let state = s.save_v4().expect("saveable while paused");
+    assert!(state.v4.paused && state.v4.display.paused && state.v4.sound.mus_paused);
+    assert_eq!(
+        (state.v4.display.level_paused, state.v4.sound.level_paused),
+        (1, 1)
+    );
+    let decoded = SessionStateV4::decode(&state.encode()).expect("decodes");
+    assert_eq!(decoded, state);
+    let mut r = Session::restore_v4(m6a::data(&pause, None), &decoded, s.level().clone())
+        .expect("restores paused");
+    let mut u = s.clone();
+    for &c in &cmds[73..160] {
+        let (a, b) = (r.tic_finale_and_melt(c), u.tic_finale_and_melt(c));
+        assert_eq!(a.map(|x| (x.kind, x.paused)), b.map(|x| (x.kind, x.paused)));
+        assert_eq!(r.frame().pixels(), u.frame().pixels());
+    }
+    assert_eq!(r.save_v4().unwrap().encode(), u.save_v4().unwrap().encode());
     assert!(matches!(
         s.save_v3(),
         Err(DsesError::Configuration(Configuration::FinaleAndMeltWire29))

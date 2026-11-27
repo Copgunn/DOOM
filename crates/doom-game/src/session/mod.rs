@@ -95,10 +95,12 @@
 //! without its buttons: the simulation zeroes a live player's (p_user.c:280-281) and gives a dead
 //! one's raw to `P_DeathThink` (p_user.c:227).
 //!
-//! **Temporary (M6b step 7):** the `M_PAUSE` picture of a paused frame (d_main.c:303-311) is not
-//! drawn ([`finale_melt::FinaleMeltTicReport::paused`] marks such frames), and a session that has
-//! shown one cannot be saved (`DSES` version 4 embeds `DDSP` version 4 and `DSND` version 3, whose
-//! tic rules a pause breaks).
+//! The display and the sound are told `paused` and the toggle before each tic's game-state switch
+//! (doom-render's `Display::set_paused`, doom-sound's `ChainSound::pause_tic`): every frame shown
+//! while paused carries the `M_PAUSE` picture (d_main.c:303-311; a missing picture is refused at
+//! the tic whose frame would first show it, the genuine engine's stop), and the sound makes the
+//! toggle's music call (s_sound.c:497-513). Both count the level's paused tics in their saved
+//! states (`DDSP` version 5, `DSND` version 4, inside `DSES` version 4).
 //!
 //! A load tic whose command pauses runs no tic of the new level, so the load's sound records (a
 //! carried chainsaw's `sfx_sawup`, p_pspr.c:145-146, started inside `P_SetupLevel`) are given to
@@ -123,7 +125,7 @@ use doom_sim::{
     CarriedStart, GameParameters, LevelExit, LevelStart, LevelStartError, SimError, Simulation,
     Skill, StartKind, TicCommand,
 };
-use doom_sound::chain::{ChainConfig, ChainRefusal, ChainSound, ChainTic, IntermissionSound};
+use doom_sound::chain::{ChainRefusal, ChainSound, ChainTic, IntermissionSound};
 use doom_sound::lumps::{SoundCaps, SoundLoadError, SoundSet};
 use doom_types::{DoomRng, Fixed};
 use finale_melt::Configuration;
@@ -585,6 +587,11 @@ pub enum PlantedFault {
     PauseRun,
     /// `pause_st`: `ST_Ticker` (and its `M_Random` draw) stopped while paused (g_game.c:731).
     PauseSt,
+    /// `pause_hu`: `HU_Ticker` (the message timer) stopped while paused (g_game.c:733).
+    PauseHu,
+    /// The self-test of `tools/reference/m6b_goldens.py`: the pause picture one row lower
+    /// (d_main.c:309; doom-render's planted pause fault).
+    PausePictureLower,
 }
 
 /// Which domain judges a command, by the part of `G_Ticker` that reads it (module
@@ -668,8 +675,6 @@ pub struct Session {
     parameters: GameParameters,
     /// `paused` (g_game.c:121; [`Configuration::FinaleAndMeltWire29`] only, module documentation).
     paused: bool,
-    /// Temporary (M6b step 7): a frame has been drawn while paused, so the session cannot be saved.
-    shown_paused: bool,
     /// Wire 29: the current level's load tic was paused, so its tic 0 has not run and will
     /// publish the load's sound records again (module documentation).
     head_owed: bool,
@@ -713,14 +718,9 @@ impl Session {
             return Err(StartError::Domain);
         }
         let skill = config.skill(settings.skill)?;
-        let sound = ChainSound::new_with(
-            data.sound_set.clone(),
-            data.music,
-            ChainConfig::fresh(data.textures),
-            i32::from(settings.map),
-            config.chain_mode(),
-        )
-        .map_err(|e| StartError::Sound(SoundWitness::Chain(e)))?;
+        let sound = config
+            .new_sound(&data, i32::from(settings.map))
+            .map_err(|e| StartError::Sound(SoundWitness::Chain(e)))?;
         let (map, level) = data.map(settings.map).map_err(StartError::Map)?;
         let sim = config
             .level_at(
@@ -734,13 +734,7 @@ impl Session {
         let cfg = DisplayConfig {
             screenblocks: settings.screenblocks,
         };
-        let mut display = Display::new_session_with(
-            data.res.clone(),
-            level.clone(),
-            cfg,
-            config.display_config(data.mode.mode.game_mode()),
-        )
-        .map_err(|e| {
+        let mut display = config.new_display(&data, level.clone(), cfg).map_err(|e| {
             StartError::Display(match e {
                 // The genuine text (w_wad.c:399-409), as at HU_Init's stop (hu_stuff.c:404-410).
                 ResourceError::LumpNotFound(n) => format!("W_GetNumForName: {n} not found!"),
@@ -771,7 +765,6 @@ impl Session {
             finale: None,
             parameters,
             paused: false,
-            shown_paused: false,
             head_owed: false,
             data,
         })
@@ -883,6 +876,9 @@ impl Session {
     #[doc(hidden)]
     pub fn plant_fault(&mut self, fault: PlantedFault) {
         self.plant_sound_fault(fault);
+        if fault == PlantedFault::PausePictureLower {
+            self.display.plant_pause_fault();
+        }
         self.fault = Some(fault);
     }
 
@@ -989,12 +985,14 @@ impl Session {
                 display: ts.sound.rndindex,
             });
         }
-        let observed = match (paused, self.fault) {
-            (false, _) => display.observe_after(&self.level, &cmd, ts.sound.draws),
-            (true, Some(PlantedFault::PauseSt)) => {
-                display.observe_paused_without_status(&self.level, &cmd, ts.sound.draws)
-            }
-            (true, _) => display.observe_paused(&self.level, &cmd, ts.sound.draws),
+        let tickers = match self.fault {
+            Some(PlantedFault::PauseSt) => [false, true],
+            Some(PlantedFault::PauseHu) => [true, false],
+            _ => [true, true],
+        };
+        let observed = match paused {
+            false => display.observe_after(&self.level, &cmd, ts.sound.draws),
+            true => display.observe_paused_with(&self.level, &cmd, ts.sound.draws, tickers),
         };
         observed.map_err(|e| SessionWitness::Display(SessionError::Observe(e)))?;
         let wiped = display.wipe_due();

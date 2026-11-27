@@ -133,11 +133,6 @@ pub enum DsesError {
     },
     /// `DSES` version 4: the display slot kind is not one this build reads.
     DisplayKind(u8),
-    /// Save, `DSES` version 4, **temporary (M6b step 7)**: the session has shown a frame while
-    /// paused, which neither its picture (`M_PAUSE`, not drawn yet) nor the embedded `DDSP`
-    /// version 4 and `DSND` version 3 (whose tic rules a paused level tic breaks) can hold.
-    /// Nothing is written.
-    PausedNotYet,
 }
 
 impl fmt::Display for DsesError {
@@ -889,7 +884,6 @@ impl Session {
             finale: None,
             parameters: doom_sim::GameParameters::default(),
             paused: false,
-            shown_paused: false,
             head_owed: false,
             data,
         })

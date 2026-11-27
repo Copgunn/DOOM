@@ -177,6 +177,38 @@ impl Configuration {
             }
         }
     }
+
+    /// The session display of this configuration over `data` and the first level (wire 29: the
+    /// pause display, `DDSP` version 5).
+    pub(crate) fn new_display(
+        self,
+        data: &SessionData,
+        level: Arc<doom_render::Level>,
+        cfg: doom_render::DisplayConfig,
+    ) -> Result<Display, doom_render::ResourceError> {
+        let mode = data.mode.mode.game_mode();
+        match self {
+            Self::FinaleAndMeltWire29 => {
+                Display::new_session_pause(data.res.clone(), level, cfg, mode)
+            }
+            _ => Display::new_session_with(data.res.clone(), level, cfg, self.display_config(mode)),
+        }
+    }
+
+    /// The sound session of this configuration over `data` on map `map` (wire 29: the pause
+    /// session, `DSND` version 4).
+    pub(crate) fn new_sound(
+        self,
+        data: &SessionData,
+        map: i32,
+    ) -> Result<ChainSound, doom_sound::chain::ChainRefusal> {
+        let (set, music) = (data.sound_set.clone(), data.music);
+        let config = doom_sound::chain::ChainConfig::fresh(data.textures);
+        match self {
+            Self::FinaleAndMeltWire29 => ChainSound::new_pause(set, music, config, map),
+            _ => ChainSound::new_with(set, music, config, map, self.chain_mode()),
+        }
+    }
 }
 
 /// What a tic of a finale-and-melt session was: the frozen session's kinds and the two it
@@ -252,8 +284,8 @@ pub struct FinaleMeltTicReport {
     /// `finalestage` and `finalecount` after the tic (None outside the finale).
     pub finale: Option<FinaleView>,
     /// [`Configuration::FinaleAndMeltWire29`]: `paused` after the tic's `G_Ticker`, so that its
-    /// frame is one the C draws `M_PAUSE` over (d_main.c:303-311). **Temporary (M6b step 7 draws
-    /// the picture):** this frame lacks it. Always false in the other configurations.
+    /// frame carries the `M_PAUSE` picture (d_main.c:303-311). Always false in the other
+    /// configurations.
     pub paused: bool,
 }
 
@@ -449,7 +481,37 @@ impl Session {
         let level = (state == GameState::Level && exit.is_none()) || loads;
         let hold = paused && fault != Some(PlantedFault::PauseRun);
         command_domain_wire29(&cmd, level && !hold)?;
-        let wi_cmd = if fault == Some(PlantedFault::PauseWi) && cmd.buttons & BT_SPECIAL != 0 {
+        // The display and the sound learn the toggle before the state switch (module
+        // documentation of `super`); both are taken back if the tic is refused.
+        let was = self.display.pause_fields().map(|p| p.paused);
+        self.display
+            .set_paused(paused)
+            .map_err(SessionWitness::Display)?;
+        let next = doom_sound::chain_pause::TicPause { toggle, paused };
+        self.sound
+            .pause_tic(Some(next))
+            .map_err(|e| SessionWitness::Sound(e.into()))?;
+        let r = self.dispatch_wire29(cmd, (reborn, exit, loads, state), hold);
+        if r.is_err() {
+            if let Some(was) = was {
+                self.display.set_paused(was).expect("taken back");
+            }
+            self.sound.pause_tic(None).expect("a pause session");
+        }
+        let mut r = r?;
+        self.paused = paused;
+        r.paused = paused;
+        Ok(r)
+    }
+
+    /// The game-state switch of [`Self::tic_wire29`] (`hold`: the level is paused).
+    fn dispatch_wire29(
+        &mut self,
+        cmd: TicCommand,
+        (reborn, exit, loads, state): (bool, Option<LevelExit>, bool, GameState),
+        hold: bool,
+    ) -> Result<FinaleMeltTicReport, SessionWitness> {
+        let wi_cmd = if self.fault == Some(PlantedFault::PauseWi) && cmd.buttons & BT_SPECIAL != 0 {
             TicCommand {
                 buttons: cmd.buttons & !1,
                 ..cmd
@@ -458,7 +520,7 @@ impl Session {
             cmd
         };
         let frozen = FinaleMeltTicReport::of;
-        let mut r = if reborn {
+        Ok(if reborn {
             let p_random = self.level.rng().indices()[0];
             let start = LevelStart::Reborn { p_random };
             let change = doom_render::LevelChange::Reborn;
@@ -478,11 +540,7 @@ impl Session {
             self.intermission_tic(wi_cmd).map(frozen)?
         } else {
             self.finale_tic()?
-        };
-        self.paused = paused;
-        self.shown_paused |= paused;
-        r.paused = paused;
-        Ok(r)
+        })
     }
 
     /// One melt step (`wipe_ScreenWipe` with `ticks = 1`, d_main.c:335-340; f_wipe.c:184-222):
