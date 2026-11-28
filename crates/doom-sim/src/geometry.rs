@@ -218,6 +218,10 @@ pub struct StaticWorld {
     /// (`OriginalExecutionProfile::has_monster_escape_witness`); `None` under
     /// every other policy and on a map without a boundary. Never canonical.
     pub(crate) escape_witness: Option<std::sync::Arc<crate::player_map_scale::Boundary>>,
+    /// Wire 29 alone: the `-respawn` and `-fast` parameters, canonical as DSIM45
+    /// `actors.parameters` and constant for the level (`crate::nightmare`);
+    /// `None` under every other policy.
+    pub(crate) parameters: Option<crate::GameParameters>,
     floor: Fixed,
     ceiling: Fixed,
 }
@@ -298,6 +302,7 @@ impl StaticWorld {
             checked_arithmetic: false,
             wrapping_intercept: false,
             escape_witness: None,
+            parameters: None,
             floor,
             ceiling,
         })

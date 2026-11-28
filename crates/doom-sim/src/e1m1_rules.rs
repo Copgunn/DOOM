@@ -290,9 +290,19 @@ pub(crate) fn spawn_ambush(options: u16) -> bool {
 /// the THING record carries `MTF_AMBUSH` (p_mobj.c:795–796), no pending death,
 /// solidity from `MF_SOLID`, and the THING record it was spawned from at its own
 /// position (the spawnpoint, 785) with the angle `ANG45 * (angle/45)` (794).
+#[cfg(test)]
 pub(crate) fn validate_decoration(
     room: Option<crate::player_map_scale::RoomBounds>,
     a: Actor,
+) -> Result<(), SimError> {
+    validate_decoration_at(room, a, false)
+}
+/// [`validate_decoration`]; `nightmare` (wire 29 at skill 4) expects the
+/// reaction time 0 `P_SpawnMobj` leaves on Nightmare (p_mobj.c:503-504).
+pub(crate) fn validate_decoration_at(
+    room: Option<crate::player_map_scale::RoomBounds>,
+    a: Actor,
+    nightmare: bool,
 ) -> Result<(), SimError> {
     let l = a.life().ok_or(ActorError::InvalidType)?;
     let ty = listed_decoration(l.actor_type).ok_or(ActorError::InvalidType)?;
@@ -308,7 +318,7 @@ pub(crate) fn validate_decoration(
         || l.frame != s.frame
         || !decoration_tics(state, l.tics)
         || l.health != d.spawn_health
-        || l.reaction_time != d.reaction_time
+        || l.reaction_time != crate::nightmare::spawn_reaction_time(nightmare, d.reaction_time)
         || l.target.is_some()
         || l.threshold != 0
         || l.movedir != 0

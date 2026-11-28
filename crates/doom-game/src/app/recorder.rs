@@ -11,8 +11,11 @@
 use crate::input::{RecordedTic, read_ticcmd_bytes};
 use doom_sim::demo::{
     DemoError, parse_demo_episode1_v2, write_demo_episode1_v2, write_demo_episode1_v3,
+    write_demo_episode1_v4,
 };
-use doom_sim::{BT_ATTACK, BT_CHANGE, BT_USE, BT_WEAPONMASK, TicCommand};
+use doom_sim::{
+    BT_ATTACK, BT_CHANGE, BT_SPECIAL, BT_USE, BT_WEAPONMASK, GameParameters, TicCommand,
+};
 use std::fmt;
 
 /// The longest session, in tics (decision S21: about 8.3 hours, 4 MB of commands).
@@ -52,6 +55,17 @@ pub fn wire24_admits(cmd: &TicCommand) -> bool {
         && (cmd.buttons & BT_CHANGE != 0 || cmd.buttons & BT_WEAPONMASK == 0)
 }
 
+/// The pause command, `BT_SPECIAL | BTS_PAUSE` (g_game.c:429; d_event.h): the only special byte
+/// the app builds and records (M6b ruling N5).
+pub const PAUSE_COMMAND: u8 = BT_SPECIAL | 1;
+
+/// Whether the wire 29 recorder admits `cmd`: wire 24's domain, or [`PAUSE_COMMAND`] in place of
+/// the buttons of a command in it (`G_BuildTiccmd`, g_game.c:426-430).
+pub fn wire29_admits(cmd: &TicCommand) -> bool {
+    let movement = TicCommand { buttons: 0, ..*cmd };
+    wire24_admits(cmd) || cmd.buttons == PAUSE_COMMAND && wire24_admits(&movement)
+}
+
 /// The commands of one session, append-only.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Recorder {
@@ -61,6 +75,8 @@ pub struct Recorder {
     commands: Vec<TicCommand>,
     /// [`Recorder::new_v3`]: the file is written by the wire 28 writer (skills 0 to 3).
     v3: bool,
+    /// [`Recorder::new_v4`]: the wire 29 writer with these parameter bytes.
+    v4: Option<GameParameters>,
 }
 
 impl Recorder {
@@ -72,6 +88,7 @@ impl Recorder {
             cap,
             commands: Vec::new(),
             v3: false,
+            v4: None,
         }
     }
 
@@ -85,9 +102,31 @@ impl Recorder {
         }
     }
 
+    /// [`Recorder::new`] for the session's wire 29 configuration (M6b rulings N1, N5): the file is
+    /// written by doom-sim's `write_demo_episode1_v4` (skills 0 to 4, the `respawnparm` and
+    /// `fastparm` bytes of `parameters`), and [`PAUSE_COMMAND`] is recorded ([`wire29_admits`]).
+    pub fn new_v4(map: u8, skill: u8, parameters: GameParameters, cap: usize) -> Self {
+        Self {
+            v4: Some(parameters),
+            ..Self::new(map, skill, cap)
+        }
+    }
+
+    /// Whether this recording admits `cmd`: [`wire29_admits`] for [`Recorder::new_v4`],
+    /// [`wire24_admits`] otherwise.
+    pub fn admits(&self, cmd: &TicCommand) -> bool {
+        if self.v4.is_some() {
+            wire29_admits(cmd)
+        } else {
+            wire24_admits(cmd)
+        }
+    }
+
     /// The demo writer of this recording.
     fn write(&self, commands: &[TicCommand]) -> Result<Vec<u8>, DemoError> {
-        if self.v3 {
+        if let Some(p) = self.v4 {
+            write_demo_episode1_v4(self.map, self.skill, p, commands)
+        } else if self.v3 {
             write_demo_episode1_v3(self.map, self.skill, commands)
         } else {
             write_demo_episode1_v2(self.map, self.skill, commands)
@@ -129,7 +168,7 @@ impl Recorder {
         if read_ticcmd_bytes(tic.demo()) != Some(tic.executed()) {
             return Err(RecordError::NotReread);
         }
-        if !wire24_admits(&tic.executed()) {
+        if !self.admits(&tic.executed()) {
             return Err(RecordError::NotAdmitted);
         }
         self.commands.push(tic.executed());

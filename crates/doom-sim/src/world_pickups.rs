@@ -583,19 +583,22 @@ impl<'a> ItemHeights<'a> {
         }
     }
 }
+#[cfg(test)]
 pub(crate) fn validate_item(
     room: Option<crate::player_map_scale::RoomBounds>,
     heights: ItemHeights<'_>,
     a: Actor,
 ) -> Result<(), SimError> {
-    validate_item_ref(room, heights, &a)
+    validate_item_ref(room, heights, &a, false)
 }
 /// [`validate_item`] on a borrowed actor: the same checks in the same order
-/// (M4p note §3 O10).
+/// (M4p note §3 O10). `nightmare`: wire 29 at skill 4, where the item spawned
+/// with reaction time 0 (p_mobj.c:503-504); 8, the type's, otherwise.
 pub(crate) fn validate_item_ref(
     room: Option<crate::player_map_scale::RoomBounds>,
     heights: ItemHeights<'_>,
     a: &Actor,
+    nightmare: bool,
 ) -> Result<(), SimError> {
     let l = a.life().ok_or(ActorError::InvalidType)?;
     let k = kind(l.actor_type).ok_or(ActorError::InvalidType)?;
@@ -627,7 +630,7 @@ pub(crate) fn validate_item_ref(
         })
         || l.health != 1000
         || l.target.is_some()
-        || l.reaction_time != 8
+        || l.reaction_time != crate::nightmare::spawn_reaction_time(nightmare, 8)
         || l.threshold != 0
         || l.movedir != 0
         || l.movecount != 0
@@ -707,7 +710,8 @@ pub(crate) const INFRATICS: i32 = 120 * 35;
 const CLIP_AMMO: [u16; 4] = [10, 4, 20, 1];
 /// `P_GiveAmmo` (p_inter.c:73–160) for `ammo` in `ammotype_t` order (clip,
 /// shell, cell, misl): refused at `maxammo`; `loads` clip loads, or half a clip
-/// for 0; doubled when `double` (wire 28 at `sk_baby`, p_inter.c:95-101: after
+/// for 0; doubled when `double` (wire 28 at `sk_baby`, wire 29 also at
+/// `sk_nightmare`; p_inter.c:95-101: after
 /// the loads or the half clip, before the cap); capped at `maxammo` (doubled
 /// once by the backpack); and from zero the weapon preference switch. Only the
 /// Episode 1 policy reaches cells and rockets.
@@ -859,10 +863,11 @@ impl<A: ActorAccess> movement::MotionAccess for Contacts<'_, A> {
             if body.life().is_none_or(|v| v.flags & MF_PICKUP == 0) {
                 continue;
             }
-            validate_item(
+            validate_item_ref(
                 self.player.room,
                 ItemHeights::for_policy(self.player.policy, self.sectors),
-                item,
+                &item,
+                self.player.nightmare,
             )?;
             let k = kind_for(self.player.policy, l.actor_type).ok_or(ActorError::InvalidType)?;
             let delta = item.z - body.z;
@@ -879,7 +884,10 @@ impl<A: ActorAccess> movement::MotionAccess for Contacts<'_, A> {
                 PickupOutcome::NotNeeded
             };
             if outcome == PickupOutcome::NotNeeded {
-                let baby = self.player.baby;
+                // p_inter.c:95-101: `sk_baby` (wire 28) and `sk_nightmare` (wire 29).
+                let double = self.player.baby
+                    || (self.player.nightmare
+                        && !crate::nightmare::planted(crate::nightmare::Fault::NoDouble));
                 let weapon = self.player.weapon.as_mut().ok_or(WeaponError::Player)?;
                 let PlayerWeaponRuntime::Pack(w) = weapon else {
                     return Err(WeaponError::Inventory.into());
@@ -959,12 +967,12 @@ impl<A: ActorAccess> movement::MotionAccess for Contacts<'_, A> {
                         w,
                         0,
                         if l.flags & MF_DROPPED != 0 { 0 } else { 1 },
-                        baby,
+                        double,
                         events,
                     )?,
-                    PickupKind::BulletBox => ammo(w, 0, 5, baby, events)?,
-                    PickupKind::Shells => ammo(w, 1, 1, baby, events)?,
-                    PickupKind::ShellBox => ammo(w, 1, 5, baby, events)?,
+                    PickupKind::BulletBox => ammo(w, 0, 5, double, events)?,
+                    PickupKind::Shells => ammo(w, 1, 1, double, events)?,
+                    PickupKind::ShellBox => ammo(w, 1, 5, double, events)?,
                     PickupKind::Stimpack | PickupKind::Medikit => {
                         let before = self.player.health;
                         let accepted = before < 100;
@@ -1081,8 +1089,8 @@ impl<A: ActorAccess> movement::MotionAccess for Contacts<'_, A> {
                         sound = "sfx_getpow";
                         accepted
                     }
-                    PickupKind::Rocket => ammo(w, 3, 1, baby, events)?,
-                    PickupKind::RocketBox => ammo(w, 3, 5, baby, events)?,
+                    PickupKind::Rocket => ammo(w, 3, 1, double, events)?,
+                    PickupKind::RocketBox => ammo(w, 3, 5, double, events)?,
                     PickupKind::Backpack => {
                         // p_inter.c:589–599: the first backpack doubles every
                         // maximum; then one clip load of each type, in order,
@@ -1091,7 +1099,7 @@ impl<A: ActorAccess> movement::MotionAccess for Contacts<'_, A> {
                         w.backpack = true;
                         observe(events, PickupEvent::Backpack(first));
                         for ty in 0..4 {
-                            ammo(w, ty, 1, baby, events)?;
+                            ammo(w, ty, 1, double, events)?;
                         }
                         true
                     }
@@ -1115,7 +1123,9 @@ impl<A: ActorAccess> movement::MotionAccess for Contacts<'_, A> {
                         let dropped = l.flags & MF_DROPPED != 0
                             && matches!(k, PickupKind::Shotgun | PickupKind::Chaingun);
                         let gave = match weapon.ammo() {
-                            Some(kind) => ammo(w, kind, if dropped { 1 } else { 2 }, baby, events)?,
+                            Some(kind) => {
+                                ammo(w, kind, if dropped { 1 } else { 2 }, double, events)?
+                            }
                             None => false,
                         };
                         let fresh = before & (1 << weapon as u8) == 0;
@@ -1233,7 +1243,7 @@ impl Simulation {
             {
                 count += 1;
                 counted += usize::from(a.life().is_some_and(|l| l.flags & MF_COUNTITEM != 0));
-                validate_item_ref(self.room(), self.item_sectors(), a)?;
+                validate_item_ref(self.room(), self.item_sectors(), a, self.nightmare())?;
             }
         }
         if self.player_policy().has_player_bonuses() {

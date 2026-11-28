@@ -1,0 +1,209 @@
+{
+ "schema": "DOOM-WIRE29-MIXER-RESULTS-v1",
+ "mixer_contract_sha256": "2c46cc5a1502786251b0db4c09da8373ca7bad8fde8f64229485329105a7ac0e",
+ "source": "tests/reference/m6b_sound/*.sound (the genuine M6b runner, tools/reference/m6b_goldens.py), and tests/reference/wire29_session/*.sound (tools/reference/wire29_pause.py), converted by tools/reference/m5c_starts.py; the genuine mixer of tools/reference/m5c_mixer_build.py",
+ "switches": {
+  "configuration": "integrated",
+  "schedule": "ticbuffers",
+  "frames_per_buffer": 512,
+  "frames_per_tic": 315,
+  "rule": "Recommended reading of decision T5 (open): after the starts of tic t (counted from the first tic of the session), mix every buffer k not yet mixed with 512*k < 315*(t+1), each by one genuine I_UpdateSound and I_SubmitSound; buffer k is mixed after tic floor(512k/315), none or one per tic, 315 buffers per 512 tics, the first after tic 0. A start takes effect in the next buffer mixed (the original mixes after all tics of a loop pass, d_main.c:389-405). The compared signal is the sequence of mixed buffers, not the device output.",
+  "also_recorded": "pertic (digests only)",
+  "pause": "a paused tic is an ordinary tic of the schedule (d_main.c:392-405)"
+ },
+ "wad": "tests/reference/m5c_sfx.wad",
+ "variants": [
+  "strict",
+  "overflow",
+  "address"
+ ],
+ "asan_options": "detect_leaks=0 (leak detection disabled; not LeakSanitizer coverage)",
+ "tools_sha256": {
+  "tools/reference/wire29_mixer.py": "c34f99a199a59a04cf42debb96fcf0a89a2eaa01cc91595e1c371af4a635eafd",
+  "tools/reference/m5c_starts.py": "757cfcda4392220aaa3e0da111c5162fe8a2e1aa3d74692ff7c759d6f8460235",
+  "tools/reference/m5c_mixer_driver.c": "8712383a896c7ff4a9be330e1457c7e321262180f215568ea211ee78b2b15af3"
+ },
+ "items": 11,
+ "starts": 276,
+ "tics": 9008,
+ "buffers": 5547,
+ "goldens_sha256": "c78b6334f1c424d862907ca1f61a4e27471763c2b179f88db5f1096e91350bae",
+ "per_item": {
+  "BLOCK4": {
+   "sound_sha256": "dd28a61cd23661f1195bc644d45f66898b49fee99f7c2819e0bbbb301a9aceeb",
+   "starts": 17,
+   "tics": 1644,
+   "starts_sha256": "00554d2136d0045c148392f36d7d9a288e92a66ff6d54a0a44c3a154237ef0fe",
+   "buffers": 1012,
+   "stream_sha256": "b0b8affceb350ed524018b1be0f68019368be9182d14bf0b50c337009e172dda",
+   "golden_sha256": "24dac12b9161a5885537c4b12908c83b8fa7a33a5535311f542b5bff7a880f21",
+   "model": "identical",
+   "variants": "identical",
+   "pertic": {
+    "buffers": 1644,
+    "stream_sha256": "cffa8892451ec777b1f67f4d2fb740c3c10b0ba88b89855c230f63cf0a284db3",
+    "rows_sha256": "bb995e1d835157adb41cc4e92620d3504c0bbe5463089be64490acafcc83b6f6"
+   }
+  },
+  "GIB4": {
+   "sound_sha256": "0b575aa87d2da6fd08dbab287bc3bd9b38425d3cfc3ee0a78e0b88929e4afbcc",
+   "starts": 10,
+   "tics": 1067,
+   "starts_sha256": "6763defc1ee5aac72e82ceea13867484c0f81e5ede146da45a3494fdea3c2d13",
+   "buffers": 657,
+   "stream_sha256": "13cda87fd5f78fd46353a5d23ea939cbfa3b0e32b15a9fe5be5ae98fdb44040f",
+   "golden_sha256": "5b9b45071ad23437f66f8bc159ebfc6e8a8688e13c3131676f9adf45de958b93",
+   "model": "identical",
+   "variants": "identical",
+   "pertic": {
+    "buffers": 1067,
+    "stream_sha256": "c508ee81186c17f7579f466bacdf107c4eb72ee8fabd069108956e2d2cf6fc0a",
+    "rows_sha256": "9d963adaecfb20e505cabdac1acea90709925528de0372294f84c9acd17cae16"
+   }
+  },
+  "PAUSE": {
+   "sound_sha256": "d5eb9eec906f02e5be21ae374d74251d3dc1852b0850eecc7cf05d6fb921dd97",
+   "starts": 9,
+   "tics": 341,
+   "starts_sha256": "8b64ce710750ba8b5745bd8181ae747405db3aa988c0363dded959d437d52518",
+   "buffers": 210,
+   "stream_sha256": "d5cda8d0bddd94dba9a496999ee355df85c728acf2b6293e496933fb1d9cde87",
+   "golden_sha256": "547be8367d842333b07146a8830810019bcf4315e8ed8864630b27f3e0d450fe",
+   "model": "identical",
+   "variants": "identical",
+   "pertic": {
+    "buffers": 341,
+    "stream_sha256": "50c5f5b35b04ee61f7fbc8be18174a5939d21ab09d90e339e78ffe3d98ac1b8d",
+    "rows_sha256": "a103f9aa6a81d5675209374cc7f685c62fe31cc6a21eeef7680f2e99f9711d56"
+   }
+  },
+  "PAUSE0": {
+   "sound_sha256": "f3002ce7d306cab41ad347e7a2c49e7deb01129b23ad95383e779e31a998aa02",
+   "starts": 3,
+   "tics": 42,
+   "starts_sha256": "73d1a0550408e589ba25a31d1c12976e390ae456a14bb05291b67ac448ae605f",
+   "buffers": 27,
+   "stream_sha256": "5130b0945a758a63c5c2ff8194a714c669479ea5398d31f52daf3e8e0ef077c0",
+   "golden_sha256": "918a165f7b53b63c7e692dcca16fc687dc87dd2bd5b268e43b6335f9d9376671",
+   "model": "identical",
+   "variants": "identical",
+   "pertic": {
+    "buffers": 42,
+    "stream_sha256": "24db1f050c28b298de43fad7dcced973641d82d3baa118f04530603d584e518f",
+    "rows_sha256": "5232daaf847caf9e5472c9e0646917cb6458ae0701394993dceb194b5dfed41f"
+   }
+  },
+  "PAUSEFIN": {
+   "sound_sha256": "4e51aa9d9e998260718d65a053abc855bcae1442246495d2cd617e45bbe9ee69",
+   "starts": 13,
+   "tics": 1951,
+   "starts_sha256": "149c516fa3605f86265cd7a1a503936b929f6b966275b38522ca45d3953f3f13",
+   "buffers": 1201,
+   "stream_sha256": "125d3c651dea1caf7636940ea8ba6feb14afa12e67fce2ae9b027a81ed0ae0e3",
+   "golden_sha256": "54580de24dc79f5f2e6041c2e67dcdf76a98211f7730524052c2398eaf35098b",
+   "model": "identical",
+   "variants": "identical",
+   "pertic": {
+    "buffers": 1951,
+    "stream_sha256": "a76c5956630abdf0f354d49909dbd3dfbfbc04758d25e854c54fce2f618e4edb",
+    "rows_sha256": "de4185ca23cd68d08977acd65dfdfd08d4650f64c2fcb1b124db6cf8e3018a55"
+   }
+  },
+  "PAUSEWI": {
+   "sound_sha256": "83a4f3d7f8bd6bbae9d180a182fe1553210e2d890b8dfde879a5256823978ebf",
+   "starts": 25,
+   "tics": 160,
+   "starts_sha256": "7ff9cca80ec0a47e56dc8677e7077aa5a9b6640dd687a27e8ec26afcd54a9410",
+   "buffers": 99,
+   "stream_sha256": "cdce5529c195d655bf4aae7de53721beff9ab4fa4d2c7c03f3684a7fd95476c6",
+   "golden_sha256": "825596e120be4312f39c91fd5eaf51b3d0d44fa2312e43c9ba61558a81e61592",
+   "model": "identical",
+   "variants": "identical",
+   "pertic": {
+    "buffers": 160,
+    "stream_sha256": "000252c092f51d5de21670cb4cc7c14828ecea32507b31746f58b43fc6bce92d",
+    "rows_sha256": "92e1b3193a2778a6ca9feccb5613039f97aa1050f3b0c63cab07122ae9f10d5c"
+   }
+  },
+  "RESP3R": {
+   "sound_sha256": "1501b38cd3a4dfe0f2f258af3a15086ec2e2f46c09f830facf182f76680dea28",
+   "starts": 71,
+   "tics": 1516,
+   "starts_sha256": "fc079af17b160af65ecd0986e4ebd8d7f1fa3054b0a46ea81c6ed98bc6627be2",
+   "buffers": 933,
+   "stream_sha256": "3f369e7f46cc6403b640e6b525dd625d5bc4c921808beabcbcf6f27a5d5dde41",
+   "golden_sha256": "d03e35118cbaf39e167b0d27392a2f997ae70c43b70c1bab9e70fab3e2716f70",
+   "model": "identical",
+   "variants": "identical",
+   "pertic": {
+    "buffers": 1516,
+    "stream_sha256": "5ad27bf22d0182820839049624956467e2affc6e8f87a91b6ee1682d583d0402",
+    "rows_sha256": "32efa6ed044341ec4ab728aa3071493e274626edbf8c7d531f4505c0532e844b"
+   }
+  },
+  "RESP4": {
+   "sound_sha256": "49c933447b4848aa67d3574fe9deb9ef8f885c10e8b6475f0fadc055d0c8a74d",
+   "starts": 88,
+   "tics": 1516,
+   "starts_sha256": "24f71743626aa21ccf171c77edfa8dfe4a9ad1a54557b1345c40efa6ec92256d",
+   "buffers": 933,
+   "stream_sha256": "38be5017ab44ef597ae6f3e03149ea20c4ccfc47c831b5098aac5cbeed80d524",
+   "golden_sha256": "48aceaccc7acdb57ad3b96cd2173fff893cc037703fb841c96dcbf9a1f333df3",
+   "model": "identical",
+   "variants": "identical",
+   "pertic": {
+    "buffers": 1516,
+    "stream_sha256": "bea0137468b0f053a48a08a7fabfc4a8b9bf238f997d6500884b7340f071f0e1",
+    "rows_sha256": "2b5a618a13dd35f560a1301f12effa8a04063af6d9392affea847c8b9ca96358"
+   }
+  },
+  "DEADSPEC": {
+   "sound_sha256": "e1c215b6281ea98b34ccafaa1f9beef6ed1cb4299708e494089dd024a92748da",
+   "starts": 5,
+   "tics": 260,
+   "starts_sha256": "9f1e28fa616e47efcaef7eb0d8c901ec083339f4bd4852bbb819361a7cd73d61",
+   "buffers": 160,
+   "stream_sha256": "9008624e55e78790fe3005cbe6a93b06477cd193f8af81625ce0504da64ca1de",
+   "golden_sha256": "2a521116d499e6f51a0e0d61e716d7b1861748c9cddd5df3e59f142437006589",
+   "model": "identical",
+   "variants": "identical",
+   "pertic": {
+    "buffers": 260,
+    "stream_sha256": "02f198a675301051dd0ffd4e5d51db138450eed453e7d2a0f41e9232e2e753ab",
+    "rows_sha256": "df4e6a5189ad57b6f58c2fbe56de20826cd9e9e2f103b95cc490ed286d8a85bd"
+   }
+  },
+  "LOADP": {
+   "sound_sha256": "8f85b3770551ff1969a517ca6d2482077dcd2d73d2d14e1a13138660426d2104",
+   "starts": 26,
+   "tics": 170,
+   "starts_sha256": "4bf740083a177e342c30d3fe04425cc8d35ebc32dfc37aeba24fbdd9bfdeb80c",
+   "buffers": 105,
+   "stream_sha256": "abc9bbb3f8de9518f81e46106d5d414be50feb098c353d9fdd0ca3cd08c8fd43",
+   "golden_sha256": "df91e92dcbd151e5c6512c37a911878a1ba4d86e956e97d9c2706b9acc6e6045",
+   "model": "identical",
+   "variants": "identical",
+   "pertic": {
+    "buffers": 170,
+    "stream_sha256": "e058ff447d17a7df9b1c8506cdf0593a7e742ed2f88913a433cecbdb4cb2992d",
+    "rows_sha256": "b436942d737ae6f9fe98ae321a9c445c7d42836b244d4f82e29245c35a246e95"
+   }
+  },
+  "TURBOP": {
+   "sound_sha256": "d5eb9eec906f02e5be21ae374d74251d3dc1852b0850eecc7cf05d6fb921dd97",
+   "starts": 9,
+   "tics": 341,
+   "starts_sha256": "039f3beb4741644649d1d7b56588522b2c7388e2e18d507d50f80852d67a697c",
+   "buffers": 210,
+   "stream_sha256": "d5cda8d0bddd94dba9a496999ee355df85c728acf2b6293e496933fb1d9cde87",
+   "golden_sha256": "547be8367d842333b07146a8830810019bcf4315e8ed8864630b27f3e0d450fe",
+   "model": "identical",
+   "variants": "identical",
+   "pertic": {
+    "buffers": 341,
+    "stream_sha256": "50c5f5b35b04ee61f7fbc8be18174a5939d21ab09d90e339e78ffe3d98ac1b8d",
+    "rows_sha256": "a103f9aa6a81d5675209374cc7f685c62fe31cc6a21eeef7680f2e99f9711d56"
+   }
+  }
+ }
+}

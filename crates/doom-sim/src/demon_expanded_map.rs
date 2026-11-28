@@ -29,6 +29,8 @@ pub(crate) struct ExpandedSelection {
     /// The walk exits 52 and 124 (wire 26 alone, a superset of wire 24's rules:
     /// `teleport` is set too); false under every other policy.
     pub walk_exits: bool,
+    /// Skill 4 (wire 29 alone, ruling N1); false under every other policy.
+    pub nightmare: bool,
 }
 impl Simulation {
     /// Profile 20: larger static maps with the exact map-context Demon registry.
@@ -58,6 +60,7 @@ impl Simulation {
                 episode1: None,
                 teleport: false,
                 walk_exits: false,
+                nightmare: false,
             },
         )
     }
@@ -80,6 +83,7 @@ impl Simulation {
             episode1,
             teleport,
             walk_exits,
+            nightmare,
         } = selection;
         if context.respawn_monsters {
             return Err(MapSpawnError::Respawn.into());
@@ -87,7 +91,7 @@ impl Simulation {
         if options.mode != ActorGameMode::SinglePlayer {
             return Err(ActorError::UnsupportedMode.into());
         }
-        if options.skill == Skill::Nightmare {
+        if options.skill == Skill::Nightmare && !nightmare {
             return Err(MonsterError::Definition.into());
         }
         // The real-map policy takes the THING count from the lump (the parser's
@@ -567,7 +571,7 @@ impl Simulation {
                 continue;
             }
             let actor = self.actor(id).unwrap();
-            sight::actor_bounds_within(actor, self.sight_margin())?;
+            self.actor_bounds_admitted(actor)?;
             let life = actor.life.ok_or(MonsterError::Definition)?;
             if life.tics < -1 {
                 return Err(ActorError::InvalidState.into());
@@ -880,6 +884,17 @@ impl Simulation {
                         commands[usize::from(PlayerSlot::One.ordinal())],
                     )
                     .map_err(|error| self.policy_error(error))?;
+                    // Wire 29, p_user.c:280-281 ("a special event has no other
+                    // buttons"): a live player's special byte is zeroed after the
+                    // move, before the weapon change, the use block and the psprites
+                    // read it, and the zeroed command is the one kept (ruling N5 (a)).
+                    let c = &mut commands[usize::from(PlayerSlot::One.ordinal())];
+                    if c.buttons & crate::BT_SPECIAL != 0
+                        && self.player_policy().has_nightmare()
+                        && !crate::nightmare::planted(crate::nightmare::Fault::PauseBtn)
+                    {
+                        c.buttons = 0;
+                    }
                 }
                 let live = host
                     .player

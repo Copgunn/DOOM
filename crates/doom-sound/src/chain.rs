@@ -46,6 +46,7 @@
 use std::sync::Arc;
 
 use crate::chain_melt::{ChainFault, ChainMode};
+use crate::chain_pause::{Pause, PauseTic};
 use crate::logic::{ChannelStop, Listener, OriginPositions, SoundOrigin, SoundRecord};
 use crate::lumps::SoundSet;
 use crate::music::{Music, MusicLumps};
@@ -192,6 +193,9 @@ pub enum ChainRefusal {
     /// the tic) for the mix. A melt runs only inside the display of a tic (d_main.c:223-229,
     /// 320-344, 395).
     NoDisplayPending,
+    /// [`ChainSound::pause_tic`] on a session that is not a pause session
+    /// ([`ChainSound::new_pause`], `crate::chain_pause`).
+    NotPause,
 }
 
 impl std::fmt::Display for ChainRefusal {
@@ -231,6 +235,7 @@ impl std::fmt::Display for ChainRefusal {
                 "the sound session cannot run {call:?} before the previous tic's display is mixed"
             ),
             Self::NoDisplayPending => write!(f, "no tic's display is pending in the sound session"),
+            Self::NotPause => write!(f, "the sound session has no pause"),
         }
     }
 }
@@ -322,6 +327,8 @@ pub struct ChainSound {
     pub(crate) updates: u64,
     /// A fault planted by the evidence self-tests ([`ChainFault`]); never set by the game.
     pub(crate) fault: Option<ChainFault>,
+    /// A pause session's pause part (M6b wire 29, `crate::chain_pause`); None otherwise.
+    pub(crate) pause: Option<Pause>,
 }
 
 impl ChainSound {
@@ -355,6 +362,7 @@ impl ChainSound {
             owed: false,
             updates: 0,
             fault: None,
+            pause: None,
         })
     }
 
@@ -501,6 +509,7 @@ impl ChainSound {
             let mut sound = self.sound.clone();
             let (t, owed) = self.run_tic(&mut sound, records, rndindex, listener, positions)?;
             self.commit(sound, owed);
+            self.commit_pause(PauseTic::Level { load: false });
             return Ok(ChainTic {
                 sound: t,
                 level_start: Vec::new(),
@@ -539,6 +548,7 @@ impl ChainSound {
         all.extend_from_slice(records);
         let (t, owed) = self.run_tic(&mut sound, &all, rndindex, listener, positions)?;
         self.commit(sound, owed);
+        self.commit_pause(PauseTic::Level { load: true });
         self.state = ChainState::Level;
         self.level_start = tic;
         self.level_end = 0;
@@ -586,6 +596,13 @@ impl ChainSound {
         let mut sound = self.sound.clone();
         let (t, owed) = self.run_tic(&mut sound, &records, rndindex, listener, positions)?;
         self.commit(sound, owed);
+        self.commit_pause(if entering {
+            PauseTic::EnterIntermission {
+                music: music.is_some(),
+            }
+        } else {
+            PauseTic::Other
+        });
         if entering {
             self.state = ChainState::Intermission;
             self.level_end = tic;
@@ -641,6 +658,13 @@ impl ChainSound {
         let mut sound = self.sound.clone();
         let (t, owed) = self.run_tic(&mut sound, &[], rndindex, listener, positions)?;
         self.commit(sound, owed);
+        self.commit_pause(if entering {
+            PauseTic::EnterFinale {
+                music: music.is_some(),
+            }
+        } else {
+            PauseTic::Other
+        });
         if entering {
             self.state = ChainState::Finale;
             self.level_end = tic;

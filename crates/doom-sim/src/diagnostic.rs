@@ -85,6 +85,9 @@ pub struct Diagnostic<'a> {
     /// DSIM44 (wire 28): the DSIM43 layout under policy 28 (`wrap` is set too);
     /// `actors.options` may also read skills 0 and 1.
     easy: bool,
+    /// DSIM45 (wire 29): the DSIM44 layout under policy 29 (`easy` is set too)
+    /// plus `actors.parameters` and `level.gametic_lead`; skill 4 admitted.
+    nightmare: bool,
     fields: Vec<Field<'a>>,
     sorted: Vec<usize>,
 }
@@ -410,6 +413,26 @@ impl<'a> Diagnostic<'a> {
     ) -> Result<Self, DiagnosticError> {
         Self::decode_selected(bytes, limits, Some(44))
     }
+    /// Explicit DSIM45 Episode 1 part 7 reader (wire 29, M6b rulings N1, N4 (a),
+    /// N6 (a) and N10); every earlier reader, `decode_episode1_v6` included,
+    /// rejects 45 and this reader rejects every earlier version. DSIM45 is DSIM44
+    /// with every DSIM44 rule, under policy 29 and the
+    /// `PLAYER-MONSTERS-EPISODE1-7-v1` context, plus two fields: `actors.parameters`
+    /// (u8 `respawnparm`, u8 `fastparm`, each 0 or 1) after `actors.options`, and
+    /// `level.gametic_lead` (u64, from `level.start.gametic` to `i32::MAX`) after
+    /// `level.start.gametic`. Its rules differ in four places: `actors.options` may
+    /// read skill 4, whose bounds are counted with THING bit 4 (p_mobj.c:745-746);
+    /// a decoration's reaction time is 0 at skill 4 (p_mobj.c:503-504); the kill
+    /// credit may exceed `level.total_kills` (a respawned monster is not in the
+    /// total, p_mobj.c:789-790, p_inter.c:685-687); and an actor in one of
+    /// `S_SARG_RUN1` to `S_SARG_PAIN2` lasts at most the table in force, halved
+    /// when the skill is 4 or `fastparm` is set (g_game.c:1421-1428, ruling N4 (a)).
+    pub fn decode_episode1_v7(
+        bytes: &'a [u8],
+        limits: DiagnosticLimits,
+    ) -> Result<Self, DiagnosticError> {
+        Self::decode_selected(bytes, limits, Some(45))
+    }
     /// Explicit DSIM30 real-map-scale reader; every earlier reader rejects 30 and
     /// this reader rejects every earlier version.
     pub fn decode_map_scale(
@@ -488,10 +511,11 @@ impl<'a> Diagnostic<'a> {
         {
             return Err(DiagnosticError::Structure);
         }
-        let sounds = matches!(version, 41..=44);
-        let start = matches!(version, 42..=44);
-        let wrap = matches!(version, 43 | 44);
-        let easy = version == 44;
+        let sounds = matches!(version, 41..=45);
+        let start = matches!(version, 42..=45);
+        let wrap = matches!(version, 43..=45);
+        let easy = matches!(version, 44 | 45);
+        let nightmare = version == 45;
         let result = Self {
             bytes,
             version: if sounds { 40 } else { version },
@@ -499,6 +523,7 @@ impl<'a> Diagnostic<'a> {
             start,
             wrap,
             easy,
+            nightmare,
             fields,
             sorted,
         };
@@ -515,7 +540,9 @@ impl<'a> Diagnostic<'a> {
     }
     /// Explicit format version, separate from the execution profile field.
     pub const fn version(&self) -> u32 {
-        if self.easy {
+        if self.nightmare {
+            45
+        } else if self.easy {
             44
         } else if self.wrap {
             43
@@ -579,6 +606,10 @@ impl<'a> Diagnostic<'a> {
             // DSIM44 alone: skills 0 and 1 count with THING bit 1.
             Some(&b) if self.easy && b == crate::Skill::Baby as u8 => crate::Skill::Baby,
             Some(&b) if self.easy && b == crate::Skill::Easy as u8 => crate::Skill::Easy,
+            // DSIM45 alone: skill 4 counts with THING bit 4.
+            Some(&b) if self.nightmare && b == crate::Skill::Nightmare as u8 => {
+                crate::Skill::Nightmare
+            }
             _ => crate::Skill::Medium,
         }
     }
@@ -654,6 +685,9 @@ impl<'a> Diagnostic<'a> {
                 || crate::barrels::is_barrel(self.policy(), actor))
     }
     fn policy(&self) -> OriginalExecutionProfile {
+        if self.nightmare {
+            return OriginalExecutionProfile::PlayerMonstersEpisode1V7;
+        }
         if self.easy {
             return OriginalExecutionProfile::PlayerMonstersEpisode1V6;
         }
@@ -1039,6 +1073,9 @@ impl<'a> Diagnostic<'a> {
                     .count(),
             )?;
             self.validate_start_against_level()?;
+        }
+        if self.nightmare {
+            self.validate_wire29()?;
         }
         if self.sounds {
             self.validate_sound_records()?;
@@ -1834,6 +1871,45 @@ impl<'a> Diagnostic<'a> {
             e1m1_rules::decoration(ty)
         }
     }
+    /// A spawned mobj's reaction time: the type's, 0 at skill 4 under DSIM45
+    /// (`P_SpawnMobj`, p_mobj.c:503-504).
+    fn spawn_reaction_time(&self, defined: i32) -> i32 {
+        if self.v40_skill() == crate::Skill::Nightmare {
+            0
+        } else {
+            defined
+        }
+    }
+    /// The DSIM45 rules of [`Self::decode_episode1_v7`] beyond DSIM44's: the
+    /// parameters, the gametic lead and the fast table's durations.
+    fn validate_wire29(&self) -> Result<(), DiagnosticError> {
+        let parameters = self.required("actors.parameters")?;
+        if !matches!(parameters, [0 | 1, 0 | 1]) {
+            return Err(DiagnosticError::Structure);
+        }
+        let start = u64::from_le_bytes(number(self.required("level.start.gametic")?)?);
+        let lead = u64::from_le_bytes(number(self.required("level.gametic_lead")?)?);
+        if !(start..=crate::carried_start::MAX_START_GAMETIC).contains(&lead) {
+            return Err(DiagnosticError::Schema);
+        }
+        let fast = parameters[1] == 1 || self.v40_skill() == crate::Skill::Nightmare;
+        for slot in 0..self.slots()? {
+            let prefix = format!("actor.{slot}");
+            if self.required(&format!("{prefix}.occupied"))? != [1] {
+                continue;
+            }
+            let state = u16::from_le_bytes(number(self.required(&format!("{prefix}.state"))?)?);
+            if !crate::nightmare::FAST_STATES.contains(&state) {
+                continue;
+            }
+            let state = OriginalState::try_from(state).map_err(|_| DiagnosticError::Identity)?;
+            let tics = i32::from_le_bytes(number(self.required(&format!("{prefix}.tics"))?)?);
+            if !(1..=crate::nightmare::state_tics(state, fast)).contains(&tics) {
+                return Err(DiagnosticError::Identity);
+            }
+        }
+        Ok(())
+    }
     fn validate_decorations(&self) -> Result<(), DiagnosticError> {
         // The E1M1 policy is medium skill, single player (M3h9 note §6, decision
         // E4; owner decision of the independent review): `actors.options` must read
@@ -1845,7 +1921,8 @@ impl<'a> Diagnostic<'a> {
         let admitted = skill == Some(crate::Skill::Medium as u8)
             || (self.version == 40 && skill == Some(crate::Skill::Hard as u8))
             || (self.easy
-                && matches!(skill, Some(s) if s == crate::Skill::Baby as u8 || s == crate::Skill::Easy as u8));
+                && matches!(skill, Some(s) if s == crate::Skill::Baby as u8 || s == crate::Skill::Easy as u8))
+            || (self.nightmare && skill == Some(crate::Skill::Nightmare as u8));
         if !admitted {
             return Err(DiagnosticError::Identity);
         }
@@ -1908,7 +1985,7 @@ impl<'a> Diagnostic<'a> {
                 || i32field("momy")? != 0
                 || i32field("momz")? != 0
                 || i32field("z")? != i32field("floor")?
-                || i32field("reaction_time")? != d.reaction_time
+                || i32field("reaction_time")? != self.spawn_reaction_time(d.reaction_time)
                 || i32field("threshold")? != 0
                 || self.required(&format!("{prefix}.movedir"))? != [0]
                 || i32field("movecount")? != 0
@@ -2541,9 +2618,11 @@ impl<'a> Diagnostic<'a> {
                 Some(b) => (b.monsters, b.monsters),
                 None => (placed, MAX_PLAYER_MONSTERS),
             };
+            // DSIM45 (ruling N10): kills of respawned monsters may pass the total.
             if !(0..=roster as i32).contains(&kills)
                 || (kills > 0 && kills as usize != placed)
-                || !(0..=kills).contains(&credited)
+                || credited < 0
+                || (!self.nightmare && credited > kills)
             {
                 return Err(DiagnosticError::Identity);
             }

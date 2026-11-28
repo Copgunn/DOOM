@@ -52,11 +52,13 @@ pub use player_monsters::{
     PLAYER_MAP_SCALE_CONTEXT_SCHEMA, PLAYER_MONSTERS_CONTEXT_SCHEMA, PLAYER_MOVERS_CONTEXT_SCHEMA,
     PLAYER_REAL_MAP_CONTEXT_SCHEMA, PLAYER_SPECIALS_CONTEXT_SCHEMA,
 };
+mod nightmare;
+pub use nightmare::{BT_SPECIAL, GameParameters, save_command, toggles_pause};
 mod carried_start;
 pub use carried_start::{
     CarriedField, CarriedStart, LevelExit, LevelFinish, LevelStart, LevelStartError,
     PLAYER_EPISODE1_V4_CONTEXT_SCHEMA, PLAYER_EPISODE1_V5_CONTEXT_SCHEMA,
-    PLAYER_EPISODE1_V6_CONTEXT_SCHEMA, StartKind,
+    PLAYER_EPISODE1_V6_CONTEXT_SCHEMA, PLAYER_EPISODE1_V7_CONTEXT_SCHEMA, StartKind,
 };
 mod player_commands;
 mod player_pistol;
@@ -332,6 +334,11 @@ pub enum SimError {
     PlayerReborn,
     /// Wire 25's sound support refused the map or the tic (M5c decisions T11, T12).
     Sound(sound::SoundError),
+    /// Wire 29: the source would read a mobj through a pointer to a corpse that
+    /// `P_NightmareRespawn` removed (p_mobj.c:408) and `P_RunThinkers` has since
+    /// freed (p_tick.c:107-112): zone memory whose contents the C leaves to the
+    /// allocator (M6b step 4). No state is advanced.
+    FreedRead,
 }
 impl fmt::Display for SimError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -661,6 +668,11 @@ pub struct Simulation {
     /// the sound records the load made and the `gametic` of the load's `G_Ticker`.
     /// Constant for the run; `None` under every other policy.
     pub(crate) level_start: Option<carried_start::StartRecord>,
+    /// Wire 29 alone (ruling N6 (a)): how far `gametic` is ahead of the level's
+    /// tic count (DSIM45 `level.gametic_lead`): the load's `gametic` until the
+    /// session's pause, which runs `G_Ticker` without `P_Ticker`, moves it on.
+    /// `None` under every other policy.
+    pub(crate) gametic_lead: Option<u64>,
 }
 /// Static-geometry table bounds a construction prepares against: the M3f2/M3h3
 /// constants for every historical profile, the WAD format's own bounds (M3h6 note
@@ -852,6 +864,7 @@ impl Simulation {
             sounds: Vec::new(),
             pending_sounds: Vec::new(),
             level_start: None,
+            gametic_lead: None,
         })
     }
     /// The sectors a type's dimensions are admitted against: the heights policy's
@@ -1698,6 +1711,10 @@ mod wire25_tests;
 
 #[cfg(test)]
 mod m4p_elision_tests;
+#[cfg(test)]
+mod nightmare_genuine_tests;
+#[cfg(test)]
+mod nightmare_tests;
 #[cfg(test)]
 mod overshoot_walk_tests;
 #[cfg(test)]

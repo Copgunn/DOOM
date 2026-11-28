@@ -30,6 +30,8 @@
 //! - [`chain_state`] (M6a): its saved state, `DSND` version 2.
 //! - [`chain_melt`] (M6a part 2): its finale-and-melt configuration, which runs the melt steps,
 //!   and that configuration's saved state, `DSND` version 3.
+//! - [`chain_pause`] (M6b wire 29): the original's pause in that session, saved as `DSND`
+//!   version 4.
 //!
 //! Every place where the C ends in `I_Error` or reads memory it does not own is a typed refusal
 //! made before any state changes (M5c decision T11). Every audible quirk of the source is
@@ -37,6 +39,7 @@
 
 pub mod chain;
 pub mod chain_melt;
+pub mod chain_pause;
 pub mod chain_state;
 pub mod detector;
 pub mod logic;

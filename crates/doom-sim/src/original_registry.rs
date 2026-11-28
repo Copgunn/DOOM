@@ -143,6 +143,13 @@ pub enum OriginalExecutionProfile {
     /// non-player mover (`has_monster_escape_witness`). Captures are DSIM44, read
     /// by `Diagnostic::decode_episode1_v6`: the DSIM43 layout field for field.
     PlayerMonstersEpisode1V6,
+    /// Episode 1, part 7 (wire 29, owner's rulings N1, N2, N4, N6 and N10 of
+    /// 2026-11-26): wire 28 in every respect, plus skill 4 (`sk_nightmare`) and
+    /// the `-respawn` and `-fast` parameters ([`crate::GameParameters`],
+    /// `has_nightmare`). Captures are DSIM45, read by
+    /// `Diagnostic::decode_episode1_v7`: DSIM44 plus `actors.parameters` and
+    /// `level.gametic_lead`.
+    PlayerMonstersEpisode1V7,
 }
 impl OriginalExecutionProfile {
     /// Stable wire policy ID; not the Rust Profile discriminant or DSIM version.
@@ -176,6 +183,7 @@ impl OriginalExecutionProfile {
             Self::PlayerMonstersEpisode1V4 => 26,
             Self::PlayerMonstersEpisode1V5 => 27,
             Self::PlayerMonstersEpisode1V6 => 28,
+            Self::PlayerMonstersEpisode1V7 => 29,
         }
     }
     /// Exact immutable execution-context schema; not an actor-instance identity.
@@ -209,6 +217,7 @@ impl OriginalExecutionProfile {
             Self::PlayerMonstersEpisode1V4 => PLAYER_EPISODE1_V4_CONTEXT_SCHEMA,
             Self::PlayerMonstersEpisode1V5 => PLAYER_EPISODE1_V5_CONTEXT_SCHEMA,
             Self::PlayerMonstersEpisode1V6 => PLAYER_EPISODE1_V6_CONTEXT_SCHEMA,
+            Self::PlayerMonstersEpisode1V7 => PLAYER_EPISODE1_V7_CONTEXT_SCHEMA,
         }
     }
     pub(crate) const fn has_player_armor(self) -> bool {
@@ -233,6 +242,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersEpisode1V4
                 | Self::PlayerMonstersEpisode1V5
                 | Self::PlayerMonstersEpisode1V6
+                | Self::PlayerMonstersEpisode1V7
         )
     }
     pub(crate) const fn has_player_bonuses(self) -> bool {
@@ -256,6 +266,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersEpisode1V4
                 | Self::PlayerMonstersEpisode1V5
                 | Self::PlayerMonstersEpisode1V6
+                | Self::PlayerMonstersEpisode1V7
         )
     }
     /// Original former humans, a bounded mixed roster, infighting and drops.
@@ -279,6 +290,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersEpisode1V4
                 | Self::PlayerMonstersEpisode1V5
                 | Self::PlayerMonstersEpisode1V6
+                | Self::PlayerMonstersEpisode1V7
         )
     }
     /// The original Imp and its fireball in the mixed roster.
@@ -301,6 +313,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersEpisode1V4
                 | Self::PlayerMonstersEpisode1V5
                 | Self::PlayerMonstersEpisode1V6
+                | Self::PlayerMonstersEpisode1V7
         )
     }
     /// Wall-derived travel bounds, 320 slots and 208 live fireballs inside a walled
@@ -323,6 +336,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersEpisode1V4
                 | Self::PlayerMonstersEpisode1V5
                 | Self::PlayerMonstersEpisode1V6
+                | Self::PlayerMonstersEpisode1V7
         )
     }
     /// Two-sided lines, static floor/ceiling heights, vertical movement, the
@@ -345,6 +359,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersEpisode1V4
                 | Self::PlayerMonstersEpisode1V5
                 | Self::PlayerMonstersEpisode1V6
+                | Self::PlayerMonstersEpisode1V7
         )
     }
     /// Linedefs of any direction inside a closed one-sided boundary, the parity
@@ -365,6 +380,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersEpisode1V4
                 | Self::PlayerMonstersEpisode1V5
                 | Self::PlayerMonstersEpisode1V6
+                | Self::PlayerMonstersEpisode1V7
         )
     }
     /// The real-map policy: format-sized static geometry, the arithmetic and
@@ -384,6 +400,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersEpisode1V4
                 | Self::PlayerMonstersEpisode1V5
                 | Self::PlayerMonstersEpisode1V6
+                | Self::PlayerMonstersEpisode1V7
         )
     }
     /// The specials policy (M3h7 Stage A) and its supersets: sky ceilings, the
@@ -403,6 +420,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersEpisode1V4
                 | Self::PlayerMonstersEpisode1V5
                 | Self::PlayerMonstersEpisode1V6
+                | Self::PlayerMonstersEpisode1V7
         )
     }
     /// The movers policy (M3h8 Stage B) and its E1M1 superset: doors, lifts,
@@ -422,6 +440,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersEpisode1V4
                 | Self::PlayerMonstersEpisode1V5
                 | Self::PlayerMonstersEpisode1V6
+                | Self::PlayerMonstersEpisode1V7
         )
     }
     /// The E1M1 policy (M3h9 note §5.1): two-sided scrolling walls (48) and the
@@ -439,6 +458,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersEpisode1V4
                 | Self::PlayerMonstersEpisode1V5
                 | Self::PlayerMonstersEpisode1V6
+                | Self::PlayerMonstersEpisode1V7
         )
     }
     /// The barrels policy (M3h9b note §5.1): exploding barrels, up to 64 pickups,
@@ -456,6 +476,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersEpisode1V4
                 | Self::PlayerMonstersEpisode1V5
                 | Self::PlayerMonstersEpisode1V6
+                | Self::PlayerMonstersEpisode1V7
         )
     }
     /// The level policy (M3h9c, decision G4, wire 22 only): the barrels world with
@@ -475,6 +496,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersEpisode1V4
                 | Self::PlayerMonstersEpisode1V5
                 | Self::PlayerMonstersEpisode1V6
+                | Self::PlayerMonstersEpisode1V7
         )
     }
     /// The Episode 1 policy (M4a, wire 23 only, decisions H2–H4): the level world
@@ -495,6 +517,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersEpisode1V4
                 | Self::PlayerMonstersEpisode1V5
                 | Self::PlayerMonstersEpisode1V6
+                | Self::PlayerMonstersEpisode1V7
         )
     }
     /// Episode 1, part 2 (M4b, wire 24 only, decision I2): the identity of the
@@ -512,6 +535,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersEpisode1V4
                 | Self::PlayerMonstersEpisode1V5
                 | Self::PlayerMonstersEpisode1V6
+                | Self::PlayerMonstersEpisode1V7
         )
     }
     /// Line special 97 (`EV_Teleport`, p_telept.c:47–131), the landing
@@ -526,6 +550,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersEpisode1V4
                 | Self::PlayerMonstersEpisode1V5
                 | Self::PlayerMonstersEpisode1V6
+                | Self::PlayerMonstersEpisode1V7
         )
     }
     /// The Baron of Hell (`MT_BRUISER`, doomednum 3003), `A_BruisAttack`
@@ -540,6 +565,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersEpisode1V4
                 | Self::PlayerMonstersEpisode1V5
                 | Self::PlayerMonstersEpisode1V6
+                | Self::PlayerMonstersEpisode1V7
         )
     }
     /// `A_BossDeath` (p_enemy.c:1609–1757, decision I9): wire 24 only, admitted in
@@ -552,6 +578,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersEpisode1V4
                 | Self::PlayerMonstersEpisode1V5
                 | Self::PlayerMonstersEpisode1V6
+                | Self::PlayerMonstersEpisode1V7
         )
     }
     /// Skill 3 (hard, THING option bit 4; decision I4): wire 24 only, admitted in
@@ -566,6 +593,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersEpisode1V4
                 | Self::PlayerMonstersEpisode1V5
                 | Self::PlayerMonstersEpisode1V6
+                | Self::PlayerMonstersEpisode1V7
         )
     }
     /// A Demon or Spectre bite (`A_SargAttack`, p_enemy.c:935–948) on a body that
@@ -589,6 +617,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersEpisode1V4
                 | Self::PlayerMonstersEpisode1V5
                 | Self::PlayerMonstersEpisode1V6
+                | Self::PlayerMonstersEpisode1V7
         )
     }
     /// Episode 1, part 3 (M5c, wire 25 only, decisions T3, T4 and T12): the
@@ -612,6 +641,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersEpisode1V4
                 | Self::PlayerMonstersEpisode1V5
                 | Self::PlayerMonstersEpisode1V6
+                | Self::PlayerMonstersEpisode1V7
         )
     }
     /// Episode 1, part 4 (M6a, wire 26 only, ruling U2 = B1): the level start
@@ -629,6 +659,7 @@ impl OriginalExecutionProfile {
             Self::PlayerMonstersEpisode1V4
                 | Self::PlayerMonstersEpisode1V5
                 | Self::PlayerMonstersEpisode1V6
+                | Self::PlayerMonstersEpisode1V7
         )
     }
     /// Wire 27 (owner's ruling of 2026-11-24): the traces' `P_InterceptVector`
@@ -642,26 +673,43 @@ impl OriginalExecutionProfile {
     pub(crate) const fn has_wrapping_intercept(self) -> bool {
         matches!(
             self,
-            Self::PlayerMonstersEpisode1V5 | Self::PlayerMonstersEpisode1V6
+            Self::PlayerMonstersEpisode1V5
+                | Self::PlayerMonstersEpisode1V6
+                | Self::PlayerMonstersEpisode1V7
         )
     }
-    /// Wire 28 alone (ruling U12 (iii)): skills 0 (`sk_baby`) and 1 (`sk_easy`)
+    /// Wire 28 (ruling U12 (iii)), inherited by wire 29: skills 0 (`sk_baby`) and 1 (`sk_easy`)
     /// are admitted besides 2 and 3. Both spawn with THING bit 1
     /// (p_mobj.c:743-751); `sk_baby` alone doubles every `P_GiveAmmo` amount
     /// (p_inter.c:95-101) and halves the player's damage (p_inter.c:799-800).
     /// DSIM44 and the `PLAYER-MONSTERS-EPISODE1-6-v1` context; nightmare stays
     /// refused. Every older policy keeps skills 2 and 3 byte for byte.
     pub(crate) const fn has_easy_skills(self) -> bool {
-        matches!(self, Self::PlayerMonstersEpisode1V6)
+        matches!(
+            self,
+            Self::PlayerMonstersEpisode1V6 | Self::PlayerMonstersEpisode1V7
+        )
     }
-    /// Wire 28 alone (§1.17 option 1): spawn rule S″, S′ without the margin
+    /// Wire 28 (§1.17 option 1), inherited by wire 29: spawn rule S″, S′ without the margin
     /// clause for monsters (barrels and the player keep it), with the escape
     /// witness that S′ made unreachable: after every accepted XY move of a
     /// non-player, non-missile mover on a map with a boundary, the exact parity
     /// test of [`crate::barrels::BarrelMotion`]; even parity refuses the tic with
     /// `MapScaleError::Escape` and the state before it kept.
     pub(crate) const fn has_monster_escape_witness(self) -> bool {
-        matches!(self, Self::PlayerMonstersEpisode1V6)
+        matches!(
+            self,
+            Self::PlayerMonstersEpisode1V6 | Self::PlayerMonstersEpisode1V7
+        )
+    }
+    /// Wire 29 alone (rulings N1 and N10): skill 4 (`sk_nightmare`) besides 0 to
+    /// 3, and the `-respawn` and `-fast` parameters (`respawnparm`, `fastparm`;
+    /// d_main.c:809-810, demo header bytes 5 and 6, g_game.c:1600-1601). DSIM45
+    /// and the `PLAYER-MONSTERS-EPISODE1-7-v1` context; a site that selects a
+    /// schema tests this before [`Self::has_easy_skills`]. Every older policy
+    /// keeps skills 0 to 3 (wire 28) or fewer and no parameter, byte for byte.
+    pub(crate) const fn has_nightmare(self) -> bool {
+        matches!(self, Self::PlayerMonstersEpisode1V7)
     }
     pub(crate) const fn has_world_pickups(self) -> bool {
         matches!(
@@ -686,6 +734,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersEpisode1V4
                 | Self::PlayerMonstersEpisode1V5
                 | Self::PlayerMonstersEpisode1V6
+                | Self::PlayerMonstersEpisode1V7
         )
     }
     pub(crate) const fn has_player_body(self) -> bool {
@@ -718,6 +767,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersEpisode1V4
                 | Self::PlayerMonstersEpisode1V5
                 | Self::PlayerMonstersEpisode1V6
+                | Self::PlayerMonstersEpisode1V7
         )
     }
     pub(crate) const fn has_physical_player(self) -> bool {
@@ -749,6 +799,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersEpisode1V4
                 | Self::PlayerMonstersEpisode1V5
                 | Self::PlayerMonstersEpisode1V6
+                | Self::PlayerMonstersEpisode1V7
         )
     }
     pub(crate) const fn has_player_weapons(self) -> bool {
@@ -776,6 +827,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersEpisode1V4
                 | Self::PlayerMonstersEpisode1V5
                 | Self::PlayerMonstersEpisode1V6
+                | Self::PlayerMonstersEpisode1V7
         )
     }
     /// The four-weapon pack (fists, shotgun, chaingun, manual switching): every
@@ -811,6 +863,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersEpisode1V4
                 | Self::PlayerMonstersEpisode1V5
                 | Self::PlayerMonstersEpisode1V6
+                | Self::PlayerMonstersEpisode1V7
         )
     }
 }
@@ -1307,7 +1360,8 @@ impl OriginalExecutionRegistry {
             | OriginalExecutionProfile::PlayerMonstersEpisode1V3
             | OriginalExecutionProfile::PlayerMonstersEpisode1V4
             | OriginalExecutionProfile::PlayerMonstersEpisode1V5
-            | OriginalExecutionProfile::PlayerMonstersEpisode1V6 => {
+            | OriginalExecutionProfile::PlayerMonstersEpisode1V6
+            | OriginalExecutionProfile::PlayerMonstersEpisode1V7 => {
                 demon_policy()?;
                 player_policy()?;
                 if profile.has_monsters() {
@@ -1372,7 +1426,8 @@ impl OriginalExecutionRegistry {
             | OriginalExecutionProfile::PlayerMonstersEpisode1V3
             | OriginalExecutionProfile::PlayerMonstersEpisode1V4
             | OriginalExecutionProfile::PlayerMonstersEpisode1V5
-            | OriginalExecutionProfile::PlayerMonstersEpisode1V6 => {
+            | OriginalExecutionProfile::PlayerMonstersEpisode1V6
+            | OriginalExecutionProfile::PlayerMonstersEpisode1V7 => {
                 demon_policy()?;
                 player_policy()?;
                 if profile.has_monsters() {
@@ -1659,7 +1714,8 @@ impl Simulation {
     /// to record. Wire 27 (`PlayerMonstersEpisode1V5`, DSIM43) is refused the same
     /// way, for [`Self::original_player_episode1_v5_level_at`], and wire 28
     /// (`PlayerMonstersEpisode1V6`, DSIM44) for
-    /// [`Self::original_player_episode1_v6_level_at`]. Wires 1 to 25 are
+    /// [`Self::original_player_episode1_v6_level_at`], and wire 29 for
+    /// [`Self::original_player_episode1_v7_level_at`]. Wires 1 to 25 are
     /// unchanged.
     pub fn with_original_registry(
         map: Map,
@@ -1693,9 +1749,11 @@ impl Simulation {
             skill: Skill::Hard,
             ..ActorOptions::default()
         };
-        // Wire 28 alone also admits skills 0 and 1 (ruling U12 (iii)).
+        // Wire 28 also admits skills 0 and 1 (ruling U12 (iii)), wire 29 skill 4
+        // as well (ruling N1).
         let easy = policy.has_easy_skills()
-            && matches!(options.skill, Skill::Baby | Skill::Easy)
+            && (matches!(options.skill, Skill::Baby | Skill::Easy)
+                || (policy.has_nightmare() && options.skill == Skill::Nightmare))
             && options
                 == ActorOptions {
                     skill: options.skill,
@@ -1815,6 +1873,7 @@ impl Simulation {
                 episode1,
                 teleport: policy.has_teleport(),
                 walk_exits: policy.has_carried_start(),
+                nightmare: policy.has_nightmare(),
             },
         )?;
         sim.boundary = boundary;
@@ -1849,6 +1908,7 @@ impl Simulation {
                 episode1,
                 weapon_stage: original_player::WeaponStage::Idle,
                 baby: policy.has_easy_skills() && options.skill == Skill::Baby,
+                nightmare: policy.has_nightmare() && options.skill == Skill::Nightmare,
             });
         }
         Ok(sim)

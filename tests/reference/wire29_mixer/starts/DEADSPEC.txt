@@ -1,0 +1,11 @@
+# Start list of DEADSPEC.sound (sha256 e1c215b6281ea98b34ccafaa1f9beef6ed1cb4299708e494089dd024a92748da), written by tools/reference/m5c_starts.py:
+# the 5 S rows with outcome started, in stream order; 5 S rows in all; 260 R rows.
+# handle convention: integrated (stated by the stream).
+schema DOOM-M5C-STARTS-v1
+config integrated
+tics 260
+s 35 1 35 25 8 128 124 64 100
+s 67 2 67 25 8 128 139 64 101
+s 99 3 99 25 8 128 137 64 102
+s 131 4 131 25 8 128 142 64 103
+s 166 5 166 57 8 128 139 64 104

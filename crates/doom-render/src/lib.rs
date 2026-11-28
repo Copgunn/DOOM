@@ -52,6 +52,7 @@ pub mod wi_stuff;
 pub use d_display::session::finale_melt::{
     MeltFault, MeltProgress, MeltStep, SessionDisplayStateV4, SessionStateRefusal,
 };
+pub use d_display::session::pause::{PauseFields, SessionDisplayStateV5};
 pub use d_display::session::{
     Carried, FinaleView, GameState, LevelChange, MeltState, NonLevelFrame, NotYet, Scene,
     SessionConfig, SessionDisplayState, SessionError, SessionRestoreError,

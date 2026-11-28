@@ -130,12 +130,12 @@ fn finish_launch<W: MissileWorld>(
     id: ActorId,
     source: ActorId,
     mut angle: u32,
+    speed: Fixed,
     momz: Fixed,
     shadow: bool,
 ) {
     let ty = w.missile(id).life.unwrap().actor_type;
-    let info = w.definition(ty);
-    let (speed, sound) = (Fixed::from_bits(info.speed()), info.sounds()[0]);
+    let sound = w.definition(ty).sounds()[0];
     missile_sound(w, id, sound);
     w.missile_mut(id).life.as_mut().unwrap().target = Some(source);
     w.emit(Event::ActorState(ActorStateEvent::Target {
@@ -593,7 +593,13 @@ pub(crate) fn launch_missile<A: lifecycle::ActorAccess>(
     h.access.reserve(1)?;
     let from = *h.access.get(source).ok_or(ProjectileError::Reference)?;
     let to = *h.access.get(dest).ok_or(ProjectileError::Reference)?;
-    let speed = Fixed::from_bits(h.definition(ty).speed());
+    // Wire 29: the speed in the fast table of the options (ruling N4 (a)).
+    let speed = Fixed::from_bits(crate::nightmare::missile_speed(
+        h.world,
+        h.options.skill,
+        ty,
+        h.definition(ty).speed(),
+    ));
     let (angle, momz, shadow) = actor_aim(&from, &to, speed);
     // Rust-only launch witness: 64 in the flat policies, the derived 1,024 under
     // heights, where the chord to a target up to 968 units away in z is legal.
@@ -616,7 +622,7 @@ pub(crate) fn launch_missile<A: lifecycle::ActorAccess>(
         from.position(),
         SpawnHeight::Absolute(from.z + Fixed::from_map_units(MISSILE_SPAWN_HEIGHT)),
     );
-    finish_launch(h, id, source, angle, momz, shadow);
+    finish_launch(h, id, source, angle, speed, momz, shadow);
     Ok(())
 }
 /// p_mobj.c:946–966 `P_SpawnPlayerMissile`'s aim range, `16*64*FRACUNIT`.
@@ -684,7 +690,7 @@ pub(crate) fn launch_player_missile(
         from.position(),
         SpawnHeight::Absolute(from.z + Fixed::from_map_units(MISSILE_SPAWN_HEIGHT)),
     );
-    finish_launch(h, id, source, angle, speed * slope, false);
+    finish_launch(h, id, source, angle, speed, speed * slope, false);
     Ok(())
 }
 /// Rejected projectile prerequisite; recoverable errors precede mutation.
@@ -1025,7 +1031,7 @@ impl Simulation {
             source.position(),
             SpawnHeight::Absolute(source.z + Fixed::from_map_units(MISSILE_SPAWN_HEIGHT)),
         );
-        finish_launch(self, id, request.source, angle, momz, shadow);
+        finish_launch(self, id, request.source, angle, speed, momz, shadow);
         Ok(id)
     }
     pub(crate) fn query_projectile_move(

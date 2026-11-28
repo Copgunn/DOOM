@@ -35,10 +35,8 @@ fn skills_0_to_3_are_accepted_and_nightmare_is_refused() {
         assert_eq!(o.skill, want, "{given}");
         assert_eq!((o.map, o.screenblocks), (1, 10), "nothing else: {given}");
     }
-    for nightmare in ["4", "nightmare"] {
-        let e = parse(args(&format!("--iwad a.wad --skill {nightmare}"))).unwrap_err();
-        assert_eq!(e, "--skill: nightmare (4) is not built yet", "{nightmare}");
-    }
+    // 2026-11-27: wire 29 admits nightmare; its refusal here ("--skill: nightmare (4) is not built
+    // yet" for 4 and nightmare) became its acceptance (wire29_tests.rs).
     for bad in ["5", "-1", "itytd", "", "00x"] {
         assert!(
             parse(args(&format!("--iwad a.wad --skill {bad}"))).is_err(),
@@ -55,9 +53,9 @@ fn the_help_lists_skills_0_to_3_and_the_escape_stop() {
     for want in [
         "0: I'm Too Young To Die; 1: Hey, Not Too Rough;",
         "2 or hmp: Hurt Me Plenty (default); 3 or uv: Ultra-Violence.",
-        "Nightmare (4) is not built yet",
-        "skills 0 to 3, and E1M7 on skill 3 plays.",
-        "Not built yet: nightmare (skill 4), which is refused at launch.",
+        // 2026-11-27: wire 29 admits nightmare, so "Nightmare (4) is not built yet", "skills 0 to
+        // 3, and E1M7 on skill 3 plays." and "Not built yet: nightmare (skill 4), which is refused
+        // at launch." left the help (its account now: wire29_tests.rs).
         "monster or a corpse is shoved through a one-sided wall",
         "the session refuses that tic",
         "TIC REFUSED screen naming the rule",

@@ -9,7 +9,9 @@
 //! [`Session::new_finale_and_melt`], runs the same tics and adds the victory, the Episode 1
 //! finale and every wipe's melt ([`finale_melt`], `DSES` version 2 in [`state_v2`]). The third,
 //! [`Session::new_finale_and_melt_wire28`], is the second on wire 28, with skills 0 and 1
-//! (`DSES` version 3 in [`state_v3`]).
+//! (`DSES` version 3 in [`state_v3`]). The fourth, [`Session::new_finale_and_melt_wire29`], is the
+//! third on wire 29, with skill 4, the `-respawn` and `-fast` parameters and the original's pause
+//! (`DSES` version 4 in [`state_v4`]; **the pause** below).
 //!
 //! **One session tic** ([`Session::tic`]), in the C's order:
 //!
@@ -75,6 +77,35 @@
 //! finished level's player's `message`, which nothing reads there (`HU_Ticker` and `HU_Drawer` run
 //! in a level only, g_game.c:729-733, d_main.c:270-271) and which the next load's `P_SpawnPlayer`
 //! clears before any `HU_Ticker`; the session therefore keeps no message outside a level.
+//!
+//! **The pause** (wire 29 only, M6b rulings N5 and N6; docs/M6B_REFERENCE_INVESTIGATION.md §4).
+//! The session owns `paused` ([`Session::paused`]). In `G_Ticker`'s order (g_game.c:605-748): the
+//! reborn and the game actions first, a load's `G_DoLoadLevel` clearing `paused` (g_game.c:494,
+//! with no resume call); then the turbo test; then each command with `BT_SPECIAL` and low bits 01
+//! toggles `paused` (g_game.c:698-708; any other bits, [`doom_sim::toggles_pause`]); the save
+//! command (low bits 10) is refused in every game state, a special byte with low bits 00 or 11 does
+//! nothing here; then the game-state switch. So the tic that pauses already skips the level and
+//! the tic that unpauses runs it. While paused in a level `P_Ticker` returns at once
+//! (p_tick.c:135-136): the simulation is not advanced but makes `G_Ticker`'s turbo test with the
+//! true `gametic` ([`Simulation::paused_tic`], which moves its `gametic` lead), while `ST_Ticker`
+//! (its `M_Random` draw), `HU_Ticker`, the sound and `gametic` go on; a load tic whose command
+//! pauses loads the level and runs no tic of it. `WI_Ticker` and `F_Ticker` are never paused, and
+//! `WI_checkForAccelerate` reads the raw byte (0x81 has bit 0, a fire press, wi_stuff.c:1480). On
+//! a tic the level runs, a special byte (but the save command) is judged by wire 24's domain
+//! without its buttons: the simulation zeroes a live player's (p_user.c:280-281) and gives a dead
+//! one's raw to `P_DeathThink` (p_user.c:227).
+//!
+//! The display and the sound are told `paused` and the toggle before each tic's game-state switch
+//! (doom-render's `Display::set_paused`, doom-sound's `ChainSound::pause_tic`): every frame shown
+//! while paused carries the `M_PAUSE` picture (d_main.c:303-311; a missing picture is refused at
+//! the tic whose frame would first show it, the genuine engine's stop), and the sound makes the
+//! toggle's music call (s_sound.c:497-513). Both count the level's paused tics in their saved
+//! states (`DDSP` version 5, `DSND` version 4, inside `DSES` version 4).
+//!
+//! A load tic whose command pauses runs no tic of the new level, so the load's sound records (a
+//! carried chainsaw's `sfx_sawup`, p_pspr.c:145-146, started inside `P_SetupLevel`) are given to
+//! the sound on the load tic as always, and the simulation, which publishes them at the head of
+//! its tic 0's records, is stripped of them when that tic runs later.
 pub mod demo;
 pub mod finale;
 pub mod finale_melt;
@@ -83,6 +114,7 @@ pub mod sound;
 pub mod state;
 pub mod state_v2;
 pub mod state_v3;
+pub mod state_v4;
 
 use doom_map::Map;
 use doom_render::{
@@ -90,10 +122,10 @@ use doom_render::{
     Level, LevelChange, LumpDirectory, ResourceError, Resources, SessionError,
 };
 use doom_sim::{
-    CarriedStart, LevelExit, LevelStart, LevelStartError, SimError, Simulation, Skill, StartKind,
-    TicCommand,
+    CarriedStart, GameParameters, LevelExit, LevelStart, LevelStartError, SimError, Simulation,
+    Skill, StartKind, TicCommand,
 };
-use doom_sound::chain::{ChainConfig, ChainRefusal, ChainSound, ChainTic, IntermissionSound};
+use doom_sound::chain::{ChainRefusal, ChainSound, ChainTic, IntermissionSound};
 use doom_sound::lumps::{SoundCaps, SoundLoadError, SoundSet};
 use doom_types::{DoomRng, Fixed};
 use finale_melt::Configuration;
@@ -320,7 +352,8 @@ impl SessionData {
 pub struct SessionSettings {
     /// The start map, 1..=9 (any, as vanilla's warp; ruling U14).
     pub map: u8,
-    /// The skill byte: 2 or 3; also 0 or 1 in the wire 28 configuration.
+    /// The skill byte: 2 or 3; also 0 or 1 in the wire 28 and 29 configurations, and 4 in the
+    /// wire 29 configuration.
     pub skill: u8,
     /// Screenblocks, 10 or 11 (decision S14).
     pub screenblocks: u8,
@@ -543,6 +576,22 @@ pub enum PlantedFault {
     /// [`Configuration::FinaleAndMelt`]: the first melt step of a display mixes the owed buffer
     /// (doom-sound's `ChainFault::MixInMelt`; d_main.c:397-405 mix after the display).
     MixInMelt,
+    /// [`Configuration::FinaleAndMeltWire29`], the altered genuine engines of
+    /// `tools/reference/m6b_goldens.py`: `pause_mask`, only the byte 0x81 toggles (g_game.c:704).
+    PauseMask,
+    /// `pause_keep`: a level load keeps `paused` (g_game.c:494).
+    PauseKeep,
+    /// `pause_wi`: the intermission does not read a special byte as a fire press (wi_stuff.c:1480).
+    PauseWi,
+    /// `pause_run`: `P_Ticker` runs while paused (p_tick.c:135).
+    PauseRun,
+    /// `pause_st`: `ST_Ticker` (and its `M_Random` draw) stopped while paused (g_game.c:731).
+    PauseSt,
+    /// `pause_hu`: `HU_Ticker` (the message timer) stopped while paused (g_game.c:733).
+    PauseHu,
+    /// The self-test of `tools/reference/m6b_goldens.py`: the pause picture one row lower
+    /// (d_main.c:309; doom-render's planted pause fault).
+    PausePictureLower,
 }
 
 /// Which domain judges a command, by the part of `G_Ticker` that reads it (module
@@ -562,6 +611,25 @@ fn command_domain(cmd: &TicCommand, reader: Reader) -> Result<(), SessionWitness
         return Err(SessionWitness::Special);
     }
     if reader == Reader::Level && !crate::app::wire24_admits(cmd) {
+        return Err(SessionWitness::Command);
+    }
+    Ok(())
+}
+
+/// The command check of wire 29 (ruling N5 (a); module documentation): the save command is
+/// refused in every game state; a command `P_Ticker` reads (`level_reads`) must be in wire 24's
+/// domain, a special byte judged without its buttons; every other command is accepted (`WI_Ticker`
+/// and a paused tic read only bits 0 and 1 and the turbo test's `forwardmove`).
+fn command_domain_wire29(cmd: &TicCommand, level_reads: bool) -> Result<(), SessionWitness> {
+    if doom_sim::save_command(cmd.buttons) {
+        return Err(SessionWitness::Special);
+    }
+    let judged = if cmd.buttons & BT_SPECIAL != 0 {
+        TicCommand { buttons: 0, ..*cmd }
+    } else {
+        *cmd
+    };
+    if level_reads && !crate::app::wire24_admits(&judged) {
         return Err(SessionWitness::Command);
     }
     Ok(())
@@ -602,6 +670,14 @@ pub struct Session {
     config: Configuration,
     /// `finalestage` and `finalecount` in the finale ([`Configuration::FinaleAndMelt`] only).
     finale: Option<FinaleView>,
+    /// `respawnparm` and `fastparm` ([`Configuration::FinaleAndMeltWire29`]; the default in every
+    /// other configuration).
+    parameters: GameParameters,
+    /// `paused` (g_game.c:121; [`Configuration::FinaleAndMeltWire29`] only, module documentation).
+    paused: bool,
+    /// Wire 29: the current level's load tic was paused, so its tic 0 has not run and will
+    /// publish the load's sound records again (module documentation).
+    head_owed: bool,
 }
 
 fn skill_of(byte: u8) -> Result<Skill, StartError> {
@@ -628,32 +704,37 @@ impl Session {
         settings: SessionSettings,
         config: Configuration,
     ) -> Result<Self, StartError> {
+        Self::new_in_with(data, settings, config, GameParameters::default())
+    }
+
+    /// [`Self::new_in`] with wire 29's `parameters` (the default for every other configuration).
+    pub(crate) fn new_in_with(
+        data: Arc<SessionData>,
+        settings: SessionSettings,
+        config: Configuration,
+        parameters: GameParameters,
+    ) -> Result<Self, StartError> {
         if !(1..=9).contains(&settings.map) || !(10..=11).contains(&settings.screenblocks) {
             return Err(StartError::Domain);
         }
         let skill = config.skill(settings.skill)?;
-        let sound = ChainSound::new_with(
-            data.sound_set.clone(),
-            data.music,
-            ChainConfig::fresh(data.textures),
-            i32::from(settings.map),
-            config.chain_mode(),
-        )
-        .map_err(|e| StartError::Sound(SoundWitness::Chain(e)))?;
+        let sound = config
+            .new_sound(&data, i32::from(settings.map))
+            .map_err(|e| StartError::Sound(SoundWitness::Chain(e)))?;
         let (map, level) = data.map(settings.map).map_err(StartError::Map)?;
         let sim = config
-            .level_at(map.clone(), settings.map, skill, LevelStart::NewGame, 0)
+            .level_at(
+                map.clone(),
+                settings.map,
+                (skill, parameters),
+                LevelStart::NewGame,
+                0,
+            )
             .map_err(StartError::Admission)?;
         let cfg = DisplayConfig {
             screenblocks: settings.screenblocks,
         };
-        let mut display = Display::new_session_with(
-            data.res.clone(),
-            level.clone(),
-            cfg,
-            config.display_config(data.mode.mode.game_mode()),
-        )
-        .map_err(|e| {
+        let mut display = config.new_display(&data, level.clone(), cfg).map_err(|e| {
             StartError::Display(match e {
                 // The genuine text (w_wad.c:399-409), as at HU_Init's stop (hu_stuff.c:404-410).
                 ResourceError::LumpNotFound(n) => format!("W_GetNumForName: {n} not found!"),
@@ -682,6 +763,9 @@ impl Session {
             fault: None,
             config,
             finale: None,
+            parameters,
+            paused: false,
+            head_owed: false,
             data,
         })
     }
@@ -792,6 +876,9 @@ impl Session {
     #[doc(hidden)]
     pub fn plant_fault(&mut self, fault: PlantedFault) {
         self.plant_sound_fault(fault);
+        if fault == PlantedFault::PausePictureLower {
+            self.display.plant_pause_fault();
+        }
         self.fault = Some(fault);
     }
 
@@ -829,16 +916,17 @@ impl Session {
                             LevelStart::Reborn { p_random },
                             LevelChange::Reborn,
                             0,
+                            false,
                         )
                     })
                 } else if let Some(exit) = self.level.level_exit_request() {
                     check(Reader::NonLevel).and_then(|()| self.completion_tic(cmd, exit))
                 } else {
-                    check(Reader::Level).and_then(|()| self.level_tic(cmd))
+                    check(Reader::Level).and_then(|()| self.level_tic(cmd, false))
                 }
             }
             GameState::Intermission if self.world_done => {
-                check(Reader::Level).and_then(|()| self.world_done_tic(cmd))
+                check(Reader::Level).and_then(|()| self.world_done_tic(cmd, false))
             }
             GameState::Intermission => {
                 check(Reader::NonLevel).and_then(|()| self.intermission_tic(cmd))
@@ -851,13 +939,18 @@ impl Session {
         r.map_err(refuse)
     }
 
-    /// A level tic: `P_Ticker`, then sound and display (rule 2 on their refusal).
-    fn level_tic(&mut self, cmd: TicCommand) -> Result<TicReport, SessionWitness> {
+    /// A level tic: `P_Ticker` (or, `paused`, the simulation's paused tic), then sound and
+    /// display (rule 2 on their refusal).
+    fn level_tic(&mut self, cmd: TicCommand, paused: bool) -> Result<TicReport, SessionWitness> {
         let none = TicCommand::default();
-        self.level
-            .advance([cmd, none, none, none])
-            .map_err(SessionWitness::Simulation)?;
-        let r = self.present_level(cmd, None, None, TicKind::Level);
+        let cmds = [cmd, none, none, none];
+        if paused {
+            self.level.paused_tic(cmds)
+        } else {
+            self.level.advance(cmds)
+        }
+        .map_err(SessionWitness::Simulation)?;
+        let r = self.present_level(cmd, None, None, TicKind::Level, paused);
         if let Err(w) = &r {
             self.ended = Some(Refusal {
                 tic: self.gametic,
@@ -867,20 +960,23 @@ impl Session {
         r
     }
 
-    /// The sound and display of a level tic of `self.level` (already advanced); with `load`, the
-    /// display `prepared` by `begin_next_level_carried` and the map loaded. Commits sound and
-    /// display only when both succeed.
+    /// The sound and display of a level tic of `self.level` (already advanced, or `paused`:
+    /// its paused tic made); with `load`, the display `prepared` by `begin_next_level_carried` and
+    /// the map loaded. Commits sound and display only when both succeed.
     fn present_level(
         &mut self,
         cmd: TicCommand,
         load: Option<u8>,
         prepared: Option<Display>,
         kind: TicKind,
+        paused: bool,
     ) -> Result<TicReport, SessionWitness> {
         let mut display = prepared.unwrap_or_else(|| self.display.clone());
         let before = display.random_index();
         let mut sound = self.sound.clone();
-        let ts = sound::level_tic(&mut sound, load, &self.level, before)
+        // The level's tic 0 after a paused load tic publishes the load's records again.
+        let owed = self.head_owed && !paused;
+        let ts = sound::level_tic(&mut sound, load, &self.level, before, owed)
             .map_err(SessionWitness::Sound)?;
         let expected = before.wrapping_add((ts.sound.draws & 0xff) as u8);
         if expected != ts.sound.rndindex {
@@ -889,9 +985,16 @@ impl Session {
                 display: ts.sound.rndindex,
             });
         }
-        display
-            .observe_after(&self.level, &cmd, ts.sound.draws)
-            .map_err(|e| SessionWitness::Display(SessionError::Observe(e)))?;
+        let tickers = match self.fault {
+            Some(PlantedFault::PauseSt) => [false, true],
+            Some(PlantedFault::PauseHu) => [true, false],
+            _ => [true, true],
+        };
+        let observed = match paused {
+            false => display.observe_after(&self.level, &cmd, ts.sound.draws),
+            true => display.observe_paused_with(&self.level, &cmd, ts.sound.draws, tickers),
+        };
+        observed.map_err(|e| SessionWitness::Display(SessionError::Observe(e)))?;
         let wiped = display.wipe_due();
         let mut frame = std::mem::take(&mut self.frame);
         let drawn = display.draw(&self.level, &mut frame);
@@ -904,6 +1007,11 @@ impl Session {
         self.mix_unless_melting(&display, &mut sound, &mut ts)?;
         self.display = display;
         self.sound = sound;
+        self.head_owed = if load.is_some() {
+            paused
+        } else {
+            self.head_owed && paused
+        };
         self.gametic += 1;
         Ok(TicReport {
             tic: self.gametic - 1,
@@ -918,8 +1026,13 @@ impl Session {
         })
     }
 
-    /// A load and the new level's tic 0 (a reborn reload or `G_DoWorldDone`): everything on the
+    /// A load and the new level's tic 0 (a reborn reload or `G_DoWorldDone`), or with `paused`
+    /// (wire 29: the tic's command paused the new level) its paused tic: everything on the
     /// side, committed at the end.
+    #[allow(
+        clippy::too_many_arguments,
+        reason = "the load's parts and the pause, each passed once"
+    )]
     fn load_tic(
         &mut self,
         cmd: TicCommand,
@@ -927,6 +1040,7 @@ impl Session {
         start: LevelStart,
         change: LevelChange,
         deltaviewheight: i32,
+        paused: bool,
     ) -> Result<TicReport, SessionWitness> {
         // S_Start's music lookup comes first in P_SetupLevel (p_setup.c:607), before the map's
         // lumps are read (p_setup.c:618-650).
@@ -945,22 +1059,33 @@ impl Session {
         };
         let mut sim = self
             .config
-            .level_at(m.clone(), map, self.skill, start, gametic)
+            .level_at(
+                m.clone(),
+                map,
+                (self.skill, self.parameters),
+                start,
+                gametic,
+            )
             .map_err(|error| SessionWitness::Admission { map, error })?;
         let mut display = self.display.clone();
         display
             .begin_next_level_carried(level.clone(), &sim, change, deltaviewheight)
             .map_err(SessionWitness::Display)?;
         let none = TicCommand::default();
-        sim.advance([cmd, none, none, none])
-            .map_err(SessionWitness::Simulation)?;
+        let cmds = [cmd, none, none, none];
+        if paused {
+            sim.paused_tic(cmds)
+        } else {
+            sim.advance(cmds)
+        }
+        .map_err(SessionWitness::Simulation)?;
         let kind = TicKind::Load {
             map,
             start: start.kind(),
         };
         // Commit the level only with its presentation (transactional load).
         let old = std::mem::replace(&mut self.level, sim);
-        match self.present_level(cmd, Some(map), Some(display), kind) {
+        match self.present_level(cmd, Some(map), Some(display), kind, paused) {
             Ok(r) => {
                 if let Some(e) = old.level_exit_request() {
                     // A reborn that beat a same-tic exit: the exit's `secretexit` stands.
@@ -1185,8 +1310,13 @@ impl Session {
         }))
     }
 
-    /// `G_DoWorldDone` (g_game.c:1172-1179) and the new level's tic 0.
-    fn world_done_tic(&mut self, cmd: TicCommand) -> Result<TicReport, SessionWitness> {
+    /// `G_DoWorldDone` (g_game.c:1172-1179) and the new level's tic 0 (or, `paused`, its paused
+    /// tic).
+    fn world_done_tic(
+        &mut self,
+        cmd: TicCommand,
+        paused: bool,
+    ) -> Result<TicReport, SessionWitness> {
         let carried = self
             .carried
             .ok_or(SessionWitness::Display(SessionError::WrongGameState(
@@ -1220,7 +1350,7 @@ impl Session {
             ),
             None => (LevelStart::Reborn { p_random }, 0),
         };
-        self.load_tic(cmd, map, start, LevelChange::WorldDone, dvh)
+        self.load_tic(cmd, map, start, LevelChange::WorldDone, dvh, paused)
     }
 }
 

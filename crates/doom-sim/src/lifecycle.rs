@@ -1409,7 +1409,9 @@ pub(crate) fn make_actor(
             sprite: initial.sprite,
             frame: initial.frame,
             health: info.spawn_health(),
-            reaction_time: if options.skill == Skill::Nightmare {
+            reaction_time: if options.skill == Skill::Nightmare
+                && !crate::nightmare::planted(crate::nightmare::Fault::React)
+            {
                 0
             } else {
                 info.reaction_time()
@@ -1520,7 +1522,7 @@ impl<A: ActorAccess> LifeHost<'_, A> {
             .target = target;
         self.observe(ActorStateEvent::Target { actor: id, target });
     }
-    fn draw(&mut self, id: ActorId) -> u8 {
+    pub(crate) fn draw(&mut self, id: ActorId) -> u8 {
         let value = self.rng.p_random();
         self.observe(ActorStateEvent::Random { actor: id, value });
         value
@@ -1593,8 +1595,10 @@ impl<A: ActorAccess> LifeHost<'_, A> {
                 return;
             }
             let definition = self.registry.state(state).expect("validated state");
+            // Wire 29: the duration in the fast table of the options (ruling N4 (a)).
+            let fast = crate::nightmare::fast(self.world, self.options.skill);
             let (tics, sprite, frame, action, next) = (
-                definition.tics,
+                crate::nightmare::table_tics(state.0, definition.tics, fast),
                 definition.sprite,
                 definition.frame,
                 definition.action,
@@ -1790,7 +1794,14 @@ impl<A: ActorAccess> LifeHost<'_, A> {
             },
         }
     }
+    /// `P_MobjThinker`'s state countdown of a missile under the historical
+    /// policies, which never reach the `tics == -1` respawn branch.
     pub fn tick(&mut self, id: ActorId) {
+        self.tick_at(id, None);
+    }
+    /// `P_MobjThinker`'s state countdown (p_mobj.c:439-471) at `leveltime`, which
+    /// the corpse respawn branch of wire 29 reads ([`crate::nightmare::corpse_think`]).
+    pub(crate) fn tick_at(&mut self, id: ActorId, leveltime: Option<u64>) {
         let life = self
             .access
             .get_mut(id)
@@ -1799,6 +1810,20 @@ impl<A: ActorAccess> LifeHost<'_, A> {
             .as_mut()
             .expect("typed actor");
         if life.tics == -1 {
+            match leveltime {
+                // Wires 1 to 28 have no respawn: decided once here, not in the call.
+                Some(leveltime)
+                    if crate::nightmare::respawn_monsters(self.world, self.options.skill) =>
+                {
+                    crate::nightmare::corpse_think(self, id, leveltime)
+                }
+                Some(_) => {}
+                None => assert!(
+                    life.flags & crate::world_pickups::MF_COUNTKILL == 0
+                        || !crate::nightmare::respawn_monsters(self.world, self.options.skill),
+                    "the respawn branch runs with the level's tic"
+                ),
+            }
             return;
         }
         life.tics -= 1;

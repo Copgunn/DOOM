@@ -922,6 +922,51 @@ impl Simulation {
     pub(crate) fn position_admitted(&self, position: [Fixed; 2], margin: u32) -> bool {
         position_admitted(self.room(), position, margin)
     }
+    /// Wire 29: a missile (flying, or exploding there: `P_ExplodeMissile` clears
+    /// `MF_MISSILE`) outside the map's vertex rectangle (a fast move skips an
+    /// outer wall, p_mobj.c:152, Q-p_mobj-152). The C plays on: every blockmap
+    /// index it forms is bounds-tested first (p_maputl.c:431-448, 481-487,
+    /// 520-526; off the map a thing is in no block list, which the spatial walk's
+    /// clamped cell range reproduces) and `R_PointInSubsector` answers for any
+    /// point. Admitted while each coordinate stays within `32,767 - 128` units
+    /// less the sight margin (the largest vertex coordinate): the differences the
+    /// BSP walk (r_main.c `R_PointOnSide`) and the blockmap reads form, and the
+    /// move itself (at most 30 units), then stay inside `int`. Beyond it the C's
+    /// arithmetic overflows (undefined; `-fwrapv` wraps), and the actor is
+    /// refused as before.
+    pub(crate) fn escaped_missile(&self, a: &Actor) -> bool {
+        self.world.parameters.is_some()
+            && a.life
+                .is_some_and(|l| original_registry::is_missile_type(l.actor_type))
+            && a.position()
+                .iter()
+                .all(|v| sight::within(*v, 32_767 - 128 - self.sight_margin().min(16_384)))
+    }
+    /// The absolute bound of every live actor ([`Self::sight_margin`]), or under
+    /// wire 29 for an escaped missile ([`Self::escaped_missile`]) the sight margin
+    /// on its height alone. An actor within the whole bound passes either way, so
+    /// the wire 29 test is made only for one outside it (the per-actor preflights
+    /// of every wire call this; older wires pay one branch on the refusal path).
+    #[inline]
+    pub(crate) fn actor_bounds_admitted(&self, a: &Actor) -> Result<(), SimError> {
+        let margin = self.sight_margin();
+        match sight::actor_bounds_within(a, margin) {
+            Ok(()) => Ok(()),
+            Err(e) => self.escaped_bounds(a, margin, e),
+        }
+    }
+    /// [`Self::actor_bounds_admitted`] for an actor outside the whole bound.
+    #[cold]
+    #[inline(never)]
+    fn escaped_bounds(&self, a: &Actor, margin: u32, e: SimError) -> Result<(), SimError> {
+        if !self.escaped_missile(a) {
+            Err(e)
+        } else if sight::within(a.z, margin) {
+            Ok(())
+        } else {
+            Err(PerceptionError::Arithmetic.into())
+        }
+    }
     /// Spawn admission: the rectangle rule of the map-scale policies, and under the
     /// diagonal policy also the boundary rule (center inside `Ω`, closed box meeting
     /// no wall).

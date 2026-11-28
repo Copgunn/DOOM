@@ -310,8 +310,12 @@ pub(crate) fn select<A: ActorAccess>(
         h.enter_counted(id, states[3], work);
         return true;
     }
+    // p_enemy.c:738-742: no missile while `movecount` is left, below Nightmare
+    // and without `fastparm` (wire 29).
     if states[4].0 != 0
-        && (h.options.skill == Skill::Nightmare || life.movecount == 0)
+        && (((h.options.skill == Skill::Nightmare || crate::nightmare::fastparm(h.world))
+            && !crate::nightmare::planted(crate::nightmare::Fault::ChaseCount))
+            || life.movecount == 0)
         && missile(h, id)
     {
         observe(
@@ -779,7 +783,7 @@ impl Simulation {
                 {
                     shot_owner = Some(id);
                 }
-            } else if !self.position_admitted(a.position(), 994) {
+            } else if !self.position_admitted(a.position(), 994) && !self.escaped_missile(a) {
                 return Err(MonsterError::Arithmetic.into());
             }
             if !crate::player_map_scale::vertical_witness(self.player_policy(), a) {

@@ -43,10 +43,19 @@ use super::state::{
 use super::{
     CarriedPlayer, DeclaredMode, ModeSource, Session, SessionData, SessionMode, SessionSettings,
 };
-use doom_render::{Display, DisplayConfig, FinaleView, Frame, GameState, SessionDisplayStateV4};
+use doom_render::{
+    DisplayConfig, FinaleView, Frame, GameState, SessionDisplayStateV4, SessionDisplayStateV5,
+};
 use doom_sim::{CarriedStart, Diagnostic, DiagnosticLimits, LevelExit, Simulation};
 use doom_sound::chain::{ChainConfig, ChainSound};
 use doom_sound::chain_melt::ChainSoundStateV3;
+use doom_sound::chain_pause::ChainSoundStateV4;
+
+/// The `DDSP` version 5 and `DSND` version 4 fields of a saved wire 29 session.
+pub(super) type PauseParts = (
+    doom_render::PauseFields,
+    doom_sound::chain_pause::PauseFields,
+);
 use std::sync::Arc;
 
 /// The version written and read here.
@@ -54,15 +63,33 @@ pub const VERSION: u16 = 2;
 /// The sound slot kind of `DSND` version 3.
 pub const SOUND_DSND3: u8 = 3;
 
-/// The two versions sharing this layout: version 2 (wire 27, DSIM43) and version 3 (wire 28,
-/// DSIM44, [`super::state_v3`]). Each names its version, its configuration (whose skills the
-/// settings may hold) and the reader of its embedded level.
+/// The versions sharing this layout: version 2 (wire 27, DSIM43), version 3 (wire 28, DSIM44,
+/// [`super::state_v3`]) and version 4 (wire 29, DSIM45, with [`V4Fields`],
+/// [`super::state_v4`]). Each names its version, its configuration (whose skills the settings
+/// may hold) and the reader of its embedded level.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub(super) enum Layout {
     /// `DSES` version 2.
     V2,
     /// `DSES` version 3.
     V3,
+    /// `DSES` version 4.
+    V4,
+}
+
+/// The fields `DSES` version 4 adds to the layout ([`super::state_v4`]): its own three bytes, and
+/// the fields by which its embedded `DDSP` version 5 and `DSND` version 4 extend the version 4
+/// and version 3 states that [`SessionStateV2`] holds.
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+pub struct V4Fields {
+    /// `respawnparm` and `fastparm`.
+    pub parameters: doom_sim::GameParameters,
+    /// `paused` (owned by the session, ruling N6 (a)).
+    pub paused: bool,
+    /// `DDSP` version 5's fields.
+    pub display: doom_render::PauseFields,
+    /// `DSND` version 4's fields.
+    pub sound: doom_sound::chain_pause::PauseFields,
 }
 
 impl Layout {
@@ -70,6 +97,7 @@ impl Layout {
         match self {
             Self::V2 => VERSION,
             Self::V3 => super::state_v3::VERSION,
+            Self::V4 => super::state_v4::VERSION,
         }
     }
 
@@ -77,15 +105,18 @@ impl Layout {
         match self {
             Self::V2 => Configuration::FinaleAndMelt,
             Self::V3 => Configuration::FinaleAndMeltWire28,
+            Self::V4 => Configuration::FinaleAndMeltWire29,
         }
     }
 
-    /// The embedded level's reader: DSIM43 alone for version 2, DSIM44 alone for version 3.
+    /// The embedded level's reader: DSIM43 alone for version 2, DSIM44 alone for version 3,
+    /// DSIM45 alone for version 4.
     fn level(self, bytes: &[u8]) -> Result<Diagnostic<'_>, DsesError> {
         let limits = DiagnosticLimits::default();
         match self {
             Self::V2 => Diagnostic::decode_episode1_v5(bytes, limits),
             Self::V3 => Diagnostic::decode_episode1_v6(bytes, limits),
+            Self::V4 => Diagnostic::decode_episode1_v7(bytes, limits),
         }
         .map_err(|e| DsesError::Level(format!("{e:?}")))
     }
@@ -206,8 +237,14 @@ impl SessionStateV2 {
         self.encode_as(Layout::V2)
     }
 
-    /// The encoding under `layout`'s version number.
+    /// The encoding under `layout`'s version number (versions 2 and 3).
     pub(super) fn encode_as(&self, layout: Layout) -> Vec<u8> {
+        self.encode_with(layout, None)
+    }
+
+    /// The encoding under `layout`'s version number, with version 4's fields `v4` (`Some`
+    /// exactly for [`Layout::V4`]).
+    pub(super) fn encode_with(&self, layout: Layout, v4: Option<V4Fields>) -> Vec<u8> {
         let mut w = Writer(Vec::new());
         w.0.extend_from_slice(MAGIC);
         w.u16(layout.version());
@@ -216,6 +253,11 @@ impl SessionStateV2 {
         w.u8(self.settings.map);
         w.u8(self.settings.skill);
         w.u8(self.settings.screenblocks);
+        if let Some(v) = v4 {
+            w.b(v.parameters.respawn);
+            w.b(v.parameters.fast);
+            w.b(v.paused);
+        }
         w.u64(self.gametic);
         w.u8(game_state_byte(self.gamestate));
         w.u8(self.map);
@@ -256,9 +298,26 @@ impl SessionStateV2 {
             }
         }
         w.blob(&self.level);
-        w.blob(&self.display.encode());
-        w.u8(SOUND_DSND3);
-        w.blob(&self.sound.encode());
+        match v4 {
+            None => {
+                w.blob(&self.display.encode());
+                w.u8(SOUND_DSND3);
+                w.blob(&self.sound.encode());
+            }
+            Some(v) => {
+                w.u8(super::state_v4::DISPLAY_DDSP5);
+                w.blob(&SessionDisplayStateV5::encode_parts(
+                    &self.display,
+                    v.display,
+                ));
+                w.u8(super::state_v4::SOUND_DSND4);
+                let sound = ChainSoundStateV4 {
+                    state: self.sound.state.clone(),
+                    pause: v.sound,
+                };
+                w.blob(&sound.encode());
+            }
+        }
         w.0
     }
 
@@ -269,8 +328,18 @@ impl SessionStateV2 {
         Self::decode_as(bytes, Layout::V2)
     }
 
-    /// [`Self::decode`] for `layout`'s version (any other is refused) and checked by its rules.
+    /// [`Self::decode`] for `layout`'s version (any other is refused) and checked by its rules
+    /// (versions 2 and 3).
     pub(super) fn decode_as(bytes: &[u8], layout: Layout) -> Result<Self, DsesError> {
+        Self::decode_with(bytes, layout).map(|(s, _)| s)
+    }
+
+    /// [`Self::decode_as`] for any layout, with version 4's fields (`Some` exactly for
+    /// [`Layout::V4`]).
+    pub(super) fn decode_with(
+        bytes: &[u8],
+        layout: Layout,
+    ) -> Result<(Self, Option<V4Fields>), DsesError> {
         if bytes.len() > MAX_BYTES {
             return Err(DsesError::TooLarge);
         }
@@ -299,6 +368,18 @@ impl SessionStateV2 {
             skill: r.u8()?,
             screenblocks: r.u8()?,
         };
+        let mut v4 = if layout == Layout::V4 {
+            Some(V4Fields {
+                parameters: doom_sim::GameParameters {
+                    respawn: r.b("respawnparm")?,
+                    fast: r.b("fastparm")?,
+                },
+                paused: r.b("paused")?,
+                ..V4Fields::default()
+            })
+        } else {
+            None
+        };
         let gametic = r.u64()?;
         let gamestate = match r.u8()? {
             0 => GameState::Level,
@@ -322,12 +403,32 @@ impl SessionStateV2 {
             _ => return Err(DsesError::Value("finale")),
         };
         let level = r.blob()?.to_vec();
-        let display = SessionDisplayStateV4::decode(r.blob()?).map_err(DsesError::Display)?;
-        let kind = r.u8()?;
-        if kind != SOUND_DSND3 {
-            return Err(DsesError::SoundKind(kind));
-        }
-        let sound = ChainSoundStateV3::decode(r.blob()?).map_err(DsesError::Sound)?;
+        let (display, sound) = match v4.as_mut() {
+            None => {
+                let display =
+                    SessionDisplayStateV4::decode(r.blob()?).map_err(DsesError::Display)?;
+                let kind = r.u8()?;
+                if kind != SOUND_DSND3 {
+                    return Err(DsesError::SoundKind(kind));
+                }
+                let sound = ChainSoundStateV3::decode(r.blob()?).map_err(DsesError::Sound)?;
+                (display, sound)
+            }
+            Some(v) => {
+                let kind = r.u8()?;
+                if kind != super::state_v4::DISPLAY_DDSP5 {
+                    return Err(DsesError::DisplayKind(kind));
+                }
+                let d = SessionDisplayStateV5::decode(r.blob()?).map_err(DsesError::Display)?;
+                let kind = r.u8()?;
+                if kind != super::state_v4::SOUND_DSND4 {
+                    return Err(DsesError::SoundKind(kind));
+                }
+                let s = ChainSoundStateV4::decode(r.blob()?).map_err(DsesError::Sound)?;
+                (v.display, v.sound) = (d.pause, s.pause);
+                (d.display, ChainSoundStateV3 { state: s.state })
+            }
+        };
         if !r.0.is_empty() {
             return Err(DsesError::Trailing);
         }
@@ -348,8 +449,8 @@ impl SessionStateV2 {
             display,
             sound,
         };
-        state.check_as(layout)?;
-        Ok(state)
+        state.check_with(layout, v4)?;
+        Ok((state, v4))
     }
 
     /// The rules a state keeps without its session data (each error names its rule):
@@ -380,8 +481,15 @@ impl SessionStateV2 {
         self.check_as(Layout::V2)
     }
 
-    /// [`Self::check`] under `layout`: its skills and its embedded level's reader.
+    /// [`Self::check`] under `layout`: its skills and its embedded level's reader (versions 2
+    /// and 3).
     pub(super) fn check_as(&self, layout: Layout) -> Result<(), DsesError> {
+        self.check_with(layout, None)
+    }
+
+    /// [`Self::check_as`] for any layout, with version 4's fields `v4` and their rules
+    /// ([`super::state_v4`]).
+    pub(super) fn check_with(&self, layout: Layout, v4: Option<V4Fields>) -> Result<(), DsesError> {
         let value = |ok: bool, name| {
             if ok {
                 Ok(())
@@ -412,11 +520,14 @@ impl SessionStateV2 {
         let in_level = self.gamestate == GameState::Level;
         let sound = &self.sound.state;
         let level = layout.level(&self.level)?;
-        // Version 3 alone: every level is set up on the one `gameskill` (g_game.c:484, 1450).
+        if (layout == Layout::V4) != v4.is_some() {
+            return Err(DsesError::Inconsistent("version 4 fields"));
+        }
+        // Versions 3 and 4: every level is set up on the one `gameskill` (g_game.c:484, 1450).
         let level_skill = level
             .field("actors.options")
             .and_then(|o| o.first().copied());
-        if layout == Layout::V3 && level_skill != Some(self.settings.skill) {
+        if layout != Layout::V2 && level_skill != Some(self.settings.skill) {
             return Err(DsesError::SkillAndLevel {
                 skill: self.settings.skill,
                 level: level_skill,
@@ -432,15 +543,57 @@ impl SessionStateV2 {
             level.field("level.map") == Some(&[self.map][..]),
             "the level capture's map",
         )?;
+        // Version 4: the level's paused tics (`level.gametic_lead` - `level.start.gametic`) are
+        // session tics of the level the simulation did not run, which the sound counts.
+        let paused_tics = match v4 {
+            None => Some(0),
+            Some(_) => level_u64("level.gametic_lead")
+                .zip(level_u64("level.start.gametic"))
+                .and_then(|(lead, start)| lead.checked_sub(start)),
+        };
+        let sound_paused = v4.map_or(0, |v| v.sound.level_paused);
         rule(
-            level_u64("tic") == Some(sound.level_tics()),
+            level_u64("tic")
+                .zip(paused_tics)
+                .and_then(|(t, p)| t.checked_add(p))
+                == Some(sound.level_tics())
+                && paused_tics == Some(sound_paused),
             "the level capture's tic",
         )?;
+        if let Some(v) = v4 {
+            let p = [v.parameters.respawn, v.parameters.fast].map(u8::from);
+            rule(
+                level.field("actors.parameters") == Some(&p[..]),
+                "parameters and the level's",
+            )?;
+            // A level is paused only after a paused tic, which set no exit or reborn.
+            rule(
+                !(v.paused && in_level) || (self.gameaction == 0 && paused_tics > Some(0)),
+                "paused and the level",
+            )?;
+            // The session sets the display's `paused` every tic, and `mus_paused` follows
+            // `paused`: both are cleared by a load (g_game.c:494, s_sound.c:214) and toggled
+            // together (g_game.c:704-709, s_sound.c:497-513 with music always playing), and a
+            // music change keeps it (s_sound.c:689-696).
+            rule(
+                v.display.paused == v.paused && v.sound.mus_paused == v.paused,
+                "paused, the display's and mus_paused",
+            )?;
+            // In a level the display entered it at its load, so it counts the same paused tics.
+            rule(
+                !in_level || Some(v.display.level_paused) == paused_tics,
+                "the display's paused tics",
+            )?;
+        }
         rule(
             level_u64("level.start.gametic") == Some(sound.level_start),
             "the level's start gametic and levelstarttic",
         )?;
-        self.display.check().map_err(DsesError::DisplayRestore)?;
+        match v4 {
+            None => self.display.check(),
+            Some(v) => SessionDisplayStateV5::check_parts(&self.display, v.display),
+        }
+        .map_err(DsesError::DisplayRestore)?;
         rule(
             self.display.mode == self.mode.mode.game_mode(),
             "display game mode",
@@ -612,25 +765,50 @@ impl Session {
 
     /// [`Self::save_v2`] for `layout`'s configuration alone.
     pub(super) fn save_as(&self, layout: Layout) -> Result<SessionStateV2, DsesError> {
+        self.save_parts(layout).map(|(s, _)| s)
+    }
+
+    /// [`Self::save_as`] with, for [`Layout::V4`], the embedded `DDSP` version 5 and `DSND`
+    /// version 4 fields.
+    pub(super) fn save_parts(
+        &self,
+        layout: Layout,
+    ) -> Result<(SessionStateV2, Option<PauseParts>), DsesError> {
         if self.config != layout.config() {
             return Err(DsesError::Configuration(self.config));
         }
         if self.ended.is_some() || self.fault.is_some() {
             return Err(DsesError::NotSaveable);
         }
-        let display = self
-            .display
-            .session_state_v4_checked()
-            .map_err(|_| DsesError::NotSaveable)?;
-        let sound = self
-            .sound
-            .save_v3_checked()
-            .map_err(|_| DsesError::NotSaveable)?;
+        let (display, sound, pause) = if layout == Layout::V4 {
+            let d = self
+                .display
+                .session_state_v5_checked()
+                .map_err(|_| DsesError::NotSaveable)?;
+            let s = self
+                .sound
+                .save_v4_checked()
+                .map_err(|_| DsesError::NotSaveable)?;
+            let state = ChainSoundStateV3 { state: s.state };
+            (d.display, state, Some((d.pause, s.pause)))
+        } else {
+            let d = self
+                .display
+                .session_state_v4_checked()
+                .map_err(|_| DsesError::NotSaveable)?;
+            (
+                d,
+                self.sound
+                    .save_v3_checked()
+                    .map_err(|_| DsesError::NotSaveable)?,
+                None,
+            )
+        };
         let mut carried = self.carried;
         if let Some(CarriedPlayer { start: Some(s), .. }) = carried.as_mut() {
             s.p_random = 0;
         }
-        Ok(SessionStateV2 {
+        let state = SessionStateV2 {
             mode: self.data.mode,
             settings: self.settings,
             gametic: self.gametic,
@@ -646,7 +824,8 @@ impl Session {
             level: self.level.snapshot().canonical_bytes(),
             display,
             sound,
-        })
+        };
+        Ok((state, pause))
     }
 
     /// A finale-and-melt session rebuilt from `state` over `data` and `level` (the level's
@@ -665,14 +844,25 @@ impl Session {
         Self::restore_as(data, state, level, Layout::V2)
     }
 
-    /// [`Self::restore_v2`] under `layout`: its rules and its configuration.
+    /// [`Self::restore_v2`] under `layout`: its rules and its configuration (versions 2 and 3).
     pub(super) fn restore_as(
         data: Arc<SessionData>,
         state: &SessionStateV2,
         level: Simulation,
         layout: Layout,
     ) -> Result<Self, DsesError> {
-        state.check_as(layout)?;
+        Self::restore_with(data, state, level, layout, None)
+    }
+
+    /// [`Self::restore_as`] for any layout, with version 4's fields `v4`.
+    pub(super) fn restore_with(
+        data: Arc<SessionData>,
+        state: &SessionStateV2,
+        level: Simulation,
+        layout: Layout,
+        v4: Option<V4Fields>,
+    ) -> Result<Self, DsesError> {
+        state.check_with(layout, v4)?;
         if data.mode != state.mode {
             return Err(DsesError::Mode);
         }
@@ -730,24 +920,38 @@ impl Session {
         let cfg = DisplayConfig {
             screenblocks: state.settings.screenblocks,
         };
-        let mut display = Display::new_session_with(
-            data.res.clone(),
-            lvl.clone(),
-            cfg,
-            layout.config().display_config(data.mode.mode.game_mode()),
-        )
-        .map_err(|_| DsesError::Value("display"))?;
+        let mut display = layout
+            .config()
+            .new_display(&data, lvl.clone(), cfg)
+            .map_err(|_| DsesError::Value("display"))?;
         let scene_level = in_level.then(|| (lvl.clone(), &level));
-        display
-            .restore_session_v4(state.display.clone(), scene_level)
-            .map_err(DsesError::DisplayRestore)?;
-        let sound = ChainSound::restore_v3(
+        let (set, music, expected) = (
             data.sound_set.clone(),
             data.music,
-            &state.sound,
-            &level,
             ChainConfig::fresh(data.textures),
-        )
+        );
+        let sound = match v4 {
+            None => {
+                display
+                    .restore_session_v4(state.display.clone(), scene_level)
+                    .map_err(DsesError::DisplayRestore)?;
+                ChainSound::restore_v3(set, music, &state.sound, &level, expected)
+            }
+            Some(v) => {
+                let d = SessionDisplayStateV5 {
+                    display: state.display.clone(),
+                    pause: v.display,
+                };
+                display
+                    .restore_session_v5(d, scene_level)
+                    .map_err(DsesError::DisplayRestore)?;
+                let s = ChainSoundStateV4 {
+                    state: state.sound.state.clone(),
+                    pause: v.sound,
+                };
+                ChainSound::restore_v4(set, music, &s, &level, expected)
+            }
+        }
         .map_err(DsesError::SoundRestore)?;
         rule(
             level.level_start_gametic() == Some(sound.level_start()),
@@ -759,6 +963,11 @@ impl Session {
             // G_InitNew): the carried index is the finished level's.
             s.p_random = level.rng().indices()[0];
         }
+        // Version 4: a level whose tic 0 has not run after paused tics was loaded paused, so its
+        // tic 0 will publish the load's sound records again (the session's `head_owed`, module
+        // documentation of `super`); a first level has none.
+        let head_owed =
+            in_level && level.tic() == 0 && v4.is_some_and(|v| v.sound.level_paused > 0);
         Ok(Self {
             settings: state.settings,
             skill,
@@ -778,6 +987,9 @@ impl Session {
             fault: None,
             config: layout.config(),
             finale: state.finale,
+            parameters: v4.unwrap_or_default().parameters,
+            paused: v4.unwrap_or_default().paused,
+            head_owed,
             data,
         })
     }

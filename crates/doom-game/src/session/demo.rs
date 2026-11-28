@@ -4,7 +4,8 @@
 //! command for every player before the game-state switch, g_game.c:656-670; there is no per-level
 //! header or marker). The recording is the app's existing [`crate::app::Recorder`] unchanged:
 //! started with the session's start map and skill it writes exactly that file, and it never
-//! records `BT_SPECIAL` (its command domain is wire 24's). This module adds the reading side
+//! records `BT_SPECIAL` (its command domain is wire 24's), except under wire 29, where it records
+//! the pause command 0x81 (M6b ruling N5). This module adds the reading side
 //! ([`SessionDemo::parse`], which takes the header's map as the start and does not stop at a level
 //! boundary; the single-level `DemoCommands::parse` and its files are unchanged), the replay
 //! ([`replay`], the same session layer to the demo's end or a refusal, a replayed `BT_SPECIAL`
@@ -22,11 +23,12 @@ use super::finale_melt::{FinaleMeltTicReport, MeltStepReport};
 use super::{Refusal, Session, SessionMode, TicReport};
 use crate::app::Timestamp;
 use doom_render::Frame;
-use doom_sim::TicCommand;
 use doom_sim::demo::{
     DEMO_HEADER, DEMO_MAP_INDEX, DemoError, DemoHeaderV2, EPISODE1_DEMO_MAPS,
-    parse_demo_episode1_v2, parse_demo_episode1_v3, write_demo_episode1_v2, write_demo_episode1_v3,
+    parse_demo_episode1_v2, parse_demo_episode1_v3, parse_demo_episode1_v4, write_demo_episode1_v2,
+    write_demo_episode1_v3, write_demo_episode1_v4,
 };
+use doom_sim::{GameParameters, TicCommand};
 
 /// One of doom-sim's version-110 Episode 1 demo readers.
 type DemoReader = fn(&[u8], u8) -> Result<(DemoHeaderV2, doom_sim::demo::Demo), DemoError>;
@@ -85,6 +87,31 @@ impl SessionDemo {
     /// 0 to 3); for skills 2 and 3 the bytes equal [`Self::bytes`]'s.
     pub fn bytes_v3(&self) -> Result<Vec<u8>, DemoError> {
         write_demo_episode1_v3(self.map, self.skill, &self.commands)
+    }
+
+    /// [`Self::parse`] for the wire 29 configuration (doom-sim's `parse_demo_episode1_v4`, M6b
+    /// rulings N1 and N5): any skill byte, played as at most 4 (g_game.c:1379-1380), and the
+    /// `respawnparm` and `fastparm` bytes, returned beside the demo.
+    pub fn parse_v4(bytes: &[u8]) -> Result<(Self, GameParameters), DemoError> {
+        let map = *bytes.get(DEMO_MAP_INDEX).ok_or(DemoError::Truncated)?;
+        let map = if EPISODE1_DEMO_MAPS.contains(&map) {
+            map
+        } else {
+            1
+        };
+        let (h, demo) = parse_demo_episode1_v4(bytes, map)?;
+        let demo = Self {
+            map: h.map,
+            skill: h.skill,
+            commands: demo.commands,
+        };
+        Ok((demo, h.parameters))
+    }
+
+    /// [`Self::bytes`] for the wire 29 configuration (doom-sim's `write_demo_episode1_v4`): skills
+    /// 0 to 4, the two parameter bytes, and every `BT_SPECIAL` byte but the save command.
+    pub fn bytes_v4(&self, parameters: GameParameters) -> Result<Vec<u8>, DemoError> {
+        write_demo_episode1_v4(self.map, self.skill, parameters, &self.commands)
     }
 }
 

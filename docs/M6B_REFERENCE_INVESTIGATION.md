@@ -6,7 +6,7 @@ The behavioural authority is the original id Software Linux DOOM 1.10 at `a77dfb
 
 Each fact is labelled. **(run)**: seen in the genuine engine, built from the original source by the M6b runner ([§6.1](#61-the-genuine-side-built-in-this-phase)), in a committed item whose golden is checked in CI unless the sentence says it was an authoring run. **(read)**: read in the C or Rust source and not run. **(inferred)**: reasoned from cited lines.
 
-**Status (2026-11-26, America/Los_Angeles).** Phase 1 is written and the genuine-engine side is built: 19 synthetic items, 24 planted faults, 7 runs after an earlier game of the same process, two self-tests, all in CI's M6a genuine session job. Decisions N1 to N11 in [§8](#8-decisions-for-the-owner) wait for the owner. Not built: everything in the Rust crates, and the state digests over the wire 29 schema, which wait on N2, N4, N5 and N6.
+**Status (2026-11-26, America/Los_Angeles).** Phase 1 is written and the genuine-engine side is built: 19 synthetic items, 24 planted faults, 7 runs after an earlier game of the same process, two self-tests, all in CI's M6a genuine session job. Decisions N1 to N11 in [§8](#8-decisions-for-the-owner) were ruled on by the owner on 2026-11-26 ([rulings](#rulings)); Phase 2 builds on them. Not built in Phase 1: everything in the Rust crates, and the state digests over the wire 29 schema, which wait on N2, N4, N5 and N6.
 
 ## Summary
 
@@ -309,6 +309,26 @@ The demo **file** format is the original's and does not change; "version" names 
 ## 8. Decisions for the owner
 
 Each has the facts, the options and one recommendation. Nothing in Phase 2 starts before the rulings.
+
+### Rulings
+
+The owner ruled on all eleven on 2026-11-26 (America/Los_Angeles). The decisions below are kept as they were put to him.
+
+| Decision | Ruling |
+| --- | --- |
+| N1 | (a): `-fast` and `-respawn` are in, as two options of wire 29, with `doom-play` flags. |
+| N2 | (a): one wire, 29, carries Nightmare and the pause's simulation part. |
+| N3 | (a): one pull request. If the line count reaches the ceiling before the pause is built, the pause moves to wire 30 in a second pull request. |
+| N4 | (a): the fast table is a function of the options. A `doom-play` restart counts as a new process. The other table histories stay in the quirk register with their goldens, to be reopened when menus, saves or cheats can reach them. |
+| N5 | (a): every command byte with bit 7 is admitted except the save command (low bits 10). The recorder writes only 0x81. Bit 6 alone stays as audit 1 left it. |
+| N6 | (a): the session owns the paused flag. New versions: `DSIM` 45, `DSES` 4, `DDSP` 5, `DSND` 4. |
+| N7 | (a): the Pause key sends the original's command. Esc and focus loss keep the app's own pause, outside the demo. |
+| N8 | (a): one hand test by the owner before the pull request is marked ready. |
+| N9 | (a): the p_maputl.c:873 block-walk overshoot is admitted under wire 29, as the last step, and drops to a later wire if the ceiling is near. |
+| N10 | (a): kill percentages above 100 are in, with `RESP4` and `RESP3R` as the witness. |
+| N11 | The hand-written line ceiling for Phase 2 is 13,000, counted with `git diff --numstat` from the merge base, added lines, without `tests/reference` and `Cargo.lock`. The ceiling decides which pull request something lands in, never whether it lands. |
+
+**Cheats.** The original does not lock cheats on Nightmare: the test at st_stuff.c:546 is commented out ([§1.8](#18-the-menu-and-the-status-bar)). Cheats are not in this milestone, and no Nightmare lockout is added anywhere.
 
 **N1. Scope: are `-fast` and `-respawn` in M6b?** Facts: they are the same code as Nightmare with the conditions split ([§3](#3-the--fast-and--respawn-parameters)); the demo header carries them; three genuine items exist. Their one hazard is the table history of [§1.3](#13-g_initnew-the-clamp-respawnmonsters-and-the-fast-set-up), which N4 handles. Options: (a) in, as two options of wire 29, with `doom-play` flags; (b) in the simulation and the demo reader only, no `doom-play` flag; (c) out: the bytes stay refused and a later wire adds them. **Recommendation: (a).** The cost is two booleans where the skill test already is, and leaving them out costs another wire later for the same lines.
 

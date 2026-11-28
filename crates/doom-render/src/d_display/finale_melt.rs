@@ -108,6 +108,10 @@ pub enum SessionStateRefusal {
     RefusesFinaleAndMeltSavesVersion3,
     /// The display holds a planted fault (evidence self-tests only).
     PlantedFault,
+    /// A pause display (M6b wire 29) is saved as `DDSP` version 5 only.
+    PauseSavesVersion5,
+    /// `DDSP` version 5 is the state of a pause display only.
+    NotPauseDisplay,
 }
 
 impl std::fmt::Display for SessionStateRefusal {
@@ -254,6 +258,9 @@ impl Display {
         let (mut screen, mut taint) = (c.screen.clone(), c.taint.clone());
         crate::f_finale::draw(&self.res, &self.font, mode, view, &mut screen, &mut taint)
             .map_err(SessionError::Finale)?;
+        // The pause picture over the frame (d_main.c:303-311).
+        self.draw_pause(&mut screen, &mut taint)
+            .map_err(|e| SessionError::PausePicture(Some(e)))?;
         // I_SetPalette(PLAYPAL) only on entering the state (d_main.c:274-275): the text-to-art
         // wipe sets none.
         let palette_set = (s.old_gamestate != Some(GameState::Finale)).then_some(0);
@@ -359,13 +366,30 @@ impl Display {
     /// another display or configuration.
     pub fn session_state_v4(&self) -> Option<SessionDisplayStateV4> {
         let s = self.session.as_deref()?;
-        let SessionConfig::FinaleAndMelt { mode } = s.config else {
-            return None;
-        };
-        if s.fault.is_some() {
+        if s.pause.is_some() {
+            // Its state is `DDSP` version 5 ([`Self::session_state_v5`]).
             return None;
         }
-        let session = self.session_state_any()?;
+        self.session_state_v4_any().ok()
+    }
+
+    /// The version 4 contents of a finale-and-melt display, a pause display's included.
+    pub(crate) fn session_state_v4_any(
+        &self,
+    ) -> Result<SessionDisplayStateV4, SessionStateRefusal> {
+        let s = self
+            .session
+            .as_deref()
+            .ok_or(SessionStateRefusal::NotSession)?;
+        let SessionConfig::FinaleAndMelt { mode } = s.config else {
+            return Err(SessionStateRefusal::RefusesFinaleAndMeltSavesVersion3);
+        };
+        if s.fault.is_some() {
+            return Err(SessionStateRefusal::PlantedFault);
+        }
+        let session = self
+            .session_state_any()
+            .ok_or(SessionStateRefusal::NotStarted)?;
         let melt = s.melt.as_deref().map(|m| MeltProgress {
             step: m.step,
             palette: m.palette,
@@ -374,7 +398,7 @@ impl Display {
             start_taint: m.start_taint.clone(),
             end: m.melt.end().to_vec(),
         });
-        Some(SessionDisplayStateV4 {
+        Ok(SessionDisplayStateV4 {
             mode,
             session,
             melt,
@@ -407,6 +431,9 @@ impl Display {
             SessionConfig::RefusesFinaleAndMelt => {
                 Err(SessionStateRefusal::RefusesFinaleAndMeltSavesVersion3)
             }
+            SessionConfig::FinaleAndMelt { .. } if s.pause.is_some() => {
+                Err(SessionStateRefusal::PauseSavesVersion5)
+            }
             SessionConfig::FinaleAndMelt { .. } if s.fault.is_some() => {
                 Err(SessionStateRefusal::PlantedFault)
             }
@@ -427,14 +454,30 @@ impl Display {
         state: SessionDisplayStateV4,
         level: Option<(Arc<Level>, &Simulation)>,
     ) -> Result<(), SessionRestoreError> {
+        self.restore_v4_with(state, level, None)
+    }
+
+    /// [`Self::restore_session_v4`], or with `paused` a pause display's `DDSP` version 5 restore
+    /// (each refused as [`SessionRestoreError::WrongConfig`] on the other kind of display).
+    pub(crate) fn restore_v4_with(
+        &mut self,
+        state: SessionDisplayStateV4,
+        level: Option<(Arc<Level>, &Simulation)>,
+        paused: Option<super::pause::PauseFields>,
+    ) -> Result<(), SessionRestoreError> {
         let s = self
             .session
             .as_deref()
             .ok_or(SessionRestoreError::NotSession)?;
-        if s.config != (SessionConfig::FinaleAndMelt { mode: state.mode }) {
+        if s.config != (SessionConfig::FinaleAndMelt { mode: state.mode })
+            || s.pause.is_some() != paused.is_some()
+        {
             return Err(SessionRestoreError::WrongConfig);
         }
-        state.check()?;
+        match paused {
+            None => state.check()?,
+            Some(p) => super::pause::SessionDisplayStateV5::check_parts(&state, p)?,
+        }
         let run = match &state.melt {
             None => None,
             Some(m) => {
@@ -453,7 +496,7 @@ impl Display {
             }
         };
         let mut next = self.clone();
-        next.restore_session_checked(state.session, level)?;
+        next.restore_session_checked(state.session, level, paused)?;
         next.session.as_deref_mut().expect("restored").melt = run;
         *self = next;
         Ok(())
@@ -524,10 +567,15 @@ impl SessionDisplayStateV4 {
     /// Accepted on trust, as in version 3: the start screen and its taint (the previous frame,
     /// which may belong to a level no longer loaded).
     pub fn check(&self) -> Result<(), SessionRestoreError> {
+        self.check_paused(0)
+    }
+
+    /// [`Self::check`] with `level_paused` paused tics of a level scene (`DDSP` version 5).
+    pub(crate) fn check_paused(&self, level_paused: u64) -> Result<(), SessionRestoreError> {
         if self.session.melt.is_some() {
             return Err(inconsistent("version 3 melt"));
         }
-        self.session.check()?;
+        self.session.check_paused(level_paused)?;
         let Some(m) = &self.melt else {
             return Ok(());
         };

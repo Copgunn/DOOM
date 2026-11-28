@@ -131,6 +131,8 @@ pub enum DsesError {
         /// The embedded level's skill byte, if the capture names one.
         level: Option<u8>,
     },
+    /// `DSES` version 4: the display slot kind is not one this build reads.
+    DisplayKind(u8),
 }
 
 impl fmt::Display for DsesError {
@@ -880,6 +882,9 @@ impl Session {
             fault: None,
             config: super::finale_melt::Configuration::RefusesFinaleAndMelt,
             finale: None,
+            parameters: doom_sim::GameParameters::default(),
+            paused: false,
+            head_owed: false,
             data,
         })
     }

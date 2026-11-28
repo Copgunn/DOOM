@@ -308,6 +308,7 @@ impl App {
                 if matches!(r.kind, FinaleMeltTicKind::Load { .. }) {
                     self.input.load_level();
                     self.layer.load_level();
+                    self.sendpause = false; // g_game.c:494
                 }
                 if r.kind == FinaleMeltTicKind::Victory {
                     self.melt.finale_began.get_or_insert(r.tic);

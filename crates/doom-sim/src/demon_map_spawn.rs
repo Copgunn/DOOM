@@ -97,6 +97,7 @@ impl Simulation {
         let mut owners = 0;
         let mut decorations = 0;
         let mut barrels = 0;
+        let nightmare = self.nightmare();
         for id in self.actors.order() {
             if self.actors.is_pending(id) != Some(false) {
                 continue;
@@ -114,7 +115,7 @@ impl Simulation {
                 if decorations > self.decoration_limit() {
                     return Err(MapSpawnError::DecorationLimit.into());
                 }
-                e1m1_rules::validate_decoration(self.room(), *a)?;
+                e1m1_rules::validate_decoration_at(self.room(), *a, nightmare)?;
             } else if crate::barrels::is_barrel(self.player_policy(), life.actor_type) {
                 // An exploding barrel (M3h9b note §2.1) interleaves with the other
                 // THINGs in lump order and is never the suffix; its witness covers
@@ -144,11 +145,22 @@ impl Simulation {
                 }
             } else if self.is_roster_monster(life.actor_type) {
                 owners += 1;
-                if suffix || owners > self.map_demon_limit() {
+                // Wire 29: P_NightmareRespawn spawns the monster at the tail
+                // (p_mobj.c:396, P_AddThinker), after its two fogs; it replaces
+                // its corpse, so the roster bound holds.
+                let respawning =
+                    crate::nightmare::respawn_monsters(&self.world, self.actor_options.skill);
+                if (suffix && !respawning) || owners > self.map_demon_limit() {
                     return Err(MapSpawnError::Ownership.into());
                 }
+                // Wire 29: a corpse removed by P_NightmareRespawn may still be a
+                // monster's target (p_mobj.c:408 sweeps no reference). The C holds
+                // the pointer without reading it until A_Chase (p_enemy.c:683-705),
+                // where `pursuit::chase` reads a pending corpse and refuses a freed
+                // one (`SimError::FreedRead`), so it is not refused here.
+                let removed = |t: ActorId| respawning && self.actors.is_pending(t) != Some(false);
                 if life.health > 0 {
-                    if let Some(target) = life.target {
+                    if let Some(target) = life.target.filter(|t| !removed(*t)) {
                         self.validate_perception_reference(target)?;
                     }
                 }
@@ -161,7 +173,7 @@ impl Simulation {
                 if !level_body {
                     suffix = true;
                 }
-                if !self.position_admitted(a.position(), 994) {
+                if !self.position_admitted(a.position(), 994) && !self.escaped_missile(a) {
                     return Err(MonsterError::Arithmetic.into());
                 }
                 if life.actor_type == self.demon_body_type()
